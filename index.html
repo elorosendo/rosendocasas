@@ -153,6 +153,15 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
 </style>
 </head>
 <body>
+  <!-- SPLASH SCREEN — primeiro elemento do body -->
+  <div id="splash" style="position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#0f1f17 0%,#152b1e 60%,#0a1a10 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
+    <img src="appicone.png" width="110" height="110" style="border-radius:26px;box-shadow:0 8px 40px rgba(74,222,128,0.25);margin-bottom:22px;" onerror="this.style.display='none'">
+    <div style="color:#fff;font-size:26px;font-weight:700;letter-spacing:-0.5px;">Recibos</div>
+    <div style="color:#4ade80;font-size:14px;font-weight:500;margin-top:6px;letter-spacing:0.5px;">Casas Rosendo</div>
+    <div style="margin-top:48px;width:36px;height:3px;background:rgba(74,222,128,0.25);border-radius:2px;overflow:hidden;">
+      <div id="splash-bar" style="height:100%;width:0%;background:#4ade80;border-radius:2px;transition:width 1.6s ease;"></div>
+    </div>
+  </div>
 <div class="app">
 
 <header>
@@ -780,18 +789,30 @@ if (!_c.key || !_c.url) {
 // ═══════════════════════════════════════════════════════
 //  SPLASH SCREEN
 // ═══════════════════════════════════════════════════════
+// Splash — roda imediatamente pois splash já está no DOM
 (function() {
-  const splash = document.getElementById("splash");
-  if (!splash) return;
-  // Animar a barra de progresso
-  setTimeout(() => {
-    document.getElementById("splash-bar").style.width = "100%";
-  }, 50);
-  // Sumir após 1.8s
-  setTimeout(() => {
-    splash.style.opacity = "0";
-    setTimeout(() => splash.remove(), 520);
-  }, 1800);
+  function initSplash() {
+    const splash = document.getElementById("splash");
+    if (!splash) return;
+    // Inicia barra
+    setTimeout(() => {
+      const bar = document.getElementById("splash-bar");
+      if (bar) bar.style.width = "100%";
+    }, 100);
+    // Remove após 2s
+    setTimeout(() => {
+      splash.style.opacity = "0";
+      setTimeout(() => {
+        if (splash.parentNode) splash.parentNode.removeChild(splash);
+      }, 600);
+    }, 2000);
+  }
+  // Rodar agora — splash já está no HTML acima do script
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initSplash);
+  } else {
+    initSplash();
+  }
 })();
 
 // ═══════════════════════════════════════════════════════
@@ -860,29 +881,5 @@ if (!_c.key || !_c.url) {
     ">Cancelar e preencher manual</button>
   </div>
 
-  <!-- SPLASH SCREEN -->
-  <div id="splash" style="
-    position:fixed;inset:0;z-index:99999;
-    background:linear-gradient(160deg,#0f1f17 0%,#152b1e 60%,#0a1a10 100%);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:0;transition:opacity 0.5s ease;
-  ">
-    <img src="appicone.png" style="
-      width:110px;height:110px;border-radius:26px;
-      box-shadow:0 8px 40px rgba(74,222,128,0.25);
-      margin-bottom:22px;
-    " onerror="this.style.display='none'">
-    <div style="color:#fff;font-size:26px;font-weight:700;letter-spacing:-0.5px;">Recibos</div>
-    <div style="color:#4ade80;font-size:14px;font-weight:500;margin-top:6px;letter-spacing:0.5px;">Casas Rosendo</div>
-    <div style="
-      margin-top:48px;width:36px;height:3px;
-      background:rgba(74,222,128,0.3);border-radius:2px;overflow:hidden;
-    ">
-      <div id="splash-bar" style="
-        height:100%;width:0%;background:#4ade80;border-radius:2px;
-        transition:width 1.6s ease;
-      "></div>
-    </div>
-  </div>
 </body>
 </html>
