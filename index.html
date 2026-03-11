@@ -180,8 +180,8 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
     </div>
     <input type="file" id="file-input" accept="image/*" capture="environment" onchange="fotoSelecionada(event)">
 
-    <!-- Botão analisar -->
-    <button class="ai-btn" id="aiBtn" disabled onclick="analisarIA()">
+    <!-- Botão analisar — oculto, análise agora é automática ao selecionar foto -->
+    <button class="ai-btn" id="aiBtn" disabled onclick="analisarIA()" style="display:none">
       <span class="btn-txt">✨ Analisar com IA</span>
       <div class="spinner"></div>
     </button>
@@ -404,6 +404,8 @@ function fotoSelecionada(e) {
     document.getElementById("resultCard").classList.remove("visible");
     document.getElementById("confirmBtn").classList.remove("visible");
     document.getElementById("erroBox").classList.remove("visible");
+    // Analisar automaticamente após carregar a imagem
+    analisarIA();
   };
   reader.readAsDataURL(f);
   e.target.value = "";
@@ -476,7 +478,7 @@ Administração: Materiais diversos, Despesas administrativas, Livro engenheiro,
               { inline_data: { mime_type: imgMime, data: imgB64 } }
             ]
           }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 600 }
+          generationConfig: { temperature: 0.1, maxOutputTokens: 600, responseMimeType: "application/json" }
         })
       });
 
@@ -519,27 +521,44 @@ Administração: Materiais diversos, Despesas administrativas, Livro engenheiro,
 
   const textoRaw = resposta.json.candidates[0].content.parts[0].text;
   // Limpar possíveis blocos markdown que o modelo adicione
-  const texto = textoRaw.replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"").trim();
+  const texto = textoRaw
+    .replace(/^```(?:json)?\s*/i, "")  // remove ```json do início
+    .replace(/```\s*$/,            "")  // remove ``` do fim
+    .trim();
 
-  let parsed;
-  try {
-    parsed = JSON.parse(texto);
-  } catch (e1) {
-    // Tenta extrair JSON do meio do texto
-    const match = texto.match(/\{[\s\S]*\}/);
-    if (match) {
-      try { parsed = JSON.parse(match[0]); }
-      catch (e2) {
-        mostrarErro(`Modelo ${resposta.modelo} respondeu mas não em JSON válido.\nResposta: ${texto.substring(0,200)}`);
-        buildFields("fields-foto","foto",tipoFoto,"setTipoFoto");
-        document.getElementById("resultCard").classList.add("visible");
-        document.getElementById("confirmBtn").classList.add("visible");
-        return;
-      }
-    } else {
-      mostrarErro(`Modelo ${resposta.modelo} respondeu texto puro:\n${texto.substring(0,200)}`);
-      buildFields("fields-foto","foto",tipoFoto,"setTipoFoto");
-      document.getElementById("resultCard").classList.add("visible");
+  // Parser robusto — 3 tentativas para extrair o JSON
+  let parsed = null;
+
+  // Tentativa 1: parse direto
+  try { parsed = JSON.parse(texto); } catch(e) {}
+
+  // Tentativa 2: encontrar primeiro { até último } (ignora texto ao redor)
+  if (!parsed) {
+    const ini = texto.indexOf("{");
+    const fim = texto.lastIndexOf("}");
+    if (ini !== -1 && fim > ini) {
+      try { parsed = JSON.parse(texto.slice(ini, fim + 1)); } catch(e) {}
+    }
+  }
+
+  // Tentativa 3: regex greedy para capturar JSON aninhado
+  if (!parsed) {
+    const m = texto.match(/\{[\s\S]*\}/);
+    if (m) { try { parsed = JSON.parse(m[0]); } catch(e) {} }
+  }
+
+  if (!parsed) {
+    mostrarErro(`IA retornou formato inesperado.\nResposta recebida:\n${texto.substring(0,300)}`);
+    buildFields("fields-foto","foto",tipoFoto,"setTipoFoto");
+    document.getElementById("resultCard").classList.add("visible");
+    document.getElementById("confirmBtn").classList.add("visible");
+    return;
+  }
+
+  // Parse OK — continuar normalmente
+  if (false) { // bloco morto para manter estrutura
+    buildFields("fields-foto","foto",tipoFoto,"setTipoFoto");
+    document.getElementById("resultCard").classList.add("visible");
       document.getElementById("confirmBtn").classList.add("visible");
       return;
     }
