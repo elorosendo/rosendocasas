@@ -183,14 +183,26 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
     <div class="camera-zone" id="cameraZone" onclick="abrirCamera()">
       <img id="preview-img" alt="preview">
       <div class="cam-ph">
-        <div class="cam-icon">📷</div>
-        <div class="cam-title">Fotografar recibo</div>
-        <div class="cam-sub">Toque para câmera ou galeria</div>
+        <div class="cam-icon">🧾</div>
+        <div class="cam-title">Adicionar recibo</div>
+        <div class="cam-btns" style="display:flex;gap:10px;margin-top:12px;">
+          <button onclick="event.stopPropagation();abrirCamera()" style="
+            background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.35);
+            color:#4ade80;padding:8px 16px;border-radius:20px;font-size:13px;
+            font-weight:600;cursor:pointer;
+          ">📷 Câmera</button>
+          <button onclick="event.stopPropagation();abrirGaleria()" style="
+            background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+            color:#ccc;padding:8px 16px;border-radius:20px;font-size:13px;
+            font-weight:600;cursor:pointer;
+          ">🖼️ Galeria</button>
+        </div>
       </div>
       <button class="change-photo" onclick="event.stopPropagation();abrirCamera()">Trocar foto</button>
       <!-- Overlay removido daqui -->
     </div>
-    <input type="file" id="file-input" accept="image/*" capture="environment" onchange="fotoSelecionada(event)">
+    <input type="file" id="file-input"        accept="image/*" capture="environment" onchange="fotoSelecionada(event)">
+    <input type="file" id="file-input-galeria" accept="image/*" onchange="fotoSelecionada(event)">
 
     <!-- Botão analisar — oculto, análise agora é automática ao selecionar foto -->
     <button class="ai-btn" id="aiBtn" disabled onclick="analisarIA()" style="display:none">
@@ -430,7 +442,8 @@ function updateSub(pfx, sel) {
 // ═══════════════════════════════════════════════════════
 //  CÂMERA
 // ═══════════════════════════════════════════════════════
-function abrirCamera() { document.getElementById("file-input").click(); }
+function abrirCamera()  { document.getElementById("file-input").click(); }
+function abrirGaleria() { document.getElementById("file-input-galeria").click(); }
 
 function fotoSelecionada(e) {
   const f = e.target.files[0]; if (!f) return;
@@ -765,6 +778,23 @@ if (!_c.key || !_c.url) {
 }
 
 // ═══════════════════════════════════════════════════════
+//  SPLASH SCREEN
+// ═══════════════════════════════════════════════════════
+(function() {
+  const splash = document.getElementById("splash");
+  if (!splash) return;
+  // Animar a barra de progresso
+  setTimeout(() => {
+    document.getElementById("splash-bar").style.width = "100%";
+  }, 50);
+  // Sumir após 1.8s
+  setTimeout(() => {
+    splash.style.opacity = "0";
+    setTimeout(() => splash.remove(), 520);
+  }, 1800);
+})();
+
+// ═══════════════════════════════════════════════════════
 //  PULL TO REFRESH
 // ═══════════════════════════════════════════════════════
 (function() {
@@ -828,6 +858,31 @@ if (!_c.key || !_c.url) {
       background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);
       color:#fff;border-radius:20px;font-size:13px;cursor:pointer;
     ">Cancelar e preencher manual</button>
+  </div>
+
+  <!-- SPLASH SCREEN -->
+  <div id="splash" style="
+    position:fixed;inset:0;z-index:99999;
+    background:linear-gradient(160deg,#0f1f17 0%,#152b1e 60%,#0a1a10 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:0;transition:opacity 0.5s ease;
+  ">
+    <img src="appicone.png" style="
+      width:110px;height:110px;border-radius:26px;
+      box-shadow:0 8px 40px rgba(74,222,128,0.25);
+      margin-bottom:22px;
+    " onerror="this.style.display='none'">
+    <div style="color:#fff;font-size:26px;font-weight:700;letter-spacing:-0.5px;">Recibos</div>
+    <div style="color:#4ade80;font-size:14px;font-weight:500;margin-top:6px;letter-spacing:0.5px;">Casas Rosendo</div>
+    <div style="
+      margin-top:48px;width:36px;height:3px;
+      background:rgba(74,222,128,0.3);border-radius:2px;overflow:hidden;
+    ">
+      <div id="splash-bar" style="
+        height:100%;width:0%;background:#4ade80;border-radius:2px;
+        transition:width 1.6s ease;
+      "></div>
+    </div>
   </div>
 </body>
 </html>
