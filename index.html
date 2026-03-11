@@ -375,7 +375,20 @@ function buildFields(containerId, pfx, tipo, fnTipo) {
   const catOpts = CAT_KEYS.map(k => `<option>${k}</option>`).join("");
   const subOpts = CATS[CAT_KEYS[0]].map(s => `<option>${s}</option>`).join("");
 
+  // Data de hoje para o valor padrão do campo data
+  const hoje = new Date();
+  const dd = String(hoje.getDate()).padStart(2,'0');
+  const mm = String(hoje.getMonth()+1).padStart(2,'0');
+  const yyyy = hoje.getFullYear();
+  const dataHoje = `${dd}/${mm}/${yyyy}`;
+
   document.getElementById(containerId).innerHTML = `
+    <div class="frow">
+      <span class="flabel">Data</span>
+      <input class="fval" id="data-${pfx}" type="text" inputmode="numeric"
+             placeholder="dd/mm/aaaa" value="${dataHoje}" maxlength="10"
+             oninput="mascaraData(this)">
+    </div>
     <div class="frow">
       <span class="flabel">Tipo</span>
       <div class="tipo-wrap">
@@ -479,25 +492,48 @@ async function analisarIA() {
   document.getElementById("confirmBtn").classList.remove("visible");
   document.getElementById("aiLoading").classList.add("ativo");
 
-  const prompt = `Você é um assistente de contabilidade de obras. Analise esta foto de recibo/nota fiscal/comprovante e extraia as informações.
+  const prompt = `Você é um assistente de contabilidade de obras. Analise esta foto de recibo/nota fiscal/comprovante.
 
-RESPONDA APENAS com um objeto JSON válido. SEM texto antes ou depois. SEM blocos de código markdown.
+RETORNE APENAS um JSON válido, sem nenhum texto antes ou depois.
 
-Formato exato:
-{"descricao":"texto curto maximo 40 chars","fornecedor":"nome empresa ou pessoa","valor":"numero decimal ex 1500.00","tipo":"Saida","categoria":"EXATAMENTE uma das categorias abaixo","subCategoria":"EXATAMENTE uma das subcategorias abaixo"}
+Campos OBRIGATÓRIOS (sempre preencher):
+- "valor": número decimal ex: 307.43 (use o VALOR TOTAL do recibo)
+- "fornecedor": nome da loja ou empresa
+- "descricao": resumo curto do que foi comprado (máx 50 chars)
+- "categoria": escolha UMA da lista abaixo que melhor se encaixa
 
-CATEGORIAS E SUBCATEGORIAS VÁLIDAS:
-Terreno e Legalização: Terreno, ITBI, Cartorio, Registro, Taxa Prefeitura, Sabesp, Poste, ART, Engenheiro, Projeto, Imposto, Imobiliaria, Processo Prefeitura, Desdobro
+Campos OPCIONAIS (deixe "" se não souber):
+- "subCategoria": subcategoria da lista abaixo, ou "" se não tiver certeza
+- "tipo": "Saida" ou "Entrada" (padrão "Saida")
+
+CATEGORIAS (escolha a mais adequada):
+- "Acabamentos" → tinta, gesso, piso, azulejo, lixa, massa, verniz
+- "Instalação Elétrica" → fios, disjuntores, tomadas, interruptores
+- "Instalação Hidráulica" → tubos, registros, torneiras, vasos
+- "Infraestrutura e Fundação" → areia, cimento, ferro, pedra, concreto
+- "Estrutura e Alvenaria" → blocos, tijolos, colunas, vigas
+- "Cobertura" → telhas, madeiramento, calha
+- "Esquadrias" → portas, janelas, portões
+- "Mão de Obra" → pedreiro, pintor, gesseiro, diárias
+- "Logística e Apoio" → gasolina, frete, aluguel de equipamento
+- "Terreno e Legalização" → terreno, cartório, impostos, taxas
+- "Administração" → outros, materiais diversos, despesas gerais
+
+SUBCATEGORIAS por categoria:
+Acabamentos: Piso, Azulejo, Gesso, Tinta, Marmore, Grama
+Instalação Elétrica: Fio, Conduite, Caixa disjuntor, Luz, Disjuntores, Interruptores, Tomadas, Soquetes
+Instalação Hidráulica: Tubos e conexoes, Caixa esgoto, Torneira, Vaso sanitario, Registros, Caixa dagua
 Infraestrutura e Fundação: Aterro, Terra, Areia, Pedra, Cimento, Ferro, Arame, Lajes, Concreto
-Estrutura e Alvenaria: Blocos vedacao, Muro, Colunas e vigas, Reparo estrutural, Concreto
-Instalação Elétrica: Fio, Conduite, Caixa disjuntor, Luz, Poste, Disjuntores, Interruptores, Tomadas, Soquetes
-Instalação Hidráulica: Tubos e conexoes, Caixa esgoto, Torneira, Vaso sanitario, Concreto, Registros, Caixa dagua
+Estrutura e Alvenaria: Blocos vedacao, Muro, Colunas e vigas, Reparo estrutural
 Cobertura: Telhado, Madeiramento, Calha
 Esquadrias: Portas, Janelas, Portoes
-Acabamentos: Piso, Azulejo, Gesso, Tinta, Marmore, Grama
-Mão de Obra: Mao de obra geral, Empreitagem, Diarias, Muro, Pintura, Gesseiro
+Mão de Obra: Mao de obra geral, Empreitagem, Diarias, Pintura, Gesseiro
 Logística e Apoio: Gasolina, Frete, Locacoes, Limpeza final
-Administração: Materiais diversos, Despesas administrativas, Livro engenheiro, Outros, Ferramentas, Contas obra, Deposito fornecedor, Venda de propriedade, Corretor, Taxas, Imposto`;
+Terreno e Legalização: Terreno, ITBI, Cartorio, Registro, Taxa Prefeitura, Imposto
+Administração: Materiais diversos, Outros, Ferramentas, Despesas administrativas
+
+Exemplo de resposta:
+{"valor":"307.43","fornecedor":"SODIMAC DICICO","descricao":"Tinta, massa e lixas","categoria":"Acabamentos","subCategoria":"Tinta","tipo":"Saida"}`
 
   // Modelos para tentar em sequência (free tier março 2026)
   // IMPORTANTE: Use chave criada em aistudio.google.com (não no Google Cloud Console)
@@ -606,6 +642,14 @@ Administração: Materiais diversos, Despesas administrativas, Livro engenheiro,
   preencherFoto(parsed, resposta.modelo);
 }
 
+// Máscara de data: digita 11032026 → 11/03/2026
+function mascaraData(input) {
+  let v = input.value.replace(/\D/g, '').substring(0,8);
+  if (v.length >= 5)      v = v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4);
+  else if (v.length >= 3) v = v.slice(0,2)+'/'+v.slice(2);
+  input.value = v;
+}
+
 // Máscara de valor em formato BR: permite 1.200,50 ou 1200,50 ou 1200.50
 function mascaraValor(input) {
   let v = input.value;
@@ -650,6 +694,11 @@ function preencherFoto(d, modeloUsado) {
     updateSub("foto","");
   }
 
+  // Data: se a IA identificou a data da nota, preenche; senão mantém hoje
+  if (d.data) {
+    document.getElementById("data-foto").value = d.data;
+  }
+
   document.getElementById("resultCard").classList.add("visible");
   document.getElementById("confirmBtn").classList.add("visible");
   toast("✨ Analisado com " + (modeloUsado||"IA") + "!", "ok");
@@ -672,7 +721,7 @@ async function lancar(pfx) {
     fornecedor:   document.getElementById(`forn-${pfx}`)?.value   || "N/A",
     categoria:    document.getElementById(`cat-${pfx}`)?.value    || "Administração",
     subCategoria: document.getElementById(`sub-${pfx}`)?.value    || "",
-    data:         new Date().toLocaleDateString("pt-BR"),
+    data:         document.getElementById(`data-${pfx}`)?.value || new Date().toLocaleDateString("pt-BR"),
   };
 
   // Validação básica
