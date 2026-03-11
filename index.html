@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<!-- saved from url=(0045)file:///Users/lulu/Downloads/app_recibos.html -->
-<html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Recibos">
 <title>Recibos — Rosendo Casas</title>
-<link href="./app_recibos_files/css2" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   /* ─── RESET & VARS ─── */
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -631,7 +631,7 @@
     <input type="file" id="file-input" accept="image/*" capture="environment" onchange="onFileSelected(event)">
 
     <!-- ANALYZE BUTTON -->
-    <button class="analyze-btn" id="analyzeBtn" disabled="" onclick="analisarRecibo()">
+    <button class="analyze-btn" id="analyzeBtn" disabled onclick="analisarRecibo()">
       <span class="btn-text">✨ Analisar com IA</span>
       <div class="spinner"></div>
     </button>
@@ -650,8 +650,8 @@
         <div class="field-row">
           <span class="field-label">Tipo</span>
           <div class="tipo-select-wrap">
-            <button class="tipo-btn active-saida" id="btnSaida" onclick="setTipo(&#39;Saida&#39;)">↓ Saída</button>
-            <button class="tipo-btn" id="btnEntrada" onclick="setTipo(&#39;Entrada&#39;)">↑ Entrada</button>
+            <button class="tipo-btn active-saida" id="btnSaida" onclick="setTipo('Saida')">↓ Saída</button>
+            <button class="tipo-btn" id="btnEntrada" onclick="setTipo('Entrada')">↑ Entrada</button>
           </div>
         </div>
 
@@ -682,16 +682,18 @@
 
         <div class="field-row">
           <span class="field-label">Categoria</span>
-          <select class="field-value" id="fieldCategoria">
-            <option>Administração</option>
+          <select class="field-value" id="fieldCategoria" onchange="atualizarSubcats()">
             <option>Terreno e Legalização</option>
             <option>Infraestrutura e Fundação</option>
-            <option>Estrutura</option>
-            <option>Instalações</option>
-            <option>Acabamento</option>
-            <option>Mão de obra</option>
-            <option>Equipamentos e Locação</option>
-            <option>Outros</option>
+            <option>Estrutura e Alvenaria</option>
+            <option>Instalação Elétrica</option>
+            <option>Instalação Hidraulica</option>
+            <option>Cobertura</option>
+            <option>Esquadrias</option>
+            <option>Acabamentos</option>
+            <option>Mão de Obra</option>
+            <option>Logistica e Apoio</option>
+            <option>Administração</option>
           </select>
         </div>
 
@@ -715,7 +717,7 @@
 </div>
 
 <!-- TOAST -->
-<div class="toast success" id="toast">✅ Configurações salvas!</div>
+<div class="toast" id="toast"></div>
 
 <!-- SETTINGS PANEL -->
 <div class="settings-panel" id="settingsPanel">
@@ -848,9 +850,22 @@ Responda APENAS com JSON válido, sem texto extra, neste formato:
   "fornecedor": "nome da loja ou pessoa que recebeu",
   "valor": "valor numérico sem R$, ex: 1500.00",
   "tipo": "Saida ou Entrada (Entrada apenas se for depósito/recebimento)",
-  "categoria": "uma destas: Administração, Terreno e Legalização, Infraestrutura e Fundação, Estrutura, Instalações, Acabamento, Mão de obra, Equipamentos e Locação, Outros",
-  "subCategoria": "subcategoria específica dentro da categoria"
+  "categoria": "escolha a categoria mais adequada da lista abaixo",
+  "subCategoria": "escolha a subcategoria mais adequada da lista abaixo"
 }
+
+Categorias e subcategorias disponíveis:
+- Terreno e Legalização: Terreno, ITBI, Cartorio, Registro, Taxa Prefeitura, Sabesp, Poste, ART, Engenheiro, Projeto, Imposto, Imobiliaria, Processo Prefeitura, Desdobro
+- Infraestrutura e Fundação: Aterro, Terra, Areia, Pedra, Cimento, Ferro, Arame, Lajes, Concreto
+- Estrutura e Alvenaria: Blocos vedacao, Muro, Colunas e vigas, Reparo estrutural, Concreto
+- Instalação Elétrica: Fio, Conduite, Caixa disjuntor, Luz, Poste, Dijuntores, Interruptores, Tomadas, Soquetes
+- Instalação Hidraulica: Tubos e conexoes, Caixa esgoto, Torneira, Vaso sanitario, Concreto, Registros, Caixa dágua
+- Cobertura: Telhado, Madeiramento, Calha
+- Esquadrias: Portas, Janelas, Portoes
+- Acabamentos: Piso, Azulejo, Gesso, Tinta, Marmore, Grama
+- Mão de Obra: Mao de obra geral, Empreitagem, Diarias, Muro, Pintura, Gesseiro
+- Logistica e Apoio: Gasolina, Frete, Locacoes, Limpeza final
+- Administração: Materiais diversos, Despesas administrativas, Livro engenheiro, Outros, Ferramentas, Contas obra, Deposito fornecedor, Venda de propriedade, Corretor, Taxas, Imposto
 
 Se não conseguir ler algum campo, coloque string vazia "".`;
 
@@ -969,7 +984,34 @@ async function confirmarLancamento() {
   }
 }
 
-// ─── RESET ───
+// ─── SUBCATEGORIAS POR CATEGORIA ───
+const SUBCATS = {
+  "Terreno e Legalização":    ["Terreno","ITBI","Cartorio","Registro","Taxa Prefeitura","Sabesp","Poste","ART","Engenheiro","Projeto","Imposto","Imobiliaria","Processo Prefeitura","Desdobro"],
+  "Infraestrutura e Fundação":["Aterro","Terra","Areia","Pedra","Cimento","Ferro","Arame","Lajes","Concreto"],
+  "Estrutura e Alvenaria":    ["Blocos vedacao","Muro","Colunas e vigas","Reparo estrutural","Concreto"],
+  "Instalação Elétrica":      ["Fio","Conduite","Caixa disjuntor","Luz","Poste","Dijuntores","Interruptores","Tomadas","Soquetes"],
+  "Instalação Hidraulica":    ["Tubos e conexoes","Caixa esgoto","Torneira","Vaso sanitario","Concreto","Registros","Caixa dágua"],
+  "Cobertura":                ["Telhado","Madeiramento","Calha"],
+  "Esquadrias":               ["Portas","Janelas","Portoes"],
+  "Acabamentos":              ["Piso","Azulejo","Gesso","Tinta","Marmore","Grama"],
+  "Mão de Obra":              ["Mao de obra geral","Empreitagem","Diarias","Muro","Pintura","Gesseiro"],
+  "Logistica e Apoio":        ["Gasolina","Frete","Locacoes","Limpeza final"],
+  "Administração":            ["Materiais diversos","Despesas administrativas","Livro engenheiro","Outros","Ferramentas","Contas obra","Deposito fornecedor","Venda de propriedade","Corretor","Taxas","Imposto"],
+};
+
+function atualizarSubcats() {
+  const cat   = document.getElementById("fieldCategoria").value;
+  const subs  = SUBCATS[cat] || [];
+  const subEl = document.getElementById("fieldSubcat");
+  // Se for input de texto, apenas sugere a primeira subcategoria
+  if (subEl.tagName === "INPUT") {
+    if (!subEl.value || subs.includes(subEl.value)) {
+      subEl.value = subs[0] || "";
+    }
+  }
+}
+
+
 function resetarApp() {
   imagemBase64 = null;
   imagemMime   = null;
@@ -1027,6 +1069,5 @@ if (!cfg.geminiKey || !cfg.scriptUrl) {
   setTimeout(() => toast("⚙️ Configure as chaves nas configurações", ""), 800);
 }
 </script>
-
-
-</body></html>
+</body>
+</html>
