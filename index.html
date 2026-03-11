@@ -10,1077 +10,685 @@
 <title>Recibos — Rosendo Casas</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* ─── RESET & VARS ─── */
-  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-  :root {
-    --bg:        #0F1117;
-    --surface:   #1A1D27;
-    --surface2:  #222636;
-    --border:    rgba(255,255,255,0.08);
-    --green:     #22C55E;
-    --green-dim: rgba(34,197,94,0.15);
-    --red:       #EF4444;
-    --red-dim:   rgba(239,68,68,0.12);
-    --gold:      #F59E0B;
-    --text:      #F1F5F9;
-    --muted:     #64748B;
-    --muted2:    #94A3B8;
-    --radius:    16px;
-    --font:      'Space Grotesk', sans-serif;
-  }
-
-  html, body {
-    height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font);
-    overflow-x: hidden;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  /* ─── LAYOUT ─── */
-  .app {
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    max-width: 480px;
-    margin: 0 auto;
-    padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
-  }
-
-  /* ─── HEADER ─── */
-  header {
-    padding: 20px 24px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    background: var(--bg);
-    z-index: 100;
-    backdrop-filter: blur(20px);
-  }
-
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .logo-icon {
-    width: 36px;
-    height: 36px;
-    background: var(--green);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-  }
-
-  .logo-text {
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: -0.3px;
-  }
-
-  .logo-sub {
-    font-size: 11px;
-    color: var(--muted);
-    font-weight: 400;
-  }
-
-  .settings-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background 0.15s;
-  }
-  .settings-btn:active { background: var(--surface2); }
-
-  /* ─── MAIN CONTENT ─── */
-  main {
-    flex: 1;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  /* ─── CAMERA ZONE ─── */
-  .camera-zone {
-    background: var(--surface);
-    border: 2px dashed var(--border);
-    border-radius: var(--radius);
-    min-height: 220px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .camera-zone.has-image {
-    border-style: solid;
-    border-color: var(--green);
-    background: var(--surface2);
-  }
-
-  .camera-zone.dragging {
-    border-color: var(--gold);
-    background: rgba(245,158,11,0.05);
-  }
-
-  .camera-zone:active { background: var(--surface2); }
-
-  #preview-img {
-    width: 100%;
-    height: 220px;
-    object-fit: cover;
-    border-radius: calc(var(--radius) - 2px);
-    display: none;
-  }
-
-  .camera-zone.has-image #preview-img { display: block; }
-  .camera-zone.has-image .camera-placeholder { display: none; }
-
-  .camera-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    pointer-events: none;
-  }
-
-  .camera-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: var(--surface2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
-  }
-
-  .camera-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .camera-sub {
-    font-size: 12px;
-    color: var(--muted);
-    text-align: center;
-    line-height: 1.5;
-    padding: 0 24px;
-  }
-
-  #file-input {
-    display: none;
-  }
-
-  /* ─── CHANGE PHOTO BTN ─── */
-  .change-photo-btn {
-    position: absolute;
-    bottom: 12px;
-    right: 12px;
-    background: rgba(0,0,0,0.7);
-    border: 1px solid rgba(255,255,255,0.2);
-    color: white;
-    font-family: var(--font);
-    font-size: 11px;
-    font-weight: 500;
-    padding: 6px 12px;
-    border-radius: 20px;
-    cursor: pointer;
-    backdrop-filter: blur(8px);
-    display: none;
-  }
-
-  .camera-zone.has-image .change-photo-btn { display: block; }
-
-  /* ─── ANALYZE BUTTON ─── */
-  .analyze-btn {
-    width: 100%;
-    height: 56px;
-    background: var(--green);
-    color: #0a1a0f;
-    border: none;
-    border-radius: var(--radius);
-    font-family: var(--font);
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.2px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: opacity 0.15s, transform 0.1s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .analyze-btn:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-  }
-
-  .analyze-btn:not(:disabled):active {
-    transform: scale(0.98);
-    opacity: 0.9;
-  }
-
-  .analyze-btn .spinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(10,26,15,0.3);
-    border-top-color: #0a1a0f;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    display: none;
-  }
-
-  .analyze-btn.loading .btn-text { display: none; }
-  .analyze-btn.loading .spinner  { display: block; }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ─── RESULT CARD ─── */
-  .result-card {
-    background: var(--surface);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    overflow: hidden;
-    display: none;
-    animation: slideUp 0.3s ease;
-  }
-
-  .result-card.visible { display: block; }
-
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .result-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .result-header-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .result-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--green);
-  }
-
-  .result-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--muted2);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
-
-  .edit-hint {
-    font-size: 11px;
-    color: var(--muted);
-  }
-
-  /* ─── FIELDS ─── */
-  .fields {
-    padding: 4px 0;
-  }
-
-  .field-row {
-    display: flex;
-    align-items: center;
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--border);
-    gap: 12px;
-  }
-
-  .field-row:last-child { border-bottom: none; }
-
-  .field-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    width: 90px;
-    flex-shrink: 0;
-  }
-
-  .field-value {
-    flex: 1;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text);
-    background: transparent;
-    border: none;
-    outline: none;
-    font-family: var(--font);
-    padding: 4px 8px;
-    border-radius: 6px;
-    transition: background 0.15s;
-  }
-
-  .field-value:focus {
-    background: var(--surface2);
-  }
-
-  select.field-value {
-    cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
-  }
-
-  .field-value.valor-entrada { color: var(--green); }
-  .field-value.valor-saida   { color: var(--red); }
-
-  /* Tipo badge */
-  .tipo-select-wrap {
-    flex: 1;
-    display: flex;
-    gap: 8px;
-  }
-
-  .tipo-btn {
-    flex: 1;
-    height: 32px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted2);
-    font-family: var(--font);
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-
-  .tipo-btn.active-saida  { background: var(--red-dim);   border-color: var(--red);   color: var(--red); }
-  .tipo-btn.active-entrada{ background: var(--green-dim); border-color: var(--green); color: var(--green); }
-
-  /* ─── CONFIRM BUTTON ─── */
-  .confirm-btn {
-    width: 100%;
-    height: 56px;
-    background: var(--surface2);
-    border: 1px solid var(--green);
-    color: var(--green);
-    border-radius: var(--radius);
-    font-family: var(--font);
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: background 0.15s, transform 0.1s;
-  }
-
-  .confirm-btn.visible { display: flex; }
-  .confirm-btn:not(:disabled):active { transform: scale(0.98); }
-
-  .confirm-btn.loading-confirm {
-    opacity: 0.6;
-    pointer-events: none;
-  }
-
-  /* ─── STATUS TOAST ─── */
-  .toast {
-    position: fixed;
-    bottom: calc(24px + env(safe-area-inset-bottom, 0));
-    left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 12px 20px;
-    border-radius: 30px;
-    font-size: 13px;
-    font-weight: 500;
-    white-space: nowrap;
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    z-index: 999;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-  }
-
-  .toast.show { transform: translateX(-50%) translateY(0); }
-  .toast.success { border-color: var(--green); }
-  .toast.error   { border-color: var(--red); }
-
-  /* ─── SETTINGS PANEL ─── */
-  .settings-panel {
-    position: fixed;
-    inset: 0;
-    z-index: 200;
-    display: none;
-    flex-direction: column;
-  }
-
-  .settings-panel.open { display: flex; }
-
-  .settings-backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(4px);
-  }
-
-  .settings-sheet {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--surface);
-    border-radius: 24px 24px 0 0;
-    padding: 24px 24px calc(24px + env(safe-area-inset-bottom, 0));
-    animation: sheetUp 0.3s ease;
-    max-width: 480px;
-    margin: 0 auto;
-  }
-
-  @keyframes sheetUp {
-    from { transform: translateY(100%); }
-    to   { transform: translateY(0); }
-  }
-
-  .settings-handle {
-    width: 40px;
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    margin: 0 auto 24px;
-  }
-
-  .settings-title {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 20px;
-  }
-
-  .settings-field {
-    margin-bottom: 16px;
-  }
-
-  .settings-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-bottom: 8px;
-    display: block;
-  }
-
-  .settings-input {
-    width: 100%;
-    height: 48px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    color: var(--text);
-    font-family: var(--font);
-    font-size: 13px;
-    padding: 0 16px;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-
-  .settings-input:focus { border-color: var(--green); }
-
-  .save-settings-btn {
-    width: 100%;
-    height: 48px;
-    background: var(--green);
-    border: none;
-    border-radius: 12px;
-    color: #0a1a0f;
-    font-family: var(--font);
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    margin-top: 8px;
-  }
-
-  /* ─── HISTORY ─── */
-  .history {
-    margin-top: 4px;
-  }
-
-  .history-title {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-bottom: 12px;
-  }
-
-  .history-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 16px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .history-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .history-dot.saida   { background: var(--red); }
-  .history-dot.entrada { background: var(--green); }
-
-  .history-info { flex: 1; min-width: 0; }
-
-  .history-desc {
-    font-size: 13px;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .history-meta {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-
-  .history-valor {
-    font-size: 14px;
-    font-weight: 700;
-    flex-shrink: 0;
-  }
-
-  .history-valor.saida   { color: var(--red); }
-  .history-valor.entrada { color: var(--green); }
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0F1117;--surface:#1A1D27;--surface2:#222636;--border:rgba(255,255,255,.08);
+  --green:#22C55E;--green-dim:rgba(34,197,94,.15);--red:#EF4444;--red-dim:rgba(239,68,68,.12);
+  --gold:#F59E0B;--text:#F1F5F9;--muted:#64748B;--muted2:#94A3B8;
+  --radius:16px;--font:'Space Grotesk',sans-serif
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.app{min-height:100dvh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+
+/* HEADER */
+header{padding:20px 24px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:100;backdrop-filter:blur(20px)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-text{font-size:16px;font-weight:600;letter-spacing:-.3px}
+.logo-sub{font-size:11px;color:var(--muted);font-weight:400}
+.hdr-right{display:flex;gap:8px}
+.icon-btn{width:36px;height:36px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px}
+.icon-btn:active{background:var(--surface2)}
+
+/* MAIN */
+main{flex:1;padding:20px 24px;display:flex;flex-direction:column;gap:14px}
+
+/* TABS */
+.tabs{display:flex;gap:6px;background:var(--surface);border-radius:12px;padding:4px}
+.tab-btn{flex:1;height:38px;border-radius:9px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+.tab-btn.active{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.tab-panel{display:none;flex-direction:column;gap:14px}
+.tab-panel.active{display:flex}
+
+/* CAMERA */
+.camera-zone{background:var(--surface);border:2px dashed var(--border);border-radius:var(--radius);min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:border-color .2s,background .2s;position:relative;overflow:hidden}
+.camera-zone.has-image{border-style:solid;border-color:var(--green)}
+.camera-zone:active{background:var(--surface2)}
+#preview-img{width:100%;height:190px;object-fit:cover;border-radius:calc(var(--radius) - 2px);display:none}
+.camera-zone.has-image #preview-img{display:block}
+.camera-zone.has-image .cam-ph{display:none}
+.cam-ph{display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+.cam-icon{width:52px;height:52px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px}
+.cam-title{font-size:14px;font-weight:600}
+.cam-sub{font-size:12px;color:var(--muted);text-align:center;padding:0 20px}
+#file-input{display:none}
+.change-photo{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.75);border:1px solid rgba(255,255,255,.2);color:#fff;font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;cursor:pointer;display:none}
+.camera-zone.has-image .change-photo{display:block}
+
+/* BOTÃO IA */
+.ai-btn{width:100%;height:54px;background:var(--green);color:#0a1a0f;border:none;border-radius:var(--radius);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s,transform .1s}
+.ai-btn:disabled{opacity:.35;cursor:not-allowed}
+.ai-btn:not(:disabled):active{transform:scale(.98);opacity:.9}
+.spinner{width:20px;height:20px;border:2.5px solid rgba(10,26,15,.3);border-top-color:#0a1a0f;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.ai-btn.loading .btn-txt{display:none}
+.ai-btn.loading .spinner{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ERRO BOX */
+.erro-box{background:var(--red-dim);border:1px solid var(--red);border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.5;display:none}
+.erro-box.visible{display:block}
+.erro-box strong{color:var(--red);display:block;margin-bottom:4px;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+
+/* CARD RESULTADO */
+.result-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;display:none;animation:slideUp .3s ease}
+.result-card.visible{display:block}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.card-header{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.card-title{font-size:11px;font-weight:600;color:var(--muted2);letter-spacing:.5px;text-transform:uppercase;margin-left:8px}
+.edit-hint{font-size:11px;color:var(--muted)}
+
+/* CAMPOS */
+.fields{padding:2px 0}
+.frow{display:flex;align-items:center;padding:10px 18px;border-bottom:1px solid var(--border);gap:10px}
+.frow:last-child{border-bottom:none}
+.flabel{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;width:88px;flex-shrink:0}
+.fval{flex:1;font-size:14px;font-weight:500;color:var(--text);background:transparent;border:none;outline:none;font-family:var(--font);padding:3px 7px;border-radius:6px;transition:background .15s}
+.fval:focus{background:var(--surface2)}
+select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
+.fval.c-entrada{color:var(--green)}
+.fval.c-saida{color:var(--red)}
+.tipo-wrap{flex:1;display:flex;gap:8px}
+.tbtn{flex:1;height:30px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted2);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.tbtn.a-saida{background:var(--red-dim);border-color:var(--red);color:var(--red)}
+.tbtn.a-entrada{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+
+/* CONFIRMAR */
+.confirm-btn{width:100%;height:54px;background:var(--surface2);border:1px solid var(--green);color:var(--green);border-radius:var(--radius);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;display:none;align-items:center;justify-content:center;gap:8px;transition:background .15s,transform .1s}
+.confirm-btn.visible{display:flex}
+.confirm-btn:active{transform:scale(.98)}
+.confirm-btn.sending{opacity:.6;pointer-events:none}
+
+/* FORM MANUAL */
+.manual-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
+.manual-header{padding:13px 18px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--muted2);letter-spacing:.5px;text-transform:uppercase}
+.submit-btn{width:100%;height:54px;background:var(--green);color:#0a1a0f;border:none;border-radius:var(--radius);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s,transform .1s}
+.submit-btn:active{transform:scale(.98);opacity:.9}
+.submit-btn.sending{opacity:.6;pointer-events:none}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0));left:50%;transform:translateX(-50%) translateY(90px);background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:11px 18px;border-radius:30px;font-size:13px;font-weight:500;white-space:nowrap;transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:var(--green)}
+.toast.err{border-color:var(--red)}
+
+/* SETTINGS */
+.overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column}
+.overlay.open{display:flex}
+.backdrop{position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)}
+.sheet{position:absolute;bottom:0;left:0;right:0;background:var(--surface);border-radius:24px 24px 0 0;padding:24px 24px calc(24px + env(safe-area-inset-bottom,0));animation:sheetUp .3s ease;max-width:480px;margin:0 auto}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 22px}
+.sheet-title{font-size:18px;font-weight:700;margin-bottom:18px}
+.s-field{margin-bottom:14px}
+.s-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;display:block}
+.s-input{width:100%;height:46px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:var(--font);font-size:13px;padding:0 15px;outline:none;transition:border-color .15s}
+.s-input:focus{border-color:var(--green)}
+.save-btn{width:100%;height:46px;background:var(--green);border:none;border-radius:11px;color:#0a1a0f;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;margin-top:6px}
+
+/* HISTÓRICO */
+.hist-section{margin-top:2px}
+.hist-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+.hist-item{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:11px 14px;margin-bottom:7px;display:flex;align-items:center;gap:10px}
+.hdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.hdot.s{background:var(--red)}
+.hdot.e{background:var(--green)}
+.hinfo{flex:1;min-width:0}
+.hdesc{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hmeta{font-size:11px;color:var(--muted);margin-top:2px}
+.hval{font-size:13px;font-weight:700;flex-shrink:0}
+.hval.s{color:var(--red)}
+.hval.e{color:var(--green)}
 </style>
 </head>
 <body>
-
 <div class="app">
 
-  <!-- HEADER -->
-  <header>
-    <div class="logo">
-      <div class="logo-icon">🧾</div>
-      <div>
-        <div class="logo-text">Recibos</div>
-        <div class="logo-sub">Rosendo Casas</div>
-      </div>
+<header>
+  <div class="logo">
+    <div class="logo-icon">🧾</div>
+    <div>
+      <div class="logo-text">Recibos</div>
+      <div class="logo-sub">Rosendo Casas</div>
     </div>
-    <div class="settings-btn" onclick="abrirSettings()">⚙️</div>
-  </header>
+  </div>
+  <div class="hdr-right">
+    <div class="icon-btn" onclick="abrirSettings()" title="Configurações">⚙️</div>
+  </div>
+</header>
 
-  <!-- MAIN -->
-  <main>
+<main>
 
-    <!-- CAMERA ZONE -->
-    <div class="camera-zone" id="cameraZone" onclick="triggerCamera()">
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-foto-btn" onclick="mudarTab('foto')">📷 Foto + IA</button>
+    <button class="tab-btn" id="tab-manual-btn" onclick="mudarTab('manual')">✏️ Manual</button>
+  </div>
+
+  <!-- ══ TAB FOTO ══ -->
+  <div class="tab-panel active" id="tab-foto">
+
+    <!-- Área câmera -->
+    <div class="camera-zone" id="cameraZone" onclick="abrirCamera()">
       <img id="preview-img" alt="preview">
-      <div class="camera-placeholder">
-        <div class="camera-icon">📷</div>
-        <div class="camera-title">Fotografar recibo</div>
-        <div class="camera-sub">Toque para abrir a câmera ou selecionar uma imagem da galeria</div>
+      <div class="cam-ph">
+        <div class="cam-icon">📷</div>
+        <div class="cam-title">Fotografar recibo</div>
+        <div class="cam-sub">Toque para câmera ou galeria</div>
       </div>
-      <button class="change-photo-btn" onclick="event.stopPropagation(); triggerCamera()">
-        Trocar foto
-      </button>
+      <button class="change-photo" onclick="event.stopPropagation();abrirCamera()">Trocar foto</button>
     </div>
+    <input type="file" id="file-input" accept="image/*" capture="environment" onchange="fotoSelecionada(event)">
 
-    <input type="file" id="file-input" accept="image/*" capture="environment" onchange="onFileSelected(event)">
-
-    <!-- ANALYZE BUTTON -->
-    <button class="analyze-btn" id="analyzeBtn" disabled onclick="analisarRecibo()">
-      <span class="btn-text">✨ Analisar com IA</span>
+    <!-- Botão analisar -->
+    <button class="ai-btn" id="aiBtn" disabled onclick="analisarIA()">
+      <span class="btn-txt">✨ Analisar com IA</span>
       <div class="spinner"></div>
     </button>
 
-    <!-- RESULT CARD -->
+    <!-- Caixa de erro detalhado -->
+    <div class="erro-box" id="erroBox">
+      <strong>⚠️ Erro da IA</strong>
+      <span id="erroMsg"></span>
+    </div>
+
+    <!-- Resultado -->
     <div class="result-card" id="resultCard">
-      <div class="result-header">
-        <div class="result-header-left">
-          <div class="result-dot"></div>
-          <span class="result-title">Dados extraídos</span>
+      <div class="card-header">
+        <div style="display:flex;align-items:center">
+          <div class="card-dot"></div>
+          <span class="card-title">Dados extraídos</span>
         </div>
         <span class="edit-hint">toque para editar</span>
       </div>
-      <div class="fields">
-
-        <div class="field-row">
-          <span class="field-label">Tipo</span>
-          <div class="tipo-select-wrap">
-            <button class="tipo-btn active-saida" id="btnSaida" onclick="setTipo('Saida')">↓ Saída</button>
-            <button class="tipo-btn" id="btnEntrada" onclick="setTipo('Entrada')">↑ Entrada</button>
-          </div>
-        </div>
-
-        <div class="field-row">
-          <span class="field-label">Projeto</span>
-          <select class="field-value" id="fieldProjeto">
-            <option>P3</option>
-            <option>P4</option>
-            <option>P5</option>
-            <option>Outro</option>
-          </select>
-        </div>
-
-        <div class="field-row">
-          <span class="field-label">Valor</span>
-          <input class="field-value valor-saida" id="fieldValor" type="text" placeholder="0,00">
-        </div>
-
-        <div class="field-row">
-          <span class="field-label">Descrição</span>
-          <input class="field-value" id="fieldDesc" type="text" placeholder="—">
-        </div>
-
-        <div class="field-row">
-          <span class="field-label">Fornecedor</span>
-          <input class="field-value" id="fieldFornecedor" type="text" placeholder="—">
-        </div>
-
-        <div class="field-row">
-          <span class="field-label">Categoria</span>
-          <select class="field-value" id="fieldCategoria" onchange="atualizarSubcats()">
-            <option value="Terreno e Legalização">Terreno e Legalização</option>
-            <option value="Infraestrutura e Fundação">Infraestrutura e Fundação</option>
-            <option value="Estrutura e Alvenaria">Estrutura e Alvenaria</option>
-            <option value="Instalação Elétrica">Instalação Elétrica</option>
-            <option value="Instalação Hidráulica">Instalação Hidráulica</option>
-            <option value="Cobertura">Cobertura</option>
-            <option value="Esquadrias">Esquadrias</option>
-            <option value="Acabamentos">Acabamentos</option>
-            <option value="Mão de Obra">Mão de Obra</option>
-            <option value="Logística e Apoio">Logística e Apoio</option>
-            <option value="Administração">Administração</option>
-          </select>
-        </div>
-
-        <div class="field-row">
-          <span class="field-label">Subcategoria</span>
-          <select class="field-value" id="fieldSubcat"></select>
-        </div>
-
-      </div>
+      <div class="fields" id="fields-foto"></div>
     </div>
 
-    <!-- CONFIRM BUTTON -->
-    <button class="confirm-btn" id="confirmBtn" onclick="confirmarLancamento()">
-      <span>✅ Lançar no Sheets</span>
+    <!-- Confirmar -->
+    <button class="confirm-btn" id="confirmBtn" onclick="lancar('foto')">
+      ✅ Confirmar e lançar no Sheets
     </button>
 
-    <!-- HISTORY -->
-    <div class="history" id="history"></div>
+  </div><!-- /tab-foto -->
 
-  </main>
+  <!-- ══ TAB MANUAL ══ -->
+  <div class="tab-panel" id="tab-manual">
+    <div class="manual-card">
+      <div class="manual-header">✏️ Lançamento manual</div>
+      <div class="fields" id="fields-manual"></div>
+    </div>
+    <button class="submit-btn" id="submitManual" onclick="lancar('manual')">
+      ✅ Lançar no Sheets
+    </button>
+  </div><!-- /tab-manual -->
+
+  <!-- Histórico -->
+  <div class="hist-section" id="histSection"></div>
+
+</main>
 </div>
 
-<!-- TOAST -->
+<!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<!-- SETTINGS PANEL -->
-<div class="settings-panel" id="settingsPanel">
-  <div class="settings-backdrop" onclick="fecharSettings()"></div>
-  <div class="settings-sheet">
-    <div class="settings-handle"></div>
-    <div class="settings-title">⚙️ Configurações</div>
+<!-- Settings overlay -->
+<div class="overlay" id="settingsOverlay">
+  <div class="backdrop" onclick="fecharSettings()"></div>
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">⚙️ Configurações</div>
 
-    <div class="settings-field">
-      <label class="settings-label">Chave API Gemini</label>
-      <input class="settings-input" id="inputGeminiKey" type="password" placeholder="AIza...">
+    <div class="s-field">
+      <label class="s-label">Chave API Gemini</label>
+      <input class="s-input" id="sGeminiKey" type="password" placeholder="AIzaSy...">
     </div>
-
-    <div class="settings-field">
-      <label class="settings-label">URL do Apps Script (Deploy)</label>
-      <input class="settings-input" id="inputScriptUrl" type="text" placeholder="https://script.google.com/macros/s/...">
+    <div class="s-field">
+      <label class="s-label">URL do Apps Script</label>
+      <input class="s-input" id="sScriptUrl" type="url" placeholder="https://script.google.com/macros/s/...">
     </div>
-
-    <div class="settings-field">
-      <label class="settings-label">Projeto padrão</label>
-      <input class="settings-input" id="inputProjeto" type="text" placeholder="P3">
+    <div class="s-field">
+      <label class="s-label">Projeto padrão</label>
+      <input class="s-input" id="sProjeto" type="text" placeholder="P3">
     </div>
-
-    <button class="save-settings-btn" onclick="salvarSettings()">Salvar</button>
+    <button class="save-btn" onclick="salvarSettings()">Salvar</button>
   </div>
 </div>
 
 <script>
-// ─── ESTADO ───
-let imagemBase64 = null;
-let imagemMime   = null;
-let tipoAtual    = "Saida";
-let historico    = JSON.parse(localStorage.getItem("historico") || "[]");
+// ═══════════════════════════════════════════════════════
+//  DADOS
+// ═══════════════════════════════════════════════════════
+const CATS = {
+  "Terreno e Legalização":     ["Terreno","ITBI","Cartorio","Registro","Taxa Prefeitura","Sabesp","Poste","ART","Engenheiro","Projeto","Imposto","Imobiliaria","Processo Prefeitura","Desdobro"],
+  "Infraestrutura e Fundação": ["Aterro","Terra","Areia","Pedra","Cimento","Ferro","Arame","Lajes","Concreto"],
+  "Estrutura e Alvenaria":     ["Blocos vedacao","Muro","Colunas e vigas","Reparo estrutural","Concreto"],
+  "Instalação Elétrica":       ["Fio","Conduite","Caixa disjuntor","Luz","Poste","Disjuntores","Interruptores","Tomadas","Soquetes"],
+  "Instalação Hidráulica":     ["Tubos e conexoes","Caixa esgoto","Torneira","Vaso sanitario","Concreto","Registros","Caixa dagua"],
+  "Cobertura":                 ["Telhado","Madeiramento","Calha"],
+  "Esquadrias":                ["Portas","Janelas","Portoes"],
+  "Acabamentos":               ["Piso","Azulejo","Gesso","Tinta","Marmore","Grama"],
+  "Mão de Obra":               ["Mao de obra geral","Empreitagem","Diarias","Muro","Pintura","Gesseiro"],
+  "Logística e Apoio":         ["Gasolina","Frete","Locacoes","Limpeza final"],
+  "Administração":             ["Materiais diversos","Despesas administrativas","Livro engenheiro","Outros","Ferramentas","Contas obra","Deposito fornecedor","Venda de propriedade","Corretor","Taxas","Imposto"],
+};
+const CAT_KEYS = Object.keys(CATS);
 
-// ─── CONFIG (salva no localStorage) ───
-function getConfig() {
+// ═══════════════════════════════════════════════════════
+//  ESTADO GLOBAL
+// ═══════════════════════════════════════════════════════
+let imgB64 = null, imgMime = null;
+let tipoFoto = "Saida", tipoManual = "Saida";
+let hist = JSON.parse(localStorage.getItem("rc_hist") || "[]");
+
+// ═══════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════
+function cfg() {
   return {
-    geminiKey: localStorage.getItem("geminiKey") || "",
-    scriptUrl: localStorage.getItem("scriptUrl") || "",
-    projeto:   localStorage.getItem("projeto")   || "P3",
+    key:      localStorage.getItem("rc_key")  || "",
+    url:      localStorage.getItem("rc_url")  || "",
+    projeto:  localStorage.getItem("rc_proj") || "P3",
   };
 }
-
 function salvarSettings() {
-  localStorage.setItem("geminiKey", document.getElementById("inputGeminiKey").value.trim());
-  localStorage.setItem("scriptUrl", document.getElementById("inputScriptUrl").value.trim());
-  localStorage.setItem("projeto",   document.getElementById("inputProjeto").value.trim() || "P3");
+  localStorage.setItem("rc_key",  document.getElementById("sGeminiKey").value.trim());
+  localStorage.setItem("rc_url",  document.getElementById("sScriptUrl").value.trim());
+  localStorage.setItem("rc_proj", document.getElementById("sProjeto").value.trim() || "P3");
   fecharSettings();
-  toast("✅ Configurações salvas!", "success");
+  toast("✅ Configurações salvas!", "ok");
 }
-
 function abrirSettings() {
-  const c = getConfig();
-  document.getElementById("inputGeminiKey").value = c.geminiKey;
-  document.getElementById("inputScriptUrl").value = c.scriptUrl;
-  document.getElementById("inputProjeto").value   = c.projeto;
-  document.getElementById("settingsPanel").classList.add("open");
+  const c = cfg();
+  document.getElementById("sGeminiKey").value = c.key;
+  document.getElementById("sScriptUrl").value = c.url;
+  document.getElementById("sProjeto").value   = c.projeto;
+  document.getElementById("settingsOverlay").classList.add("open");
 }
-
 function fecharSettings() {
-  document.getElementById("settingsPanel").classList.remove("open");
+  document.getElementById("settingsOverlay").classList.remove("open");
 }
 
-// ─── CÂMERA / FILE ───
-function triggerCamera() {
-  document.getElementById("file-input").click();
+// ═══════════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════════
+function mudarTab(t) {
+  document.getElementById("tab-foto-btn").classList.toggle("active",   t==="foto");
+  document.getElementById("tab-manual-btn").classList.toggle("active", t==="manual");
+  document.getElementById("tab-foto").classList.toggle("active",   t==="foto");
+  document.getElementById("tab-manual").classList.toggle("active", t==="manual");
 }
 
-function onFileSelected(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+// ═══════════════════════════════════════════════════════
+//  CONSTRUIR CAMPOS
+// ═══════════════════════════════════════════════════════
+function buildFields(containerId, pfx, tipo, fnTipo) {
+  const c = cfg();
+  const projOpts = ["P3","P4","P5","Outro"].map(p =>
+    `<option${p===c.projeto?" selected":""}>${p}</option>`).join("");
+  const catOpts = CAT_KEYS.map(k => `<option>${k}</option>`).join("");
+  const subOpts = CATS[CAT_KEYS[0]].map(s => `<option>${s}</option>`).join("");
 
-  imagemMime = file.type;
+  document.getElementById(containerId).innerHTML = `
+    <div class="frow">
+      <span class="flabel">Tipo</span>
+      <div class="tipo-wrap">
+        <button class="tbtn${tipo==="Saida"?" a-saida":""}"   id="ts-${pfx}" onclick="${fnTipo}('Saida')">↓ Saída</button>
+        <button class="tbtn${tipo==="Entrada"?" a-entrada":""}" id="te-${pfx}" onclick="${fnTipo}('Entrada')">↑ Entrada</button>
+      </div>
+    </div>
+    <div class="frow">
+      <span class="flabel">Projeto</span>
+      <select class="fval" id="proj-${pfx}">${projOpts}</select>
+    </div>
+    <div class="frow">
+      <span class="flabel">Valor (R$)</span>
+      <input class="fval${tipo==="Saida"?" c-saida":" c-entrada"}" id="val-${pfx}" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0,00">
+    </div>
+    <div class="frow">
+      <span class="flabel">Descrição</span>
+      <input class="fval" id="desc-${pfx}" type="text" placeholder="—">
+    </div>
+    <div class="frow">
+      <span class="flabel">Fornecedor</span>
+      <input class="fval" id="forn-${pfx}" type="text" placeholder="—">
+    </div>
+    <div class="frow">
+      <span class="flabel">Categoria</span>
+      <select class="fval" id="cat-${pfx}" onchange="updateSub('${pfx}')">${catOpts}</select>
+    </div>
+    <div class="frow">
+      <span class="flabel">Subcategoria</span>
+      <select class="fval" id="sub-${pfx}">${subOpts}</select>
+    </div>`;
+}
 
+function setTipoFoto(t) {
+  tipoFoto = t;
+  document.getElementById("ts-foto").className  = "tbtn"+(t==="Saida"?" a-saida":"");
+  document.getElementById("te-foto").className  = "tbtn"+(t==="Entrada"?" a-entrada":"");
+  const v = document.getElementById("val-foto");
+  if (v) v.className = "fval"+(t==="Saida"?" c-saida":" c-entrada");
+}
+function setTipoManual(t) {
+  tipoManual = t;
+  document.getElementById("ts-manual").className = "tbtn"+(t==="Saida"?" a-saida":"");
+  document.getElementById("te-manual").className = "tbtn"+(t==="Entrada"?" a-entrada":"");
+  const v = document.getElementById("val-manual");
+  if (v) v.className = "fval"+(t==="Saida"?" c-saida":" c-entrada");
+}
+
+function updateSub(pfx, sel) {
+  const cat = document.getElementById("cat-"+pfx).value;
+  const subs = CATS[cat] || [];
+  document.getElementById("sub-"+pfx).innerHTML =
+    subs.map(s => `<option${s===sel?" selected":""}>${s}</option>`).join("");
+}
+
+// ═══════════════════════════════════════════════════════
+//  CÂMERA
+// ═══════════════════════════════════════════════════════
+function abrirCamera() { document.getElementById("file-input").click(); }
+
+function fotoSelecionada(e) {
+  const f = e.target.files[0]; if (!f) return;
+  imgMime = f.type;
   const reader = new FileReader();
-  reader.onload = (e) => {
-    const result = e.target.result;
-    imagemBase64 = result.split(",")[1]; // só o base64
-
-    // Mostrar preview
-    const preview = document.getElementById("preview-img");
-    preview.src = result;
+  reader.onload = ev => {
+    imgB64 = ev.target.result.split(",")[1];
+    document.getElementById("preview-img").src = ev.target.result;
     document.getElementById("cameraZone").classList.add("has-image");
-    document.getElementById("analyzeBtn").disabled = false;
-
-    // Resetar resultado anterior
+    document.getElementById("aiBtn").disabled = false;
+    // resetar resultado anterior
     document.getElementById("resultCard").classList.remove("visible");
     document.getElementById("confirmBtn").classList.remove("visible");
+    document.getElementById("erroBox").classList.remove("visible");
   };
-  reader.readAsDataURL(file);
-
-  // Limpar input para permitir mesma foto
-  event.target.value = "";
+  reader.readAsDataURL(f);
+  e.target.value = "";
 }
 
-// ─── TIPO ───
-function setTipo(tipo) {
-  tipoAtual = tipo;
-  document.getElementById("btnSaida").className    = "tipo-btn" + (tipo === "Saida"   ? " active-saida"   : "");
-  document.getElementById("btnEntrada").className  = "tipo-btn" + (tipo === "Entrada" ? " active-entrada" : "");
-  const valorEl = document.getElementById("fieldValor");
-  valorEl.className = "field-value " + (tipo === "Saida" ? "valor-saida" : "valor-entrada");
-}
+// ═══════════════════════════════════════════════════════
+//  ANALISAR COM GEMINI
+//
+//  MODELOS DISPONÍVEIS NO FREE TIER (março 2026):
+//  - gemini-2.0-flash  → mais recente, suporta visão, free tier OK
+//  - gemini-1.5-flash  → fallback confiável
+//  - gemini-1.5-flash-8b → fallback leve
+//
+//  ENDPOINT CORRETO: /v1beta/models/{modelo}:generateContent
+//  A versão v1 (sem "beta") NÃO suporta todos os modelos no free tier.
+// ═══════════════════════════════════════════════════════
+async function analisarIA() {
+  const c = cfg();
+  if (!c.key) { toast("⚙️ Configure a chave Gemini primeiro","err"); abrirSettings(); return; }
+  if (!imgB64) { toast("📷 Selecione uma foto primeiro","err"); return; }
 
-// ─── ANALISAR COM GEMINI ───
-async function analisarRecibo() {
-  const config = getConfig();
+  const btn = document.getElementById("aiBtn");
+  btn.disabled = true; btn.classList.add("loading");
+  document.getElementById("erroBox").classList.remove("visible");
+  document.getElementById("resultCard").classList.remove("visible");
+  document.getElementById("confirmBtn").classList.remove("visible");
 
-  if (!config.geminiKey) {
-    toast("⚙️ Configure a chave Gemini primeiro", "error");
-    abrirSettings();
-    return;
-  }
+  const prompt = `Você é um assistente de contabilidade de obras. Analise esta foto de recibo/nota fiscal/comprovante e extraia as informações.
 
-  if (!imagemBase64) {
-    toast("📷 Tire uma foto primeiro", "error");
-    return;
-  }
+RESPONDA APENAS com um objeto JSON válido. SEM texto antes ou depois. SEM blocos de código markdown.
 
-  const btn = document.getElementById("analyzeBtn");
-  btn.disabled = true;
-  btn.classList.add("loading");
+Formato exato:
+{"descricao":"texto curto maximo 40 chars","fornecedor":"nome empresa ou pessoa","valor":"numero decimal ex 1500.00","tipo":"Saida","categoria":"EXATAMENTE uma das categorias abaixo","subCategoria":"EXATAMENTE uma das subcategorias abaixo"}
 
-  try {
-    const prompt = `Analise este recibo ou comprovante de pagamento e extraia as informações.
+CATEGORIAS E SUBCATEGORIAS VÁLIDAS:
+Terreno e Legalização: Terreno, ITBI, Cartorio, Registro, Taxa Prefeitura, Sabesp, Poste, ART, Engenheiro, Projeto, Imposto, Imobiliaria, Processo Prefeitura, Desdobro
+Infraestrutura e Fundação: Aterro, Terra, Areia, Pedra, Cimento, Ferro, Arame, Lajes, Concreto
+Estrutura e Alvenaria: Blocos vedacao, Muro, Colunas e vigas, Reparo estrutural, Concreto
+Instalação Elétrica: Fio, Conduite, Caixa disjuntor, Luz, Poste, Disjuntores, Interruptores, Tomadas, Soquetes
+Instalação Hidráulica: Tubos e conexoes, Caixa esgoto, Torneira, Vaso sanitario, Concreto, Registros, Caixa dagua
+Cobertura: Telhado, Madeiramento, Calha
+Esquadrias: Portas, Janelas, Portoes
+Acabamentos: Piso, Azulejo, Gesso, Tinta, Marmore, Grama
+Mão de Obra: Mao de obra geral, Empreitagem, Diarias, Muro, Pintura, Gesseiro
+Logística e Apoio: Gasolina, Frete, Locacoes, Limpeza final
+Administração: Materiais diversos, Despesas administrativas, Livro engenheiro, Outros, Ferramentas, Contas obra, Deposito fornecedor, Venda de propriedade, Corretor, Taxas, Imposto`;
 
-Responda APENAS com JSON válido, sem texto extra, neste formato:
-{
-  "descricao": "descrição curta do item ou serviço (máx 40 chars)",
-  "fornecedor": "nome da loja ou pessoa que recebeu",
-  "valor": "valor numérico sem R$, ex: 1500.00",
-  "tipo": "Saida ou Entrada (Entrada apenas se for depósito/recebimento)",
-  "categoria": "escolha a categoria mais adequada da lista abaixo",
-  "subCategoria": "escolha a subcategoria mais adequada da lista abaixo"
-}
-
-Categorias e subcategorias disponíveis (use EXATAMENTE estes nomes):
-- Terreno e Legalização: Terreno, ITBI, Cartorio, Registro, Taxa Prefeitura, Sabesp, Poste, ART, Engenheiro, Projeto, Imposto, Imobiliaria, Processo Prefeitura, Desdobro
-- Infraestrutura e Fundação: Aterro, Terra, Areia, Pedra, Cimento, Ferro, Arame, Lajes, Concreto
-- Estrutura e Alvenaria: Blocos vedacao, Muro, Colunas e vigas, Reparo estrutural, Concreto
-- Instalação Elétrica: Fio, Conduite, Caixa disjuntor, Luz, Poste, Disjuntores, Interruptores, Tomadas, Soquetes
-- Instalação Hidráulica: Tubos e conexoes, Caixa esgoto, Torneira, Vaso sanitario, Concreto, Registros, Caixa dagua
-- Cobertura: Telhado, Madeiramento, Calha
-- Esquadrias: Portas, Janelas, Portoes
-- Acabamentos: Piso, Azulejo, Gesso, Tinta, Marmore, Grama
-- Mão de Obra: Mao de obra geral, Empreitagem, Diarias, Muro, Pintura, Gesseiro
-- Logística e Apoio: Gasolina, Frete, Locacoes, Limpeza final
-- Administração: Materiais diversos, Despesas administrativas, Livro engenheiro, Outros, Ferramentas, Contas obra, Deposito fornecedor, Venda de propriedade, Corretor, Taxas, Imposto
-
-Se não conseguir ler algum campo, coloque string vazia "".`;
-
+  // Modelos para tentar em sequência (free tier março 2026)
   const MODELOS = [
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent",
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
   ];
 
-  let data = null;
-  let ultimoErro = "";
+  let resposta = null;
+  let erros = [];
 
-  for (const modelUrl of MODELOS) {
+  for (const modelo of MODELOS) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${c.key}`;
     try {
-      const response = await fetch(`${modelUrl}?key=${config.geminiKey}`, {
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{
             parts: [
               { text: prompt },
-              { inline_data: { mime_type: imagemMime, data: imagemBase64 } }
+              { inline_data: { mime_type: imgMime, data: imgB64 } }
             ]
           }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 400 }
+          generationConfig: { temperature: 0.1, maxOutputTokens: 600 }
         })
       });
-      const json = await response.json();
-      if (json.error) { ultimoErro = json.error.message; continue; }
-      data = json;
-      break;
-    } catch(e) { ultimoErro = e.message; continue; }
-  }
 
-  if (!data) throw new Error(ultimoErro);
+      const json = await res.json();
 
-    const texto  = data.candidates[0].content.parts[0].text;
-    const limpo  = texto.replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();
-    const parsed = JSON.parse(limpo);
-
-    // Preencher campos
-    preencherCampos(parsed);
-
-    document.getElementById("resultCard").classList.add("visible");
-    document.getElementById("confirmBtn").classList.add("visible");
-
-    toast("✨ Recibo analisado!", "success");
-
-  } catch(err) {
-    console.error(err);
-    toast("❌ Erro ao analisar: " + err.message, "error");
-    // Mesmo com erro, mostra os campos para preenchimento manual
-    preencherCampos({});
-    document.getElementById("resultCard").classList.add("visible");
-    document.getElementById("confirmBtn").classList.add("visible");
-  } finally {
-    btn.disabled = false;
-    btn.classList.remove("loading");
-  }
-}
-
-function preencherCampos(dados) {
-  const config = getConfig();
-
-  if (dados.tipo) setTipo(dados.tipo);
-
-  document.getElementById("fieldProjeto").value    = config.projeto;
-  document.getElementById("fieldValor").value      = dados.valor      || "";
-  document.getElementById("fieldDesc").value       = dados.descricao  || "";
-  document.getElementById("fieldFornecedor").value = dados.fornecedor || "";
-  document.getElementById("fieldSubcat").value     = dados.subCategoria || "";
-
-  if (dados.categoria) {
-    const sel = document.getElementById("fieldCategoria");
-    for (let i = 0; i < sel.options.length; i++) {
-      if (sel.options[i].value === dados.categoria) {
-        sel.selectedIndex = i;
-        break;
+      if (json.error) {
+        const msg = `[${modelo}] ${json.error.code}: ${json.error.message}`;
+        erros.push(msg);
+        console.warn("Gemini erro:", msg);
+        continue; // tenta próximo modelo
       }
+
+      // Verificar estrutura da resposta
+      if (!json.candidates?.[0]?.content?.parts?.[0]?.text) {
+        const msg = `[${modelo}] Resposta sem texto: ${JSON.stringify(json).substring(0,150)}`;
+        erros.push(msg);
+        continue;
+      }
+
+      resposta = { modelo, json };
+      break; // sucesso!
+
+    } catch (ex) {
+      erros.push(`[${modelo}] Exceção: ${ex.message}`);
     }
-    atualizarSubcats(dados.subCategoria || "");
   }
-}
 
-// ─── CONFIRMAR E LANÇAR NO SHEETS ───
-async function confirmarLancamento() {
-  const config = getConfig();
+  btn.disabled = false; btn.classList.remove("loading");
 
-  if (!config.scriptUrl) {
-    toast("⚙️ Configure a URL do Apps Script primeiro", "error");
-    abrirSettings();
+  // ── PROCESSAR RESULTADO ──
+  if (!resposta) {
+    mostrarErro("Nenhum modelo Gemini respondeu com sucesso.\n\n" + erros.join("\n") +
+                "\n\nDica: Verifique se a chave API está correta e se o projeto Google Cloud tem a API 'Generative Language' habilitada em console.cloud.google.com");
+    // Abrir campos vazios para preenchimento manual
+    buildFields("fields-foto","foto",tipoFoto,"setTipoFoto");
+    document.getElementById("resultCard").classList.add("visible");
+    document.getElementById("confirmBtn").classList.add("visible");
     return;
   }
 
-  const btn = document.getElementById("confirmBtn");
-  btn.classList.add("loading-confirm");
-  btn.innerHTML = '<span>Enviando...</span>';
+  const textoRaw = resposta.json.candidates[0].content.parts[0].text;
+  // Limpar possíveis blocos markdown que o modelo adicione
+  const texto = textoRaw.replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"").trim();
+
+  let parsed;
+  try {
+    parsed = JSON.parse(texto);
+  } catch (e1) {
+    // Tenta extrair JSON do meio do texto
+    const match = texto.match(/\{[\s\S]*\}/);
+    if (match) {
+      try { parsed = JSON.parse(match[0]); }
+      catch (e2) {
+        mostrarErro(`Modelo ${resposta.modelo} respondeu mas não em JSON válido.\nResposta: ${texto.substring(0,200)}`);
+        buildFields("fields-foto","foto",tipoFoto,"setTipoFoto");
+        document.getElementById("resultCard").classList.add("visible");
+        document.getElementById("confirmBtn").classList.add("visible");
+        return;
+      }
+    } else {
+      mostrarErro(`Modelo ${resposta.modelo} respondeu texto puro:\n${texto.substring(0,200)}`);
+      buildFields("fields-foto","foto",tipoFoto,"setTipoFoto");
+      document.getElementById("resultCard").classList.add("visible");
+      document.getElementById("confirmBtn").classList.add("visible");
+      return;
+    }
+  }
+
+  // Sucesso — preencher campos
+  preencherFoto(parsed, resposta.modelo);
+}
+
+function mostrarErro(msg) {
+  document.getElementById("erroMsg").textContent = msg;
+  document.getElementById("erroBox").classList.add("visible");
+  toast("⚠️ Erro na análise — veja detalhes acima","err");
+}
+
+function preencherFoto(d, modeloUsado) {
+  const c = cfg();
+  if (d.tipo === "Entrada" || d.tipo === "Saida") tipoFoto = d.tipo;
+
+  buildFields("fields-foto","foto",tipoFoto,"setTipoFoto");
+
+  document.getElementById("proj-foto").value = c.projeto;
+  document.getElementById("val-foto").value  = d.valor      || "";
+  document.getElementById("desc-foto").value = d.descricao  || "";
+  document.getElementById("forn-foto").value = d.fornecedor || "";
+
+  if (d.categoria && CATS[d.categoria]) {
+    document.getElementById("cat-foto").value = d.categoria;
+    updateSub("foto", d.subCategoria || "");
+  } else {
+    updateSub("foto","");
+  }
+
+  document.getElementById("resultCard").classList.add("visible");
+  document.getElementById("confirmBtn").classList.add("visible");
+  toast("✨ Analisado com " + (modeloUsado||"IA") + "!", "ok");
+}
+
+// ═══════════════════════════════════════════════════════
+//  LANÇAR NO SHEETS
+// ═══════════════════════════════════════════════════════
+async function lancar(pfx) {
+  const c = cfg();
+  if (!c.url) { toast("⚙️ Configure a URL do Apps Script","err"); abrirSettings(); return; }
+
+  const tipo = pfx==="foto" ? tipoFoto : tipoManual;
 
   const dados = {
-    tipo:         tipoAtual,
-    projeto:      document.getElementById("fieldProjeto").value,
-    valor:        document.getElementById("fieldValor").value.replace(",", "."),
-    descricao:    document.getElementById("fieldDesc").value,
-    fornecedor:   document.getElementById("fieldFornecedor").value,
-    categoria:    document.getElementById("fieldCategoria").value,
-    subCategoria: document.getElementById("fieldSubcat").value,
+    tipo,
+    projeto:      document.getElementById(`proj-${pfx}`)?.value  || c.projeto,
+    valor:        (document.getElementById(`val-${pfx}`)?.value   || "0").replace(",","."),
+    descricao:    document.getElementById(`desc-${pfx}`)?.value   || "",
+    fornecedor:   document.getElementById(`forn-${pfx}`)?.value   || "N/A",
+    categoria:    document.getElementById(`cat-${pfx}`)?.value    || "Administração",
+    subCategoria: document.getElementById(`sub-${pfx}`)?.value    || "",
     data:         new Date().toLocaleDateString("pt-BR"),
   };
 
+  // Validação básica
+  const val = parseFloat(dados.valor);
+  if (!val || val <= 0) { toast("⚠️ Informe um valor válido","err"); return; }
+
+  // Botão de envio
+  const btn = pfx==="foto"
+    ? document.getElementById("confirmBtn")
+    : document.getElementById("submitManual");
+  btn.classList.add("sending");
+  const txtOrig = btn.innerHTML;
+  btn.innerHTML = "Enviando…";
+
   try {
-    const resp = await fetch(config.scriptUrl, {
-      method: "POST",
-      mode:   "no-cors", // Apps Script não retorna CORS, mas o POST é executado
-      headers: { "Content-Type": "application/json" },
+    await fetch(c.url, {
+      method:"POST", mode:"no-cors",
+      headers:{"Content-Type":"application/json"},
       body: JSON.stringify(dados),
     });
-
-    // Com no-cors não conseguimos ler a resposta, mas o Apps Script executa
-    // Assumir sucesso e salvar no histórico local
-    adicionarHistorico(dados);
-    toast("✅ Lançado no Sheets!", "success");
-    resetarApp();
-
+    adicionarHist(dados);
+    toast("✅ Lançado no Sheets!","ok");
+    if (pfx==="foto") resetarFoto();
+    else resetarManual();
   } catch(err) {
-    toast("❌ Erro ao enviar: " + err.message, "error");
+    toast("❌ Erro ao enviar: "+err.message,"err");
   } finally {
-    btn.classList.remove("loading-confirm");
-    btn.innerHTML = '<span>✅ Lançar no Sheets</span>';
+    btn.classList.remove("sending");
+    btn.innerHTML = txtOrig;
   }
 }
 
-// ─── SUBCATEGORIAS POR CATEGORIA ───
-const SUBCATS = {
-  "Terreno e Legalização":    ["Terreno","ITBI","Cartorio","Registro","Taxa Prefeitura","Sabesp","Poste","ART","Engenheiro","Projeto","Imposto","Imobiliaria","Processo Prefeitura","Desdobro"],
-  "Infraestrutura e Fundação":["Aterro","Terra","Areia","Pedra","Cimento","Ferro","Arame","Lajes","Concreto"],
-  "Estrutura e Alvenaria":    ["Blocos vedacao","Muro","Colunas e vigas","Reparo estrutural","Concreto"],
-  "Instalação Elétrica":      ["Fio","Conduite","Caixa disjuntor","Luz","Poste","Disjuntores","Interruptores","Tomadas","Soquetes"],
-  "Instalação Hidráulica":    ["Tubos e conexoes","Caixa esgoto","Torneira","Vaso sanitario","Concreto","Registros","Caixa dagua"],
-  "Cobertura":                ["Telhado","Madeiramento","Calha"],
-  "Esquadrias":               ["Portas","Janelas","Portoes"],
-  "Acabamentos":              ["Piso","Azulejo","Gesso","Tinta","Marmore","Grama"],
-  "Mão de Obra":              ["Mao de obra geral","Empreitagem","Diarias","Muro","Pintura","Gesseiro"],
-  "Logística e Apoio":        ["Gasolina","Frete","Locacoes","Limpeza final"],
-  "Administração":            ["Materiais diversos","Despesas administrativas","Livro engenheiro","Outros","Ferramentas","Contas obra","Deposito fornecedor","Venda de propriedade","Corretor","Taxas","Imposto"],
-};
-
-function atualizarSubcats(valorAtual) {
-  const cat   = document.getElementById("fieldCategoria").value;
-  const subs  = SUBCATS[cat] || [];
-  const subEl = document.getElementById("fieldSubcat");
-  subEl.innerHTML = subs.map(s =>
-    `<option value="${s}" ${s === valorAtual ? 'selected' : ''}>${s}</option>`
-  ).join("");
-}
-
-// Inicializa subcats ao carregar
-document.addEventListener("DOMContentLoaded", () => atualizarSubcats());
-
-
-function resetarApp() {
-  imagemBase64 = null;
-  imagemMime   = null;
-  document.getElementById("preview-img").src = "";
+function resetarFoto() {
+  imgB64=null; imgMime=null; tipoFoto="Saida";
+  document.getElementById("preview-img").src="";
   document.getElementById("cameraZone").classList.remove("has-image");
-  document.getElementById("analyzeBtn").disabled = true;
+  document.getElementById("aiBtn").disabled=true;
   document.getElementById("resultCard").classList.remove("visible");
   document.getElementById("confirmBtn").classList.remove("visible");
-  document.getElementById("file-input").value = "";
+  document.getElementById("erroBox").classList.remove("visible");
+  document.getElementById("file-input").value="";
+  buildFields("fields-foto","foto","Saida","setTipoFoto");
+}
+function resetarManual() {
+  tipoManual="Saida";
+  buildFields("fields-manual","manual","Saida","setTipoManual");
 }
 
-// ─── HISTÓRICO LOCAL ───
-function adicionarHistorico(dados) {
-  historico.unshift({ ...dados, ts: Date.now() });
-  if (historico.length > 10) historico = historico.slice(0, 10);
-  localStorage.setItem("historico", JSON.stringify(historico));
-  renderHistorico();
+// ═══════════════════════════════════════════════════════
+//  HISTÓRICO LOCAL
+// ═══════════════════════════════════════════════════════
+function adicionarHist(d) {
+  hist.unshift({...d, ts:Date.now()});
+  if (hist.length>15) hist=hist.slice(0,15);
+  localStorage.setItem("rc_hist",JSON.stringify(hist));
+  renderHist();
 }
-
-function renderHistorico() {
-  const el = document.getElementById("history");
-  if (historico.length === 0) { el.innerHTML = ""; return; }
-
-  el.innerHTML = `<div class="history-title">Últimos lançamentos</div>` +
-    historico.slice(0, 5).map(h => `
-      <div class="history-item">
-        <div class="history-dot ${h.tipo === 'Entrada' ? 'entrada' : 'saida'}"></div>
-        <div class="history-info">
-          <div class="history-desc">${h.descricao || h.categoria}</div>
-          <div class="history-meta">${h.projeto} · ${h.fornecedor || ''} · ${new Date(h.ts).toLocaleDateString('pt-BR')}</div>
+function renderHist() {
+  const el = document.getElementById("histSection");
+  if (!hist.length) { el.innerHTML=""; return; }
+  el.innerHTML = `<div class="hist-title">Últimos lançamentos</div>` +
+    hist.slice(0,6).map(h => {
+      const cls = h.tipo==="Entrada"?"e":"s";
+      const sinal = h.tipo==="Entrada"?"+":"-";
+      return `<div class="hist-item">
+        <div class="hdot ${cls}"></div>
+        <div class="hinfo">
+          <div class="hdesc">${h.descricao||h.subCategoria||h.categoria}</div>
+          <div class="hmeta">${h.projeto} · ${h.fornecedor||""} · ${new Date(h.ts).toLocaleDateString("pt-BR")}</div>
         </div>
-        <div class="history-valor ${h.tipo === 'Entrada' ? 'entrada' : 'saida'}">
-          ${h.tipo === 'Entrada' ? '+' : '-'}R$${parseFloat(h.valor||0).toFixed(2).replace('.',',')}
-        </div>
-      </div>
-    `).join("");
+        <div class="hval ${cls}">${sinal}R$${parseFloat(h.valor||0).toFixed(2).replace(".",",")}</div>
+      </div>`;
+    }).join("");
 }
 
-// ─── TOAST ───
-let toastTimeout;
-function toast(msg, tipo = "") {
+// ═══════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════
+let _toastT;
+function toast(msg, tipo="") {
   const el = document.getElementById("toast");
   el.textContent = msg;
-  el.className   = "toast show " + tipo;
-  clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(() => { el.classList.remove("show"); }, 3000);
+  el.className = "toast show" + (tipo?" "+tipo:"");
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => el.classList.remove("show"), tipo==="err" ? 5000 : 3000);
 }
 
-// ─── INIT ───
-renderHistorico();
-atualizarSubcats();
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+buildFields("fields-foto",   "foto",   "Saida", "setTipoFoto");
+buildFields("fields-manual", "manual", "Saida", "setTipoManual");
+renderHist();
 
-// Verificar se tem config salva
-const cfg = getConfig();
-if (!cfg.geminiKey || !cfg.scriptUrl) {
-  setTimeout(() => toast("⚙️ Configure as chaves nas configurações", ""), 800);
+const _c = cfg();
+if (!_c.key || !_c.url) {
+  setTimeout(() => toast("⚙️ Configure a chave e URL nas configurações",""), 900);
 }
 </script>
 </body>
