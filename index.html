@@ -2,7 +2,11 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="apple-touch-icon" href="appicone.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Recibos">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -481,148 +485,105 @@ function fotoSelecionada(e) {
 //  Chaves do Google Cloud Console precisam de billing ativado!
 // ═══════════════════════════════════════════════════════
 async function analisarIA() {
-  const c = cfg();
-  if (!c.key) { toast("⚙️ Configure a chave Gemini primeiro","err"); abrirSettings(); return; }
-  if (!imgB64) { toast("📷 Selecione uma foto primeiro","err"); return; }
+  const cfg_ = cfg();
+  if (!cfg_.key) { toast("⚙️ Configure a chave Gemini primeiro","err"); abrirSettings(); return; }
+  if (!imgB64)   { toast("📷 Selecione uma foto primeiro","err"); return; }
 
-  const btn = document.getElementById("aiBtn");
-  btn.disabled = true; btn.classList.add("loading");
+  // Mostrar loading
   document.getElementById("erroBox").classList.remove("visible");
   document.getElementById("resultCard").classList.remove("visible");
   document.getElementById("confirmBtn").classList.remove("visible");
   document.getElementById("aiLoading").classList.add("ativo");
 
-  const prompt = `Analise este recibo/nota fiscal e retorne APENAS um JSON com estes campos:
-
-{"valor":"307.43","fornecedor":"NOME DA LOJA","descricao":"resumo curto","categoria":"Acabamentos","subCategoria":"Tinta","tipo":"Saida"}
+  const prompt = `Analise este recibo e retorne APENAS este JSON preenchido:
+{"valor":"0.00","fornecedor":"","descricao":"","categoria":"Administração","subCategoria":"","tipo":"Saida"}
 
 Regras:
-- valor: número total do recibo (ex: 307.43)
-- categoria: escolha UMA: Acabamentos, Instalação Elétrica, Instalação Hidráulica, Infraestrutura e Fundação, Estrutura e Alvenaria, Cobertura, Esquadrias, Mão de Obra, Logística e Apoio, Terreno e Legalização, Administração
-- subCategoria: pode ser vazio "" se não souber
-- tipo: quase sempre "Saida"
+- valor: total pago (número, ex: 307.43)
+- categoria: uma de: Acabamentos, Instalação Elétrica, Instalação Hidráulica, Infraestrutura e Fundação, Estrutura e Alvenaria, Cobertura, Esquadrias, Mão de Obra, Logística e Apoio, Terreno e Legalização, Administração
+- Retorne SOMENTE o JSON, sem texto adicional.`;
 
-Retorne APENAS o JSON, nada mais.`
-
-  let resposta = null;
-  const erros  = [];
+  let parsed = null;
+  let modeloUsado = "";
+  let erroMsg = "";
 
   for (const modelo of MODELOS) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${c.key}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${cfg_.key}`;
     try {
-      const ctrl    = new AbortController();
-      const timer   = setTimeout(() => ctrl.abort(), 15000); // 15s timeout
-      let res;
-      try {
-        res = await fetch(url, {
-          method: "POST",
-          signal: ctrl.signal,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: prompt },
-                { inline_data: { mime_type: imgMime, data: imgB64 } }
-              ]
-            }],
-            generationConfig: { temperature: 0.1, maxOutputTokens: 1024, responseMimeType: "application/json" }
-          })
-        });
-      } finally {
-        clearTimeout(timer);
+      // Timeout de 12s por modelo
+      const ctrl  = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 12000);
+
+      const res = await fetch(url, {
+        method: "POST",
+        signal: ctrl.signal,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [
+            { text: prompt },
+            { inline_data: { mime_type: imgMime, data: imgB64 } }
+          ]}],
+          generationConfig: { temperature: 0.1, maxOutputTokens: 512, responseMimeType: "application/json" }
+        })
+      });
+      clearTimeout(timer);
+
+      if (!res.ok) {
+        erroMsg = `[${modelo}] HTTP ${res.status}`;
+        continue;
       }
 
       const json = await res.json();
 
       if (json.error) {
-        const msg = `[${modelo}] ${json.error.code}: ${json.error.message}`;
-        erros.push(msg);
-        console.warn("Gemini erro:", msg);
-        continue; // tenta próximo modelo
-      }
-
-      // Verificar estrutura da resposta
-      if (!json.candidates?.[0]?.content?.parts?.[0]?.text) {
-        const msg = `[${modelo}] Resposta sem texto: ${JSON.stringify(json).substring(0,150)}`;
-        erros.push(msg);
+        erroMsg = `[${modelo}] ${json.error.message}`;
         continue;
       }
 
-      resposta = { modelo, json };
-      break; // sucesso!
+      const texto = (json.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
+      if (!texto) { erroMsg = `[${modelo}] sem resposta`; continue; }
+
+      // Tentar parsear JSON — 3 tentativas
+      let p = null;
+      try { p = JSON.parse(texto); } catch(e) {}
+      if (!p) {
+        const ini = texto.indexOf("{"), fim = texto.lastIndexOf("}");
+        if (ini !== -1 && fim > ini) try { p = JSON.parse(texto.slice(ini, fim+1)); } catch(e) {}
+      }
+      if (!p) {
+        // JSON incompleto — fechar e tentar
+        const ini = texto.indexOf("{");
+        if (ini !== -1) {
+          let parcial = texto.slice(ini);
+          const diff = (parcial.match(/{/g)||[]).length - (parcial.match(/}/g)||[]).length;
+          if (diff > 0) parcial += "}".repeat(diff);
+          try { p = JSON.parse(parcial); } catch(e) {}
+        }
+      }
+
+      if (p) { parsed = p; modeloUsado = modelo; break; }
+      erroMsg = `[${modelo}] JSON inválido`;
 
     } catch (ex) {
-      erros.push(`[${modelo}] Exceção: ${ex.message}`);
+      erroMsg = ex.name === "AbortError"
+        ? `[${modelo}] timeout 12s`
+        : `[${modelo}] ${ex.message}`;
+      // Se foi timeout, não tenta próximo modelo — vai demorar igual
+      if (ex.name === "AbortError") break;
     }
   }
 
-  // Sempre remove loading — independente do resultado
-  btn.disabled = false; btn.classList.remove("loading");
+  // Sempre esconde loading
   document.getElementById("aiLoading").classList.remove("ativo");
 
-  // ── PROCESSAR RESULTADO ──
-  if (!resposta) {
-    mostrarErro("⚠️ IA indisponível. Preencha os campos abaixo manualmente.\n\nDetalhe: " + erros.join(" | "));
-    buildFields("fields-foto","foto",tipoFoto,"setTipoFoto");
-    document.getElementById("resultCard").classList.add("visible");
-    document.getElementById("confirmBtn").classList.add("visible");
-    return;
+  // Preenche campos com o que tiver (mesmo que vazio)
+  if (parsed && Object.keys(parsed).length > 0) {
+    preencherFoto(parsed, modeloUsado);
+  } else {
+    // IA falhou — abre campos em branco para preenchimento manual
+    if (erroMsg) mostrarErro("IA não leu o recibo — preencha manualmente.\nDetalhe: " + erroMsg);
+    preencherFoto({}, "manual");
   }
-
-  const textoRaw = resposta.json.candidates[0].content.parts[0].text;
-  // Limpar possíveis blocos markdown que o modelo adicione
-  const texto = textoRaw
-    .replace(/^```(?:json)?\s*/i, "")  // remove ```json do início
-    .replace(/```\s*$/,            "")  // remove ``` do fim
-    .trim();
-
-  // Parser robusto — 3 tentativas para extrair o JSON
-  let parsed = null;
-
-  // Tentativa 1: parse direto
-  try { parsed = JSON.parse(texto); } catch(e) {}
-
-  // Tentativa 2: encontrar primeiro { até último } (ignora texto ao redor)
-  if (!parsed) {
-    const ini = texto.indexOf("{");
-    const fim = texto.lastIndexOf("}");
-    if (ini !== -1 && fim > ini) {
-      try { parsed = JSON.parse(texto.slice(ini, fim + 1)); } catch(e) {}
-    }
-  }
-
-  // Tentativa 3: regex greedy para capturar JSON aninhado
-  if (!parsed) {
-    const m = texto.match(/\{[\s\S]*\}/);
-    if (m) { try { parsed = JSON.parse(m[0]); } catch(e) {} }
-  }
-
-  // Tentativa 4: JSON incompleto — tenta fechar e parsear o que tem
-  if (!parsed) {
-    try {
-      // Pega do primeiro { até o fim e tenta fechar o JSON
-      const ini = texto.indexOf("{");
-      if (ini !== -1) {
-        let parcial = texto.slice(ini);
-        // Fecha aspas abertas e chaves abertas
-        const opens  = (parcial.match(/{/g) || []).length;
-        const closes = (parcial.match(/}/g) || []).length;
-        parcial += "}".repeat(Math.max(0, opens - closes));
-        // Remove último campo incompleto (chave sem valor completo)
-        parcial = parcial.replace(/,\s*"[^"]*"\s*:\s*"[^"]*$/, '}');
-        parcial = parcial.replace(/,\s*"[^"]*"\s*:\s*$/, '}');
-        parsed = JSON.parse(parcial);
-      }
-    } catch(e) {}
-  }
-
-  if (!parsed) {
-    mostrarErro("IA não conseguiu ler o recibo. Preencha manualmente os campos abaixo.");
-    parsed = {}; // abre campos vazios para edição
-  }
-
-  // Sucesso — preencher campos
-  preencherFoto(parsed, resposta.modelo);
 }
 
 // Máscara de data: digita 11032026 → 11/03/2026
