@@ -295,7 +295,6 @@ let hist = JSON.parse(localStorage.getItem("rc_hist") || "[]");
 
 const MODELOS = [
   "gemini-2.5-flash",
-  "gemini-2.0-flash",
   "gemini-1.5-flash",
 ];
 
@@ -520,7 +519,7 @@ Campos: valor=total pago, categoria=uma de: Acabamentos/Instalação Elétrica/I
               { text: prompt },
               { inline_data: { mime_type: imgMime, data: imgB64 } }
             ]}],
-            generationConfig: { temperature: 0.1, maxOutputTokens: 512, responseMimeType: "application/json" }
+            generationConfig: { temperature: 0.1, maxOutputTokens: 800 }
           })
         });
         clearTimeout(timer);
@@ -536,14 +535,30 @@ Campos: valor=total pago, categoria=uma de: Acabamentos/Instalação Elétrica/I
         if (!texto) { erroMsg = "sem texto"; continue; }
 
         let p = null;
-        try { p = JSON.parse(texto); } catch(e) {}
+        // Limpar markdown (```json ... ```)
+        let txt2 = texto.replace(/```json\s*/gi,"").replace(/```\s*/g,"").trim();
+        // Tentativa 1: parse direto
+        try { p = JSON.parse(txt2); } catch(e) {}
+        // Tentativa 2: extrair do primeiro { ao último }
         if (!p) {
-          const ini = texto.indexOf("{"), fim = texto.lastIndexOf("}");
-          if (ini !== -1 && fim > ini) try { p = JSON.parse(texto.slice(ini, fim+1)); } catch(e) {}
+          const ini = txt2.indexOf("{"), fim = txt2.lastIndexOf("}");
+          if (ini !== -1 && fim > ini) try { p = JSON.parse(txt2.slice(ini, fim+1)); } catch(e) {}
         }
-        if (p) { parsed = p; modeloUsado = modelo; dbg("✅ JSON OK!"); break; }
+        // Tentativa 3: JSON incompleto — completar chaves abertas
+        if (!p) {
+          const ini = txt2.indexOf("{");
+          if (ini !== -1) {
+            let parcial = txt2.slice(ini);
+            parcial = parcial.replace(/,\s*"[^"]*"\s*:\s*"[^"]*$/, "}");
+            parcial = parcial.replace(/,\s*"[^"]*"\s*:\s*$/, "}");
+            const diff = (parcial.match(/{/g)||[]).length - (parcial.match(/}/g)||[]).length;
+            if (diff > 0) parcial += "}".repeat(diff);
+            try { p = JSON.parse(parcial); } catch(e) {}
+          }
+        }
+        if (p) { parsed = p; modeloUsado = modelo; dbg("✅ JSON OK! valor=" + (p.valor||"?")); break; }
         erroMsg = "JSON inválido";
-        dbg("❌ JSON inválido: " + texto.substring(0,60));
+        dbg("❌ JSON inválido: " + txt2.substring(0,80));
 
       } catch (ex) {
         erroMsg = ex.name === "AbortError" ? "timeout" : ex.message;
