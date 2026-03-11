@@ -293,6 +293,12 @@ let imgB64 = null, imgMime = null;
 let tipoFoto = "Saida", tipoManual = "Saida";
 let hist = JSON.parse(localStorage.getItem("rc_hist") || "[]");
 
+const MODELOS = [
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-1.5-flash",
+];
+
 // ═══════════════════════════════════════════════════════
 //  CONFIG
 // ═══════════════════════════════════════════════════════
