@@ -485,103 +485,110 @@ function fotoSelecionada(e) {
 //  Chaves do Google Cloud Console precisam de billing ativado!
 // ═══════════════════════════════════════════════════════
 async function analisarIA() {
+  // Debug visual — aparece na tela durante análise
+  function dbg(msg) {
+    const el = document.getElementById("aiLoading");
+    if (el) {
+      const p = el.querySelector(".dbg-log") || (() => {
+        const d = document.createElement("div");
+        d.className = "dbg-log";
+        d.style = "color:#aef;font-size:11px;margin-top:8px;white-space:pre-wrap;max-height:120px;overflow:auto;";
+        el.appendChild(d);
+        return d;
+      })();
+      p.textContent += msg + "\n";
+    }
+    console.log("[RC]", msg);
+  }
+
   const cfg_ = cfg();
   if (!cfg_.key) { toast("⚙️ Configure a chave Gemini primeiro","err"); abrirSettings(); return; }
   if (!imgB64)   { toast("📷 Selecione uma foto primeiro","err"); return; }
 
-  // Mostrar loading
   document.getElementById("erroBox").classList.remove("visible");
   document.getElementById("resultCard").classList.remove("visible");
   document.getElementById("confirmBtn").classList.remove("visible");
   document.getElementById("aiLoading").classList.add("ativo");
 
-  const prompt = `Analise este recibo e retorne APENAS este JSON preenchido:
+  // Garantia de segurança: se algo inesperado travar, libera após 20s
+  const safetyTimer = setTimeout(() => {
+    dbg("⚠️ Safety timeout 20s — forçando saída");
+    document.getElementById("aiLoading").classList.remove("ativo");
+    mostrarErro("Tempo esgotado. Preencha manualmente.");
+    preencherFoto({}, "manual");
+  }, 20000);
+
+  try {
+    const prompt = `Analise este recibo e retorne APENAS este JSON:
 {"valor":"0.00","fornecedor":"","descricao":"","categoria":"Administração","subCategoria":"","tipo":"Saida"}
+Campos: valor=total pago, categoria=uma de: Acabamentos/Instalação Elétrica/Instalação Hidráulica/Infraestrutura e Fundação/Estrutura e Alvenaria/Cobertura/Esquadrias/Mão de Obra/Logística e Apoio/Terreno e Legalização/Administração. Só o JSON.`;
 
-Regras:
-- valor: total pago (número, ex: 307.43)
-- categoria: uma de: Acabamentos, Instalação Elétrica, Instalação Hidráulica, Infraestrutura e Fundação, Estrutura e Alvenaria, Cobertura, Esquadrias, Mão de Obra, Logística e Apoio, Terreno e Legalização, Administração
-- Retorne SOMENTE o JSON, sem texto adicional.`;
+    let parsed = null;
+    let modeloUsado = "";
+    let erroMsg = "";
 
-  let parsed = null;
-  let modeloUsado = "";
-  let erroMsg = "";
+    for (const modelo of MODELOS) {
+      dbg("🔄 Tentando " + modelo + "...");
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${cfg_.key}`;
+      try {
+        const ctrl  = new AbortController();
+        const timer = setTimeout(() => { dbg("⏱ Abort " + modelo); ctrl.abort(); }, 12000);
 
-  for (const modelo of MODELOS) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${cfg_.key}`;
-    try {
-      // Timeout de 12s por modelo
-      const ctrl  = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 12000);
+        const res = await fetch(url, {
+          method: "POST",
+          signal: ctrl.signal,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [
+              { text: prompt },
+              { inline_data: { mime_type: imgMime, data: imgB64 } }
+            ]}],
+            generationConfig: { temperature: 0.1, maxOutputTokens: 512, responseMimeType: "application/json" }
+          })
+        });
+        clearTimeout(timer);
+        dbg("✅ HTTP " + res.status);
 
-      const res = await fetch(url, {
-        method: "POST",
-        signal: ctrl.signal,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [
-            { text: prompt },
-            { inline_data: { mime_type: imgMime, data: imgB64 } }
-          ]}],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 512, responseMimeType: "application/json" }
-        })
-      });
-      clearTimeout(timer);
+        if (!res.ok) { erroMsg = `HTTP ${res.status}`; continue; }
 
-      if (!res.ok) {
-        erroMsg = `[${modelo}] HTTP ${res.status}`;
-        continue;
-      }
+        const json = await res.json();
+        if (json.error) { erroMsg = json.error.message; dbg("❌ API: " + erroMsg); continue; }
 
-      const json = await res.json();
+        const texto = (json.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
+        dbg("📄 Resposta: " + texto.substring(0,80));
+        if (!texto) { erroMsg = "sem texto"; continue; }
 
-      if (json.error) {
-        erroMsg = `[${modelo}] ${json.error.message}`;
-        continue;
-      }
-
-      const texto = (json.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
-      if (!texto) { erroMsg = `[${modelo}] sem resposta`; continue; }
-
-      // Tentar parsear JSON — 3 tentativas
-      let p = null;
-      try { p = JSON.parse(texto); } catch(e) {}
-      if (!p) {
-        const ini = texto.indexOf("{"), fim = texto.lastIndexOf("}");
-        if (ini !== -1 && fim > ini) try { p = JSON.parse(texto.slice(ini, fim+1)); } catch(e) {}
-      }
-      if (!p) {
-        // JSON incompleto — fechar e tentar
-        const ini = texto.indexOf("{");
-        if (ini !== -1) {
-          let parcial = texto.slice(ini);
-          const diff = (parcial.match(/{/g)||[]).length - (parcial.match(/}/g)||[]).length;
-          if (diff > 0) parcial += "}".repeat(diff);
-          try { p = JSON.parse(parcial); } catch(e) {}
+        let p = null;
+        try { p = JSON.parse(texto); } catch(e) {}
+        if (!p) {
+          const ini = texto.indexOf("{"), fim = texto.lastIndexOf("}");
+          if (ini !== -1 && fim > ini) try { p = JSON.parse(texto.slice(ini, fim+1)); } catch(e) {}
         }
+        if (p) { parsed = p; modeloUsado = modelo; dbg("✅ JSON OK!"); break; }
+        erroMsg = "JSON inválido";
+        dbg("❌ JSON inválido: " + texto.substring(0,60));
+
+      } catch (ex) {
+        erroMsg = ex.name === "AbortError" ? "timeout" : ex.message;
+        dbg("❌ Catch: " + erroMsg);
+        if (ex.name === "AbortError") break;
       }
-
-      if (p) { parsed = p; modeloUsado = modelo; break; }
-      erroMsg = `[${modelo}] JSON inválido`;
-
-    } catch (ex) {
-      erroMsg = ex.name === "AbortError"
-        ? `[${modelo}] timeout 12s`
-        : `[${modelo}] ${ex.message}`;
-      // Se foi timeout, não tenta próximo modelo — vai demorar igual
-      if (ex.name === "AbortError") break;
     }
-  }
 
-  // Sempre esconde loading
-  document.getElementById("aiLoading").classList.remove("ativo");
+    clearTimeout(safetyTimer);
+    document.getElementById("aiLoading").classList.remove("ativo");
 
-  // Preenche campos com o que tiver (mesmo que vazio)
-  if (parsed && Object.keys(parsed).length > 0) {
-    preencherFoto(parsed, modeloUsado);
-  } else {
-    // IA falhou — abre campos em branco para preenchimento manual
-    if (erroMsg) mostrarErro("IA não leu o recibo — preencha manualmente.\nDetalhe: " + erroMsg);
+    if (parsed && Object.keys(parsed).length > 0) {
+      preencherFoto(parsed, modeloUsado);
+    } else {
+      mostrarErro("IA não leu o recibo — preencha manualmente.\nDetalhe: " + erroMsg);
+      preencherFoto({}, "manual");
+    }
+
+  } catch (fatalErr) {
+    clearTimeout(safetyTimer);
+    document.getElementById("aiLoading").classList.remove("ativo");
+    mostrarErro("Erro inesperado: " + fatalErr.message);
     preencherFoto({}, "manual");
   }
 }
