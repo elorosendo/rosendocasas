@@ -683,17 +683,17 @@
         <div class="field-row">
           <span class="field-label">Categoria</span>
           <select class="field-value" id="fieldCategoria" onchange="atualizarSubcats()">
-            <option>Terreno e Legalização</option>
-            <option>Infraestrutura e Fundação</option>
-            <option>Estrutura e Alvenaria</option>
-            <option>Instalação Elétrica</option>
-            <option>Instalação Hidraulica</option>
-            <option>Cobertura</option>
-            <option>Esquadrias</option>
-            <option>Acabamentos</option>
-            <option>Mão de Obra</option>
-            <option>Logistica e Apoio</option>
-            <option>Administração</option>
+            <option value="Terreno e Legalizacao">Terreno e Legalização</option>
+            <option value="Infraestrutura e Fundacao">Infraestrutura e Fundação</option>
+            <option value="Estrutura e Alvenaria">Estrutura e Alvenaria</option>
+            <option value="Instalacao Eletrica">Instalação Elétrica</option>
+            <option value="Instalacao Hidraulica">Instalação Hidráulica</option>
+            <option value="Cobertura">Cobertura</option>
+            <option value="Esquadrias">Esquadrias</option>
+            <option value="Acabamentos">Acabamentos</option>
+            <option value="Mao de Obra">Mão de Obra</option>
+            <option value="Logistica e Apoio">Logística e Apoio</option>
+            <option value="Administracao">Administração</option>
           </select>
         </div>
 
@@ -855,17 +855,17 @@ Responda APENAS com JSON válido, sem texto extra, neste formato:
 }
 
 Categorias e subcategorias disponíveis:
-- Terreno e Legalização: Terreno, ITBI, Cartorio, Registro, Taxa Prefeitura, Sabesp, Poste, ART, Engenheiro, Projeto, Imposto, Imobiliaria, Processo Prefeitura, Desdobro
-- Infraestrutura e Fundação: Aterro, Terra, Areia, Pedra, Cimento, Ferro, Arame, Lajes, Concreto
+- Terreno e Legalizacao: Terreno, ITBI, Cartorio, Registro, Taxa Prefeitura, Sabesp, Poste, ART, Engenheiro, Projeto, Imposto, Imobiliaria, Processo Prefeitura, Desdobro
+- Infraestrutura e Fundacao: Aterro, Terra, Areia, Pedra, Cimento, Ferro, Arame, Lajes, Concreto
 - Estrutura e Alvenaria: Blocos vedacao, Muro, Colunas e vigas, Reparo estrutural, Concreto
-- Instalação Elétrica: Fio, Conduite, Caixa disjuntor, Luz, Poste, Dijuntores, Interruptores, Tomadas, Soquetes
-- Instalação Hidraulica: Tubos e conexoes, Caixa esgoto, Torneira, Vaso sanitario, Concreto, Registros, Caixa dágua
+- Instalacao Eletrica: Fio, Conduite, Caixa disjuntor, Luz, Poste, Disjuntores, Interruptores, Tomadas, Soquetes
+- Instalacao Hidraulica: Tubos e conexoes, Caixa esgoto, Torneira, Vaso sanitario, Concreto, Registros, Caixa dagua
 - Cobertura: Telhado, Madeiramento, Calha
 - Esquadrias: Portas, Janelas, Portoes
 - Acabamentos: Piso, Azulejo, Gesso, Tinta, Marmore, Grama
-- Mão de Obra: Mao de obra geral, Empreitagem, Diarias, Muro, Pintura, Gesseiro
+- Mao de Obra: Mao de obra geral, Empreitagem, Diarias, Muro, Pintura, Gesseiro
 - Logistica e Apoio: Gasolina, Frete, Locacoes, Limpeza final
-- Administração: Materiais diversos, Despesas administrativas, Livro engenheiro, Outros, Ferramentas, Contas obra, Deposito fornecedor, Venda de propriedade, Corretor, Taxas, Imposto
+- Administracao: Materiais diversos, Despesas administrativas, Livro engenheiro, Outros, Ferramentas, Contas obra, Deposito fornecedor, Venda de propriedade, Corretor, Taxas, Imposto
 
 Se não conseguir ler algum campo, coloque string vazia "".`;
 
@@ -934,6 +934,7 @@ function preencherCampos(dados) {
         break;
       }
     }
+    atualizarSubcats(dados.subCategoria || "");
   }
 }
 
@@ -986,30 +987,30 @@ async function confirmarLancamento() {
 
 // ─── SUBCATEGORIAS POR CATEGORIA ───
 const SUBCATS = {
-  "Terreno e Legalização":    ["Terreno","ITBI","Cartorio","Registro","Taxa Prefeitura","Sabesp","Poste","ART","Engenheiro","Projeto","Imposto","Imobiliaria","Processo Prefeitura","Desdobro"],
-  "Infraestrutura e Fundação":["Aterro","Terra","Areia","Pedra","Cimento","Ferro","Arame","Lajes","Concreto"],
+  "Terreno e Legalizacao":    ["Terreno","ITBI","Cartorio","Registro","Taxa Prefeitura","Sabesp","Poste","ART","Engenheiro","Projeto","Imposto","Imobiliaria","Processo Prefeitura","Desdobro"],
+  "Infraestrutura e Fundacao":["Aterro","Terra","Areia","Pedra","Cimento","Ferro","Arame","Lajes","Concreto"],
   "Estrutura e Alvenaria":    ["Blocos vedacao","Muro","Colunas e vigas","Reparo estrutural","Concreto"],
-  "Instalação Elétrica":      ["Fio","Conduite","Caixa disjuntor","Luz","Poste","Dijuntores","Interruptores","Tomadas","Soquetes"],
-  "Instalação Hidraulica":    ["Tubos e conexoes","Caixa esgoto","Torneira","Vaso sanitario","Concreto","Registros","Caixa dágua"],
+  "Instalacao Eletrica":      ["Fio","Conduite","Caixa disjuntor","Luz","Poste","Disjuntores","Interruptores","Tomadas","Soquetes"],
+  "Instalacao Hidraulica":    ["Tubos e conexoes","Caixa esgoto","Torneira","Vaso sanitario","Concreto","Registros","Caixa dagua"],
   "Cobertura":                ["Telhado","Madeiramento","Calha"],
   "Esquadrias":               ["Portas","Janelas","Portoes"],
   "Acabamentos":              ["Piso","Azulejo","Gesso","Tinta","Marmore","Grama"],
-  "Mão de Obra":              ["Mao de obra geral","Empreitagem","Diarias","Muro","Pintura","Gesseiro"],
+  "Mao de Obra":              ["Mao de obra geral","Empreitagem","Diarias","Muro","Pintura","Gesseiro"],
   "Logistica e Apoio":        ["Gasolina","Frete","Locacoes","Limpeza final"],
-  "Administração":            ["Materiais diversos","Despesas administrativas","Livro engenheiro","Outros","Ferramentas","Contas obra","Deposito fornecedor","Venda de propriedade","Corretor","Taxas","Imposto"],
+  "Administracao":            ["Materiais diversos","Despesas administrativas","Livro engenheiro","Outros","Ferramentas","Contas obra","Deposito fornecedor","Venda de propriedade","Corretor","Taxas","Imposto"],
 };
 
-function atualizarSubcats() {
+function atualizarSubcats(valorAtual) {
   const cat   = document.getElementById("fieldCategoria").value;
   const subs  = SUBCATS[cat] || [];
   const subEl = document.getElementById("fieldSubcat");
-  // Se for input de texto, apenas sugere a primeira subcategoria
-  if (subEl.tagName === "INPUT") {
-    if (!subEl.value || subs.includes(subEl.value)) {
-      subEl.value = subs[0] || "";
-    }
-  }
+  subEl.innerHTML = subs.map(s =>
+    `<option value="${s}" ${s === valorAtual ? 'selected' : ''}>${s}</option>`
+  ).join("");
 }
+
+// Inicializa subcats ao carregar
+document.addEventListener("DOMContentLoaded", () => atualizarSubcats());
 
 
 function resetarApp() {
@@ -1062,6 +1063,7 @@ function toast(msg, tipo = "") {
 
 // ─── INIT ───
 renderHistorico();
+atualizarSubcats();
 
 // Verificar se tem config salva
 const cfg = getConfig();
