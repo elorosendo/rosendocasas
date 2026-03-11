@@ -520,6 +520,18 @@ Administração: Materiais diversos, Despesas administrativas, Livro engenheiro,
   }
 
   const textoRaw = resposta.json.candidates[0].content.parts[0].text;
+
+    let textoLimpo = texto.trim();
+
+  // remover markdown se existir
+  textoLimpo = textoLimpo.replace(/```json/g,"").replace(/```/g,"").trim();
+  
+  // garantir que termina com }
+  if (!textoLimpo.endsWith("}")) {
+    textoLimpo = textoLimpo + "}";
+  }
+  
+  const dadosIA = JSON.parse(textoLimpo);
   // Limpar possíveis blocos markdown que o modelo adicione
   const texto = textoRaw.replace(/^```(?:json)?\s*/i,"").replace(/```\s*$/,"").trim();
 
