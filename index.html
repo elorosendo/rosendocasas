@@ -194,24 +194,12 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
       <div class="cam-ph">
         <div class="cam-icon">🧾</div>
         <div class="cam-title">Adicionar recibo</div>
-        <div class="cam-btns" style="display:flex;gap:10px;margin-top:12px;">
-          <button onclick="event.stopPropagation();abrirCamera()" style="
-            background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.35);
-            color:#4ade80;padding:8px 16px;border-radius:20px;font-size:13px;
-            font-weight:600;cursor:pointer;
-          ">📷 Câmera</button>
-          <button onclick="event.stopPropagation();abrirGaleria()" style="
-            background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
-            color:#ccc;padding:8px 16px;border-radius:20px;font-size:13px;
-            font-weight:600;cursor:pointer;
-          ">🖼️ Galeria</button>
-        </div>
+        <div class="cam-sub">Toque para câmera ou galeria</div>
       </div>
       <button class="change-photo" onclick="event.stopPropagation();abrirCamera()">Trocar foto</button>
       <!-- Overlay removido daqui -->
     </div>
-    <input type="file" id="file-input"        accept="image/*" capture="environment" onchange="fotoSelecionada(event)">
-    <input type="file" id="file-input-galeria" accept="image/*" onchange="fotoSelecionada(event)">
+    <input type="file" id="file-input" accept="image/*" onchange="fotoSelecionada(event)" style="display:none">
 
     <!-- Botão analisar — oculto, análise agora é automática ao selecionar foto -->
     <button class="ai-btn" id="aiBtn" disabled onclick="analisarIA()" style="display:none">
@@ -452,7 +440,6 @@ function updateSub(pfx, sel) {
 //  CÂMERA
 // ═══════════════════════════════════════════════════════
 function abrirCamera()  { document.getElementById("file-input").click(); }
-function abrirGaleria() { document.getElementById("file-input-galeria").click(); }
 
 function fotoSelecionada(e) {
   const f = e.target.files[0]; if (!f) return;
