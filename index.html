@@ -683,17 +683,17 @@
         <div class="field-row">
           <span class="field-label">Categoria</span>
           <select class="field-value" id="fieldCategoria" onchange="atualizarSubcats()">
-            <option value="Terreno e Legalizacao">Terreno e Legalização</option>
-            <option value="Infraestrutura e Fundacao">Infraestrutura e Fundação</option>
+            <option value="Terreno e Legalização">Terreno e Legalização</option>
+            <option value="Infraestrutura e Fundação">Infraestrutura e Fundação</option>
             <option value="Estrutura e Alvenaria">Estrutura e Alvenaria</option>
-            <option value="Instalacao Eletrica">Instalação Elétrica</option>
-            <option value="Instalacao Hidraulica">Instalação Hidráulica</option>
+            <option value="Instalação Elétrica">Instalação Elétrica</option>
+            <option value="Instalação Hidráulica">Instalação Hidráulica</option>
             <option value="Cobertura">Cobertura</option>
             <option value="Esquadrias">Esquadrias</option>
             <option value="Acabamentos">Acabamentos</option>
-            <option value="Mao de Obra">Mão de Obra</option>
-            <option value="Logistica e Apoio">Logística e Apoio</option>
-            <option value="Administracao">Administração</option>
+            <option value="Mão de Obra">Mão de Obra</option>
+            <option value="Logística e Apoio">Logística e Apoio</option>
+            <option value="Administração">Administração</option>
           </select>
         </div>
 
@@ -854,24 +854,33 @@ Responda APENAS com JSON válido, sem texto extra, neste formato:
   "subCategoria": "escolha a subcategoria mais adequada da lista abaixo"
 }
 
-Categorias e subcategorias disponíveis:
-- Terreno e Legalizacao: Terreno, ITBI, Cartorio, Registro, Taxa Prefeitura, Sabesp, Poste, ART, Engenheiro, Projeto, Imposto, Imobiliaria, Processo Prefeitura, Desdobro
-- Infraestrutura e Fundacao: Aterro, Terra, Areia, Pedra, Cimento, Ferro, Arame, Lajes, Concreto
+Categorias e subcategorias disponíveis (use EXATAMENTE estes nomes):
+- Terreno e Legalização: Terreno, ITBI, Cartorio, Registro, Taxa Prefeitura, Sabesp, Poste, ART, Engenheiro, Projeto, Imposto, Imobiliaria, Processo Prefeitura, Desdobro
+- Infraestrutura e Fundação: Aterro, Terra, Areia, Pedra, Cimento, Ferro, Arame, Lajes, Concreto
 - Estrutura e Alvenaria: Blocos vedacao, Muro, Colunas e vigas, Reparo estrutural, Concreto
-- Instalacao Eletrica: Fio, Conduite, Caixa disjuntor, Luz, Poste, Disjuntores, Interruptores, Tomadas, Soquetes
-- Instalacao Hidraulica: Tubos e conexoes, Caixa esgoto, Torneira, Vaso sanitario, Concreto, Registros, Caixa dagua
+- Instalação Elétrica: Fio, Conduite, Caixa disjuntor, Luz, Poste, Disjuntores, Interruptores, Tomadas, Soquetes
+- Instalação Hidráulica: Tubos e conexoes, Caixa esgoto, Torneira, Vaso sanitario, Concreto, Registros, Caixa dagua
 - Cobertura: Telhado, Madeiramento, Calha
 - Esquadrias: Portas, Janelas, Portoes
 - Acabamentos: Piso, Azulejo, Gesso, Tinta, Marmore, Grama
-- Mao de Obra: Mao de obra geral, Empreitagem, Diarias, Muro, Pintura, Gesseiro
-- Logistica e Apoio: Gasolina, Frete, Locacoes, Limpeza final
-- Administracao: Materiais diversos, Despesas administrativas, Livro engenheiro, Outros, Ferramentas, Contas obra, Deposito fornecedor, Venda de propriedade, Corretor, Taxas, Imposto
+- Mão de Obra: Mao de obra geral, Empreitagem, Diarias, Muro, Pintura, Gesseiro
+- Logística e Apoio: Gasolina, Frete, Locacoes, Limpeza final
+- Administração: Materiais diversos, Despesas administrativas, Livro engenheiro, Outros, Ferramentas, Contas obra, Deposito fornecedor, Venda de propriedade, Corretor, Taxas, Imposto
 
 Se não conseguir ler algum campo, coloque string vazia "".`;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${config.geminiKey}`,
-      {
+  const MODELOS = [
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent",
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent",
+  ];
+
+  let data = null;
+  let ultimoErro = "";
+
+  for (const modelUrl of MODELOS) {
+    try {
+      const response = await fetch(`${modelUrl}?key=${config.geminiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -883,12 +892,15 @@ Se não conseguir ler algum campo, coloque string vazia "".`;
           }],
           generationConfig: { temperature: 0.1, maxOutputTokens: 400 }
         })
-      }
-    );
+      });
+      const json = await response.json();
+      if (json.error) { ultimoErro = json.error.message; continue; }
+      data = json;
+      break;
+    } catch(e) { ultimoErro = e.message; continue; }
+  }
 
-    const data = await response.json();
-
-    if (data.error) throw new Error(data.error.message);
+  if (!data) throw new Error(ultimoErro);
 
     const texto  = data.candidates[0].content.parts[0].text;
     const limpo  = texto.replace(/```json\n?/g,"").replace(/```\n?/g,"").trim();
@@ -987,17 +999,17 @@ async function confirmarLancamento() {
 
 // ─── SUBCATEGORIAS POR CATEGORIA ───
 const SUBCATS = {
-  "Terreno e Legalizacao":    ["Terreno","ITBI","Cartorio","Registro","Taxa Prefeitura","Sabesp","Poste","ART","Engenheiro","Projeto","Imposto","Imobiliaria","Processo Prefeitura","Desdobro"],
-  "Infraestrutura e Fundacao":["Aterro","Terra","Areia","Pedra","Cimento","Ferro","Arame","Lajes","Concreto"],
+  "Terreno e Legalização":    ["Terreno","ITBI","Cartorio","Registro","Taxa Prefeitura","Sabesp","Poste","ART","Engenheiro","Projeto","Imposto","Imobiliaria","Processo Prefeitura","Desdobro"],
+  "Infraestrutura e Fundação":["Aterro","Terra","Areia","Pedra","Cimento","Ferro","Arame","Lajes","Concreto"],
   "Estrutura e Alvenaria":    ["Blocos vedacao","Muro","Colunas e vigas","Reparo estrutural","Concreto"],
-  "Instalacao Eletrica":      ["Fio","Conduite","Caixa disjuntor","Luz","Poste","Disjuntores","Interruptores","Tomadas","Soquetes"],
-  "Instalacao Hidraulica":    ["Tubos e conexoes","Caixa esgoto","Torneira","Vaso sanitario","Concreto","Registros","Caixa dagua"],
+  "Instalação Elétrica":      ["Fio","Conduite","Caixa disjuntor","Luz","Poste","Disjuntores","Interruptores","Tomadas","Soquetes"],
+  "Instalação Hidráulica":    ["Tubos e conexoes","Caixa esgoto","Torneira","Vaso sanitario","Concreto","Registros","Caixa dagua"],
   "Cobertura":                ["Telhado","Madeiramento","Calha"],
   "Esquadrias":               ["Portas","Janelas","Portoes"],
   "Acabamentos":              ["Piso","Azulejo","Gesso","Tinta","Marmore","Grama"],
-  "Mao de Obra":              ["Mao de obra geral","Empreitagem","Diarias","Muro","Pintura","Gesseiro"],
-  "Logistica e Apoio":        ["Gasolina","Frete","Locacoes","Limpeza final"],
-  "Administracao":            ["Materiais diversos","Despesas administrativas","Livro engenheiro","Outros","Ferramentas","Contas obra","Deposito fornecedor","Venda de propriedade","Corretor","Taxas","Imposto"],
+  "Mão de Obra":              ["Mao de obra geral","Empreitagem","Diarias","Muro","Pintura","Gesseiro"],
+  "Logística e Apoio":        ["Gasolina","Frete","Locacoes","Limpeza final"],
+  "Administração":            ["Materiais diversos","Despesas administrativas","Livro engenheiro","Outros","Ferramentas","Contas obra","Deposito fornecedor","Venda de propriedade","Corretor","Taxas","Imposto"],
 };
 
 function atualizarSubcats(valorAtual) {
