@@ -555,15 +555,6 @@ Administração: Materiais diversos, Despesas administrativas, Livro engenheiro,
     return;
   }
 
-  // Parse OK — continuar normalmente
-  if (false) { // bloco morto para manter estrutura
-    buildFields("fields-foto","foto",tipoFoto,"setTipoFoto");
-    document.getElementById("resultCard").classList.add("visible");
-      document.getElementById("confirmBtn").classList.add("visible");
-      return;
-    }
-  }
-
   // Sucesso — preencher campos
   preencherFoto(parsed, resposta.modelo);
 }
