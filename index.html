@@ -492,60 +492,20 @@ async function analisarIA() {
   document.getElementById("confirmBtn").classList.remove("visible");
   document.getElementById("aiLoading").classList.add("ativo");
 
-  const prompt = `Você é um assistente de contabilidade de obras. Analise esta foto de recibo/nota fiscal/comprovante.
+  const prompt = `Analise este recibo/nota fiscal e retorne APENAS um JSON com estes campos:
 
-RETORNE APENAS um JSON válido, sem nenhum texto antes ou depois.
+{"valor":"307.43","fornecedor":"NOME DA LOJA","descricao":"resumo curto","categoria":"Acabamentos","subCategoria":"Tinta","tipo":"Saida"}
 
-Campos OBRIGATÓRIOS (sempre preencher):
-- "valor": número decimal ex: 307.43 (use o VALOR TOTAL do recibo)
-- "fornecedor": nome da loja ou empresa
-- "descricao": resumo curto do que foi comprado (máx 50 chars)
-- "categoria": escolha UMA da lista abaixo que melhor se encaixa
+Regras:
+- valor: número total do recibo (ex: 307.43)
+- categoria: escolha UMA: Acabamentos, Instalação Elétrica, Instalação Hidráulica, Infraestrutura e Fundação, Estrutura e Alvenaria, Cobertura, Esquadrias, Mão de Obra, Logística e Apoio, Terreno e Legalização, Administração
+- subCategoria: pode ser vazio "" se não souber
+- tipo: quase sempre "Saida"
 
-Campos OPCIONAIS (deixe "" se não souber):
-- "subCategoria": subcategoria da lista abaixo, ou "" se não tiver certeza
-- "tipo": "Saida" ou "Entrada" (padrão "Saida")
-
-CATEGORIAS (escolha a mais adequada):
-- "Acabamentos" → tinta, gesso, piso, azulejo, lixa, massa, verniz
-- "Instalação Elétrica" → fios, disjuntores, tomadas, interruptores
-- "Instalação Hidráulica" → tubos, registros, torneiras, vasos
-- "Infraestrutura e Fundação" → areia, cimento, ferro, pedra, concreto
-- "Estrutura e Alvenaria" → blocos, tijolos, colunas, vigas
-- "Cobertura" → telhas, madeiramento, calha
-- "Esquadrias" → portas, janelas, portões
-- "Mão de Obra" → pedreiro, pintor, gesseiro, diárias
-- "Logística e Apoio" → gasolina, frete, aluguel de equipamento
-- "Terreno e Legalização" → terreno, cartório, impostos, taxas
-- "Administração" → outros, materiais diversos, despesas gerais
-
-SUBCATEGORIAS por categoria:
-Acabamentos: Piso, Azulejo, Gesso, Tinta, Marmore, Grama
-Instalação Elétrica: Fio, Conduite, Caixa disjuntor, Luz, Disjuntores, Interruptores, Tomadas, Soquetes
-Instalação Hidráulica: Tubos e conexoes, Caixa esgoto, Torneira, Vaso sanitario, Registros, Caixa dagua
-Infraestrutura e Fundação: Aterro, Terra, Areia, Pedra, Cimento, Ferro, Arame, Lajes, Concreto
-Estrutura e Alvenaria: Blocos vedacao, Muro, Colunas e vigas, Reparo estrutural
-Cobertura: Telhado, Madeiramento, Calha
-Esquadrias: Portas, Janelas, Portoes
-Mão de Obra: Mao de obra geral, Empreitagem, Diarias, Pintura, Gesseiro
-Logística e Apoio: Gasolina, Frete, Locacoes, Limpeza final
-Terreno e Legalização: Terreno, ITBI, Cartorio, Registro, Taxa Prefeitura, Imposto
-Administração: Materiais diversos, Outros, Ferramentas, Despesas administrativas
-
-Exemplo de resposta:
-{"valor":"307.43","fornecedor":"SODIMAC DICICO","descricao":"Tinta, massa e lixas","categoria":"Acabamentos","subCategoria":"Tinta","tipo":"Saida"}`
-
-  // Modelos para tentar em sequência (free tier março 2026)
-  // IMPORTANTE: Use chave criada em aistudio.google.com (não no Google Cloud Console)
-  // gemini-1.5 foi removido do v1beta — use 2.5-flash ou 2.0-flash
-  const MODELOS = [
-    "gemini-2.5-flash",          // melhor free tier - imagens OK
-    "gemini-2.5-flash-lite",     // mais leve, bom fallback
-    "gemini-2.0-flash",          // fallback estável
-  ];
+Retorne APENAS o JSON, nada mais.`
 
   let resposta = null;
-  let erros = [];
+  const erros  = [];
 
   for (const modelo of MODELOS) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${c.key}`;
@@ -560,7 +520,7 @@ Exemplo de resposta:
               { inline_data: { mime_type: imgMime, data: imgB64 } }
             ]
           }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 600, responseMimeType: "application/json" }
+          generationConfig: { temperature: 0.1, maxOutputTokens: 1024, responseMimeType: "application/json" }
         })
       });
 
@@ -628,6 +588,25 @@ Exemplo de resposta:
   if (!parsed) {
     const m = texto.match(/\{[\s\S]*\}/);
     if (m) { try { parsed = JSON.parse(m[0]); } catch(e) {} }
+  }
+
+  // Tentativa 4: JSON incompleto — tenta fechar e parsear o que tem
+  if (!parsed) {
+    try {
+      // Pega do primeiro { até o fim e tenta fechar o JSON
+      const ini = texto.indexOf("{");
+      if (ini !== -1) {
+        let parcial = texto.slice(ini);
+        // Fecha aspas abertas e chaves abertas
+        const opens  = (parcial.match(/{/g) || []).length;
+        const closes = (parcial.match(/}/g) || []).length;
+        parcial += "}".repeat(Math.max(0, opens - closes));
+        // Remove último campo incompleto (chave sem valor completo)
+        parcial = parcial.replace(/,\s*"[^"]*"\s*:\s*"[^"]*$/, '}');
+        parcial = parcial.replace(/,\s*"[^"]*"\s*:\s*$/, '}');
+        parsed = JSON.parse(parcial);
+      }
+    } catch(e) {}
   }
 
   if (!parsed) {
