@@ -471,7 +471,12 @@ Administração: Materiais diversos, Despesas administrativas, Livro engenheiro,
           contents: [{
             parts: [
               { text: prompt },
-              { inline_data: { mime_type: imgMime, data: imgB64 } }
+              {
+                inlineData: {
+                  mimeType: imgMime,
+                  data: imgB64
+                }
+              }
             ]
           }],
           generationConfig: { temperature: 0.1, maxOutputTokens: 600 }
