@@ -1303,32 +1303,40 @@ if (!_c.key || !_c.url) {
 }
 
 // ═══════════════════════════════════════════════════════
-//  SPLASH SCREEN
+//  SPLASH SCREEN — múltiplos fallbacks para iOS PWA
 // ═══════════════════════════════════════════════════════
-// Splash — roda imediatamente pois splash já está no DOM
 (function() {
-  function initSplash() {
+  function esconderSplash() {
     const splash = document.getElementById("splash");
-    if (!splash) return;
-    // Inicia barra
-    setTimeout(() => {
-      const bar = document.getElementById("splash-bar");
-      if (bar) bar.style.width = "100%";
-    }, 100);
-    // Remove após 2s
+    if (!splash || splash._removido) return;
+    splash._removido = true;
+    // Inicia barra imediatamente
+    const bar = document.getElementById("splash-bar");
+    if (bar) bar.style.width = "100%";
+    // Fade out após 1.8s
     setTimeout(() => {
       splash.style.opacity = "0";
       setTimeout(() => {
-        if (splash.parentNode) splash.parentNode.removeChild(splash);
-      }, 600);
-    }, 2000);
+        splash.style.display = "none";
+      }, 500);
+    }, 1800);
   }
-  // Rodar agora — splash já está no HTML acima do script
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initSplash);
-  } else {
-    initSplash();
-  }
+
+  // Inicia barra assim que o elemento existir
+  const bar = document.getElementById("splash-bar");
+  if (bar) bar.style.width = "100%";
+
+  // Tentativa 1: imediato (página já carregada)
+  setTimeout(esconderSplash, 100);
+
+  // Tentativa 2: DOMContentLoaded
+  document.addEventListener("DOMContentLoaded", () => setTimeout(esconderSplash, 100));
+
+  // Tentativa 3: load completo
+  window.addEventListener("load", () => setTimeout(esconderSplash, 100));
+
+  // Tentativa 4: fallback absoluto — garante que some em 3.5s no máximo
+  setTimeout(esconderSplash, 3500);
 })();
 
 // ═══════════════════════════════════════════════════════
