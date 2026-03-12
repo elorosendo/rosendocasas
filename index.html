@@ -398,18 +398,23 @@ async function carregarFornecedores(forcar) {
   _fornCarregando = true;
   const url = cfg().url;
   if (!url) { _fornCarregando = false; return; }
-  fetch(url + "?action=fornecedores")
-    .then(r => r.json())
-    .then(d => { if (d.ok && Array.isArray(d.fornecedores)) _fornecedores = d.fornecedores; })
-    .catch(e => console.warn("Fornecedores:", e))
-    .finally(() => { _fornCarregando = false; });
+  try {
+    const r = await fetch(url + "?action=fornecedores");
+    const d = await r.json();
+    if (d.ok && Array.isArray(d.fornecedores)) _fornecedores = d.fornecedores;
+  } catch(e) { console.warn("Fornecedores:", e); }
+  finally { _fornCarregando = false; }
 }
 
-function abrirFornecedores(pfx) {
-  carregarFornecedores(false);
-  filtrarFornecedores(pfx);
+async function abrirFornecedores(pfx) {
   const dd = document.getElementById("forn-dd-" + pfx);
-  if (dd) dd.classList.add("open");
+  if (!dd) return;
+  // Mostrar loading imediatamente
+  dd.innerHTML = '<div class="forn-loading">⏳ Carregando...</div>';
+  dd.classList.add("open");
+  // Aguardar lista se ainda não carregou
+  await carregarFornecedores(false);
+  filtrarFornecedores(pfx);
 }
 
 function filtrarFornecedores(pfx) {
@@ -681,7 +686,7 @@ function fotoSelecionada(e) {
     // Comprimir imagem para max 1200px e qualidade 0.75 — evita quota exceeded
     const img = new Image();
     img.onload = () => {
-      const MAX = 1200;
+      const MAX = 900;
       let w = img.width, h = img.height;
       if (w > MAX || h > MAX) {
         if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
@@ -690,7 +695,7 @@ function fotoSelecionada(e) {
       const canvas = document.createElement("canvas");
       canvas.width = w; canvas.height = h;
       canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.75);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.65);
       imgB64  = dataUrl.split(",")[1];
       imgMime = "image/jpeg";
       document.getElementById("preview-img").src = dataUrl;
@@ -967,10 +972,16 @@ async function lancar(pfx) {
     data:         document.getElementById(`data-${pfx}`)?.value || new Date().toLocaleDateString("pt-BR"),
   };
 
-  // Inclui foto no payload quando vier da aba foto (para salvar no Drive)
+  // Inclui foto no payload — comprimida, tamanho razoável
   if (pfx === "foto" && imgB64 && imgMime) {
-    dados.fotoBase64 = imgB64;
-    dados.fotoMime   = imgMime;
+    const kb = Math.round(imgB64.length * 0.75 / 1024);
+    console.log("Foto tamanho:", kb, "KB");
+    if (kb < 800) { // só envia se < 800KB para evitar quota
+      dados.fotoBase64 = imgB64;
+      dados.fotoMime   = imgMime;
+    } else {
+      console.warn("Foto muito grande (" + kb + "KB), não enviando");
+    }
   }
 
   // Validação básica
