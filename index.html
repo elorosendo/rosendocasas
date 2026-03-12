@@ -1018,18 +1018,26 @@ async function lancar(pfx) {
     let respJson = null;
     try {
       const resp = await fetch(c.url, {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
+        method: "POST",
+        redirect: "follow",
+        headers: {"Content-Type":"application/json"},
         body: JSON.stringify(dados),
       });
-      respJson = await resp.json();
+      const txt = await resp.text();
+      console.log("Resposta servidor:", txt.substring(0,200));
+      // Apps Script às vezes retorna HTML de redirect — pegar só o JSON
+      const jsonStart = txt.indexOf("{");
+      if (jsonStart !== -1) {
+        respJson = JSON.parse(txt.substring(jsonStart));
+      }
     } catch(corsErr) {
-      // Fallback no-cors se o CORS falhar (sem ler resposta)
+      console.warn("Fetch erro:", corsErr.message);
+      // Fallback no-cors — lançamento vai mas sem confirmação de link
       await fetch(c.url, {
         method:"POST", mode:"no-cors",
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify(dados),
-      });
+      }).catch(()=>{});
     }
 
     adicionarHist(dados);
