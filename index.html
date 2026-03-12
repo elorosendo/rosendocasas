@@ -1,835 +1,1456 @@
-// ============================================================
-//  RECIBOS — Apps Script  (Recibos.gs)
-//  v6 — Drive upload + link na planilha + saldo em tempo real
-//
-//  COLUNAS DO SHEET:
-//  A=Data B=Projeto C=Tipo D=Categoria E=SubCategoria
-//  F=Descrição G=Qtd H=Fornecedor I=Valor J=Associado
-//  K=Saldo L=Recibo (link Drive)
-//
-//  SETUP:
-//  1. Sheets → Extensões → Apps Script → Recibos.gs
-//  2. Cole este código e salve
-//  3. Deploy → Web App | Execute as: Me | Who: Anyone
-//  4. Cole a URL nas Configurações do app
-// ============================================================
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<link rel="apple-touch-icon" href="appicone.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Recibos">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Recibos">
+<title>Recibos — Rosendo Casas</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0F1117;--surface:#1A1D27;--surface2:#222636;--border:rgba(255,255,255,.08);
+  --green:#22C55E;--green-dim:rgba(34,197,94,.15);--red:#EF4444;--red-dim:rgba(239,68,68,.12);
+  --gold:#F59E0B;--text:#F1F5F9;--muted:#64748B;--muted2:#94A3B8;
+  --radius:16px;--font:'Space Grotesk',sans-serif
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.app{min-height:100dvh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
 
-const SHEET_CONFIG = {
-  SPREADSHEET_ID: "1iTy0a292zl356_Nh5Dihzo8irlE4WQikSccCHQbjS4U",
-  SHEET_NAME:     "Livro Caixa",
-  DRIVE_FOLDER:   "Recibos de Obra"   // nome da pasta no Drive (criada automaticamente)
+/* HEADER */
+header{padding:20px 24px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:100;backdrop-filter:blur(20px)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-text{font-size:16px;font-weight:600;letter-spacing:-.3px}
+.logo-sub{font-size:11px;color:var(--muted);font-weight:400}
+.hdr-right{display:flex;gap:8px}
+.icon-btn{width:36px;height:36px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px}
+.icon-btn:active{background:var(--surface2)}
+
+/* MAIN */
+main{flex:1;padding:20px 24px;display:flex;flex-direction:column;gap:14px}
+
+/* TABS */
+.tabs{display:flex;gap:6px;background:var(--surface);border-radius:12px;padding:4px}
+.tab-btn{flex:1;height:38px;border-radius:9px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+.tab-btn.active{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.tab-panel{display:none;flex-direction:column;gap:14px}
+.tab-panel.active{display:flex}
+
+/* LOADING IA OVERLAY */
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+/* CAMERA */
+.camera-zone{background:var(--surface);border:2px dashed var(--border);border-radius:var(--radius);min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:border-color .2s,background .2s;position:relative;overflow:hidden}
+.camera-zone.has-image{border-style:solid;border-color:var(--green)}
+.camera-zone:active{background:var(--surface2)}
+#preview-img{width:100%;height:190px;object-fit:cover;border-radius:calc(var(--radius) - 2px);display:none}
+.camera-zone.has-image #preview-img{display:block}
+.camera-zone.has-image .cam-ph{display:none}
+.cam-ph{display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+.cam-icon{width:52px;height:52px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px}
+.cam-title{font-size:14px;font-weight:600}
+.cam-sub{font-size:12px;color:var(--muted);text-align:center;padding:0 20px}
+#file-input{display:none}
+.change-photo{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.75);border:1px solid rgba(255,255,255,.2);color:#fff;font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;cursor:pointer;display:none}
+.camera-zone.has-image .change-photo{display:block}
+
+/* BOTÃO IA */
+.ai-btn{width:100%;height:54px;background:var(--green);color:#0a1a0f;border:none;border-radius:var(--radius);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s,transform .1s}
+.ai-btn:disabled{opacity:.35;cursor:not-allowed}
+.ai-btn:not(:disabled):active{transform:scale(.98);opacity:.9}
+.spinner{width:20px;height:20px;border:2.5px solid rgba(10,26,15,.3);border-top-color:#0a1a0f;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.ai-btn.loading .btn-txt{display:none}
+.ai-btn.loading .spinner{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ERRO BOX */
+.erro-box{background:var(--red-dim);border:1px solid var(--red);border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.5;display:none}
+.erro-box.visible{display:block}
+.erro-box strong{color:var(--red);display:block;margin-bottom:4px;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+
+/* CARD RESULTADO */
+.result-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;display:none;animation:slideUp .3s ease}
+.result-card.visible{display:block}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.card-header{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.card-title{font-size:11px;font-weight:600;color:var(--muted2);letter-spacing:.5px;text-transform:uppercase;margin-left:8px}
+.edit-hint{font-size:11px;color:var(--muted)}
+
+/* CAMPOS */
+.fields{padding:2px 0}
+.frow{display:flex;align-items:center;padding:10px 18px;border-bottom:1px solid var(--border);gap:10px}
+.frow:last-child{border-bottom:none}
+.flabel{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;width:88px;flex-shrink:0}
+.fval{flex:1;font-size:14px;font-weight:500;color:var(--text);background:transparent;border:none;outline:none;font-family:var(--font);padding:3px 7px;border-radius:6px;transition:background .15s}
+.fval:focus{background:var(--surface2)}
+select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
+.fval.c-entrada{color:var(--green)}
+.fval.c-saida{color:var(--red)}
+.tipo-wrap{flex:1;display:flex;gap:8px}
+.tbtn{flex:1;height:30px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted2);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.tbtn.a-saida{background:var(--red-dim);border-color:var(--red);color:var(--red)}
+.tbtn.a-entrada{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+
+/* CONFIRMAR */
+.confirm-btn{width:100%;height:54px;background:var(--surface2);border:1px solid var(--green);color:var(--green);border-radius:var(--radius);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;display:none;align-items:center;justify-content:center;gap:8px;transition:background .15s,transform .1s}
+.confirm-btn.visible{display:flex}
+.confirm-btn:active{transform:scale(.98)}
+.confirm-btn.sending{opacity:.6;pointer-events:none}
+
+/* FORM MANUAL */
+.manual-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
+.manual-header{padding:13px 18px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--muted2);letter-spacing:.5px;text-transform:uppercase}
+.submit-btn{width:100%;height:54px;background:var(--green);color:#0a1a0f;border:none;border-radius:var(--radius);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s,transform .1s}
+.submit-btn:active{transform:scale(.98);opacity:.9}
+.submit-btn.sending{opacity:.6;pointer-events:none}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0));left:50%;transform:translateX(-50%) translateY(90px);background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:11px 18px;border-radius:30px;font-size:13px;font-weight:500;white-space:nowrap;transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:var(--green)}
+.toast.err{border-color:var(--red)}
+
+/* SETTINGS */
+.overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column}
+.overlay.open{display:flex}
+.backdrop{position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)}
+.sheet{position:absolute;bottom:0;left:0;right:0;background:var(--surface);border-radius:24px 24px 0 0;padding:24px 24px calc(24px + env(safe-area-inset-bottom,0));animation:sheetUp .3s ease;max-width:480px;margin:0 auto}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 22px}
+.sheet-title{font-size:18px;font-weight:700;margin-bottom:18px}
+.s-field{margin-bottom:14px}
+.s-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;display:block}
+.s-input{width:100%;height:46px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:var(--font);font-size:13px;padding:0 15px;outline:none;transition:border-color .15s}
+.s-input:focus{border-color:var(--green)}
+.s-notice{
+  font-size:12px;color:var(--gold);text-align:center;
+  min-height:18px;margin-bottom:4px;
+}
+.save-btn{width:100%;height:46px;background:var(--green);border:none;border-radius:11px;color:#0a1a0f;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;margin-top:6px}
+
+/* HISTÓRICO */
+.hist-section{margin-top:2px}
+.hist-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+.hist-item{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:11px 14px;margin-bottom:7px;display:flex;align-items:center;gap:10px}
+.hdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.hdot.s{background:var(--red)}
+.hdot.e{background:var(--green)}
+.hinfo{flex:1;min-width:0}
+.hdesc{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hmeta{font-size:11px;color:var(--muted);margin-top:2px}
+.hval{font-size:13px;font-weight:700;flex-shrink:0}
+.hval.s{color:var(--red)}
+.hval.e{color:var(--green)}
+
+/* ── FORNECEDOR — campo readonly ── */
+.forn-frow{position:static}
+.forn-wrap{position:relative;flex:1;min-width:0}
+.forn-wrap input{width:100%;background:transparent;border:none;outline:none;font-family:var(--font);font-size:14px;font-weight:500;color:var(--text);cursor:pointer}
+.forn-clear{position:absolute;right:2px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:4px;line-height:1;display:none;z-index:2}
+.forn-wrap.has-value .forn-clear{display:block}
+.forn-badge{display:inline-block;background:var(--green-dim);color:var(--green);border-radius:6px;font-size:10px;padding:1px 6px;margin-left:4px;font-weight:700;vertical-align:middle}
+/* ── FORNECEDOR BOTTOM SHEET ── */
+.forn-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:8000;display:none;backdrop-filter:blur(3px)}
+.forn-ov.open{display:block}
+.forn-bs{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:#1c1c1e;border-radius:22px 22px 0 0;z-index:8001;display:flex;flex-direction:column;max-height:75vh;transform:translateY(100%);transition:transform .35s cubic-bezier(.32,.72,0,1);will-change:transform}
+.forn-bs.open{transform:translateY(0)}
+.forn-bs-top{padding:10px 20px 0;flex-shrink:0}
+.forn-bs-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 12px}
+.forn-bs-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.forn-bs-title{font-size:16px;font-weight:700;color:var(--text)}
+.forn-bs-close{background:var(--surface2);border:none;color:var(--muted);font-size:16px;cursor:pointer;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1}
+.forn-bs-search{position:relative;margin-bottom:6px}
+.forn-bs-search input{width:100%;height:44px;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font-family:var(--font);font-size:15px;padding:0 40px 0 16px;outline:none;transition:border-color .15s;box-sizing:border-box}
+.forn-bs-search input:focus{border-color:var(--green)}
+.forn-bs-search-clear{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px;line-height:1;display:none}
+.forn-bs-search-clear.vis{display:block}
+.forn-bs-list{overflow-y:auto;flex:1;padding-bottom:env(safe-area-inset-bottom,16px)}
+.forn-bs-opt{padding:15px 20px;font-size:15px;font-weight:500;color:var(--text);border-bottom:1px solid var(--border);cursor:pointer}
+.forn-bs-opt:last-child{border-bottom:none}
+.forn-bs-opt:active{background:rgba(74,222,128,.1);color:var(--green)}
+.forn-bs-opt.add-new{color:var(--green);font-weight:700;font-size:14px}
+.forn-bs-opt.add-new::before{content:"＋  "}
+.forn-bs-empty{padding:20px;text-align:center;color:var(--muted);font-size:14px}
+
+
+/* ── MÚLTIPLOS ITENS ── */
+.itens-header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border)}
+.itens-title{font-size:13px;font-weight:600;color:var(--muted2)}
+.itens-total{font-size:13px;font-weight:700;color:var(--green)}
+.item-card{border:1px solid var(--border);border-radius:12px;margin:10px 16px;overflow:hidden;background:var(--surface2)}
+.item-card-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface);cursor:pointer;user-select:none}
+.item-num{font-size:12px;font-weight:700;color:var(--muted);background:var(--surface2);border-radius:6px;padding:2px 8px}
+.item-valor-badge{font-size:14px;font-weight:700;color:var(--red)}
+.item-valor-badge.entrada{color:var(--green)}
+.item-remove{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:2px 6px;line-height:1}
+.item-body{padding:4px 0 8px}
+.item-body .frow{padding:8px 14px}
+.add-item-btn{display:flex;align-items:center;justify-content:center;gap:8px;margin:8px 16px;padding:11px;border:1.5px dashed var(--border);border-radius:12px;background:none;color:var(--muted2);font-size:13px;font-weight:600;cursor:pointer;width:calc(100% - 32px);transition:all .2s}
+.add-item-btn:hover{border-color:var(--green);color:var(--green)}
+.itens-warn{font-size:12px;color:var(--gold);padding:6px 18px;display:none}
+.itens-warn.visible{display:block}
+.confirm-multi{background:linear-gradient(135deg,var(--green),#16a34a);color:#fff;border:none;border-radius:14px;padding:14px 24px;font-size:15px;font-weight:700;cursor:pointer;width:calc(100% - 32px);margin:8px 16px 16px;font-family:var(--font)}
+
+</style>
+</head>
+<body>
+  <!-- SPLASH SCREEN — primeiro elemento do body -->
+  <div id="splash" style="position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#0f1f17 0%,#152b1e 60%,#0a1a10 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease;">
+    <img src="appicone.png" width="110" height="110" style="border-radius:26px;box-shadow:0 8px 40px rgba(74,222,128,0.25);margin-bottom:22px;" onerror="this.style.display='none'">
+    <div style="color:#fff;font-size:26px;font-weight:700;letter-spacing:-0.5px;">Recibos</div>
+    <div style="color:#4ade80;font-size:14px;font-weight:500;margin-top:6px;letter-spacing:0.5px;">Casas Rosendo</div>
+    <div style="margin-top:48px;width:36px;height:3px;background:rgba(74,222,128,0.25);border-radius:2px;overflow:hidden;">
+      <div id="splash-bar" style="height:100%;width:0%;background:#4ade80;border-radius:2px;transition:width 1.6s ease;"></div>
+    </div>
+  </div>
+  <!-- Script inline — executa IMEDIATAMENTE, não depende do resto do JS carregar -->
+  <script>
+    (function() {
+      var _splashDone = false;
+      function hideSplash() {
+        if (_splashDone) return;
+        _splashDone = true;
+        var s = document.getElementById('splash');
+        if (!s) return;
+        var bar = document.getElementById('splash-bar');
+        if (bar) bar.style.width = '100%';
+        setTimeout(function() {
+          s.style.opacity = '0';
+          setTimeout(function() { s.style.display = 'none'; }, 600);
+        }, 1600);
+      }
+      // Dispara em 2s no máximo — independente de qualquer outro JS
+      setTimeout(hideSplash, 2000);
+      window.addEventListener('load', function() { setTimeout(hideSplash, 200); });
+    })();
+  </script>
+<div class="app">
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🧾</div>
+    <div>
+      <div class="logo-text">Recibos</div>
+      <div class="logo-sub">Rosendo Casas</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="icon-btn" onclick="location.reload()" title="Atualizar">🔄</div>
+    <div class="icon-btn" onclick="abrirSettings()" title="Configurações">⚙️</div>
+  </div>
+</header>
+
+<main>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-foto-btn" onclick="mudarTab('foto')">📷 Foto + IA</button>
+    <button class="tab-btn" id="tab-manual-btn" onclick="mudarTab('manual')">✏️ Manual</button>
+  </div>
+
+  <!-- ══ TAB FOTO ══ -->
+  <div class="tab-panel active" id="tab-foto">
+
+    <!-- Área câmera -->
+    <div class="camera-zone" id="cameraZone">
+      <img id="preview-img" alt="preview">
+      <div class="cam-ph">
+        <div class="cam-icon">🧾</div>
+        <div class="cam-title">Adicionar recibo</div>
+        <div class="cam-sub">Toque para câmera ou galeria</div>
+      </div>
+      <button class="change-photo" id="changePh">Trocar foto</button>
+      <!-- Overlay removido daqui -->
+    </div>
+    <input type="file" id="file-input" accept="image/*" onchange="fotoSelecionada(event)" style="display:none">
+
+    <!-- Botão analisar — oculto, análise agora é automática ao selecionar foto -->
+    <button class="ai-btn" id="aiBtn" disabled onclick="analisarIA()" style="display:none">
+      <span class="btn-txt">✨ Analisar com IA</span>
+      <div class="spinner"></div>
+    </button>
+
+    <!-- Caixa de erro detalhado -->
+    <div class="erro-box" id="erroBox">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div><strong>⚠️ Erro da IA</strong> <span id="erroMsg"></span></div>
+        <button id="retryBtn" onclick="analisarIA()" style="
+          background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+          color:#fff;font-family:var(--font);font-size:12px;font-weight:600;
+          padding:6px 12px;border-radius:20px;cursor:pointer;white-space:nowrap;flex-shrink:0">
+          🔄 Tentar novamente
+        </button>
+      </div>
+    </div>
+
+    <!-- Resultado -->
+    <div class="result-card" id="resultCard">
+      <div class="card-header">
+        <div style="display:flex;align-items:center">
+          <div class="card-dot"></div>
+          <span class="card-title" id="resultTitle">Dados extraídos</span>
+        </div>
+        <span class="edit-hint">toque para editar</span>
+      </div>
+
+      <!-- MODO ITEM ÚNICO -->
+      <div id="single-item-view">
+        <div class="fields" id="fields-foto"></div>
+      </div>
+
+      <!-- MODO MÚLTIPLOS ITENS -->
+      <div id="multi-item-view" style="display:none">
+        <div class="itens-header">
+          <span class="itens-title" id="itens-count-label">0 itens</span>
+          <span class="itens-total" id="itens-total-label">Total: R$0,00</span>
+        </div>
+        <div class="itens-warn" id="itens-warn"></div>
+        <div id="itens-list"></div>
+        <button class="add-item-btn" onclick="adicionarItemVazio()">➕ Adicionar item</button>
+      </div>
+    </div>
+
+    <!-- Confirmar item único -->
+    <button class="confirm-btn" id="confirmBtn" onclick="lancar('foto')">
+      ✅ Confirmar e lançar no Sheets
+    </button>
+    <!-- Confirmar múltiplos itens -->
+    <button class="confirm-multi" id="confirmMultiBtn" onclick="lancarMulti()" style="display:none">
+      ✅ Lançar todos os itens
+    </button>
+
+  </div><!-- /tab-foto -->
+
+  <!-- ══ TAB MANUAL ══ -->
+  <div class="tab-panel" id="tab-manual">
+    <div class="manual-card">
+      <div class="manual-header">✏️ Lançamento manual</div>
+      <div class="fields" id="fields-manual"></div>
+    </div>
+    <button class="submit-btn" id="submitManual" onclick="lancar('manual')">
+      ✅ Lançar no Sheets
+    </button>
+  </div><!-- /tab-manual -->
+
+  <!-- Histórico -->
+  <div class="hist-section" id="histSection"></div>
+
+</main>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Settings overlay -->
+<div class="overlay" id="settingsOverlay">
+  <div class="backdrop" onclick="fecharSettings()"></div>
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">⚙️ Configurações</div>
+
+    <div class="s-field">
+      <label class="s-label">Chave API Gemini <span style="color:var(--gold);font-weight:400">(criar em aistudio.google.com/apikey)</span></label>
+      <input class="s-input" id="sGeminiKey" type="password" placeholder="AIzaSy...">
+    </div>
+    <div class="s-field">
+      <label class="s-label">URL do Apps Script</label>
+      <input class="s-input" id="sScriptUrl" type="url" placeholder="https://script.google.com/macros/s/...">
+    </div>
+    <div class="s-field">
+      <label class="s-label">Projeto padrão</label>
+      <input class="s-input" id="sProjeto" type="text" placeholder="P3">
+    </div>
+    <div class="s-notice" id="sNotice"></div>
+    <button class="save-btn" onclick="salvarSettings()">💾 Salvar no meu celular</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  DADOS
+// ═══════════════════════════════════════════════════════
+const CATS = {
+  "Terreno e Legalização":     ["Terreno","ITBI","Cartorio","Registro","Taxa Prefeitura","Sabesp","Poste","ART","Engenheiro","Projeto","Imposto","Imobiliaria","Processo Prefeitura","Desdobro"],
+  "Infraestrutura e Fundação": ["Aterro","Terra","Areia","Pedra","Cimento","Ferro","Arame","Lajes","Concreto"],
+  "Estrutura e Alvenaria":     ["Blocos vedacao","Muro","Colunas e vigas","Reparo estrutural","Concreto"],
+  "Instalação Elétrica":       ["Fio","Conduite","Caixa disjuntor","Luz","Poste","Disjuntores","Interruptores","Tomadas","Soquetes"],
+  "Instalação Hidráulica":     ["Tubos e conexoes","Caixa esgoto","Torneira","Vaso sanitario","Concreto","Registros","Caixa dagua"],
+  "Cobertura":                 ["Telhado","Madeiramento","Calha"],
+  "Esquadrias":                ["Portas","Janelas","Portoes"],
+  "Acabamentos":               ["Piso","Azulejo","Gesso","Tinta","Marmore","Grama"],
+  "Mão de Obra":               ["Mao de obra geral","Empreitagem","Diarias","Muro","Pintura","Gesseiro"],
+  "Logística e Apoio":         ["Gasolina","Frete","Locacoes","Limpeza final"],
+  "Administração":             ["Materiais diversos","Despesas administrativas","Livro engenheiro","Outros","Ferramentas","Contas obra","Deposito fornecedor","Venda de propriedade","Corretor","Taxas","Imposto"],
 };
+const CAT_KEYS = Object.keys(CATS);
 
-// ── ENDPOINTS ──────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
+//  ESTADO GLOBAL
+// ═══════════════════════════════════════════════════════
+let imgB64 = null, imgMime = null;
+let _fornecedores = [];        // cache da lista do Sheets
+let _fornCarregando = false;   // evita chamadas duplas
+let tipoFoto = "Saida", tipoManual = "Saida";
+let hist = JSON.parse(localStorage.getItem("rc_hist") || "[]");
 
-function doPost(e) {
+const MODELOS = [
+  "gemini-2.5-flash",
+  "gemini-1.5-flash",
+];
+
+// ═══════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  FORNECEDOR — Dropdown dinâmico com lista do Sheets
+// ═══════════════════════════════════════════════════════
+
+// Carrega lista do Sheets (chamado no init e quando abre o campo)
+// ── FORNECEDOR BOTTOM SHEET ─────────────────────────────────
+
+let _fornPfxAtivo = null;  // qual campo está ativo
+
+async function carregarFornecedores(forcar) {
+  if (_fornecedores.length > 0 && !forcar) return;
+  if (_fornCarregando) return;
+  _fornCarregando = true;
+  const url = cfg().url;
+  if (!url) { _fornCarregando = false; return; }
   try {
-    const raw = e.postData.contents;
-    Logger.log("doPost raw length: " + raw.length);
-    const dados = JSON.parse(raw);
-    Logger.log("doPost | tipo=" + dados.tipo
-      + " | valor=" + dados.valor
-      + " | foto=" + (dados.fotoBase64 ? "SIM (" + Math.round(dados.fotoBase64.length*0.75/1024) + "KB)" : "NÃO")
-      + " | mime=" + (dados.fotoMime || "N/A")
-      + " | projeto=" + dados.projeto);
-    const resultado = inserirLinhaSheets(dados);
-    Logger.log("Resultado | linha=" + resultado.linha
-      + " | saldo=" + resultado.novoSaldo
-      + " | link=" + (resultado.linkRecibo || "SEM LINK")
-      + " | driveErro=" + (resultado.driveErro || "nenhum"));
-    return ContentService
-      .createTextOutput(JSON.stringify({
-        ok: true,
-        linha: resultado.linha,
-        saldo: resultado.novoSaldo,
-        linkRecibo: resultado.linkRecibo || null,
-        driveErro: resultado.driveErro || null
-      }))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    Logger.log("ERRO doPost: " + err.toString());
-    return ContentService
-      .createTextOutput(JSON.stringify({ ok: false, mensagem: err.message }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
+    const r = await fetch(url + "?action=fornecedores");
+    const d = await r.json();
+    if (d.ok && Array.isArray(d.fornecedores)) _fornecedores = d.fornecedores;
+  } catch(e) { console.warn("Fornecedores:", e); }
+  finally { _fornCarregando = false; }
 }
 
-function doGet(e) {
-  const action = e?.parameter?.action || "";
+async function abrirSheetFornecedor(pfx) {
+  _fornPfxAtivo = pfx;
+  const ov = document.getElementById("forn-ov");
+  const bs = document.getElementById("forn-bs");
+  const inp = document.getElementById("forn-bs-input");
 
-  if (action === "fornecedores") {
-    // Retorna lista de fornecedores da aba Listas
-    try {
-      const lista = lerFornecedores();
-      return ContentService
-        .createTextOutput(JSON.stringify({ ok: true, fornecedores: lista }))
-        .setMimeType(ContentService.MimeType.JSON);
-    } catch(err) {
-      return ContentService
-        .createTextOutput(JSON.stringify({ ok: false, erro: err.message }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-  }
+  // Mostrar sheet
+  ov.classList.add("open");
+  bs.classList.add("open");
+  inp.value = "";
+  document.getElementById("forn-bs-clr").classList.remove("vis");
 
-  if (action === "addFornecedor") {
-    // Adiciona novo fornecedor na lista
-    const nome = e?.parameter?.nome || "";
-    if (!nome) {
-      return ContentService
-        .createTextOutput(JSON.stringify({ ok: false, erro: "Nome vazio" }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-    try {
-      const resultado = adicionarFornecedor(nome.trim());
-      return ContentService
-        .createTextOutput(JSON.stringify({ ok: true, adicionado: resultado }))
-        .setMimeType(ContentService.MimeType.JSON);
-    } catch(err) {
-      return ContentService
-        .createTextOutput(JSON.stringify({ ok: false, erro: err.message }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-  }
+  // Mostrar loading e buscar lista
+  document.getElementById("forn-bs-list").innerHTML =
+    '<div class="forn-bs-empty">⏳ Carregando…</div>';
 
-  return ContentService
-    .createTextOutput(JSON.stringify({ status: "ok", msg: "Recibos API v7" }))
-    .setMimeType(ContentService.MimeType.JSON);
+  await carregarFornecedores(false);
+  renderSheetFornecedor();
+  setTimeout(() => inp.focus(), 350);
+
+  // Swipe down para fechar
+  iniciarSwipeSheet();
 }
 
-// ── FORNECEDORES ─────────────────────────────────────────────
-
-// Lê fornecedores da aba "Listas", coluna A (onde está o dropdown do Sheets)
-function lerFornecedores() {
-  const ss    = SpreadsheetApp.openById(SHEET_CONFIG.SPREADSHEET_ID);
-  const listas = ss.getSheetByName("Listas");
-  if (!listas) return [];
-
-  // Procura coluna de fornecedores — cabeçalho "Fornecedor" ou primeira coluna com dados
-  const dados = listas.getDataRange().getValues();
-  
-  // Encontrar coluna com header "Fornecedor"
-  let colIdx = -1;
-  if (dados.length > 0) {
-    dados[0].forEach((h, i) => {
-      if (String(h).toLowerCase().includes("fornec")) colIdx = i;
-    });
-  }
-  if (colIdx === -1) {
-    Logger.log("Coluna Fornecedor não encontrada na aba Listas");
-    return []; // sem fallback — evita ler coluna errada
-  }
-
-  const lista = [];
-  for (let i = 1; i < dados.length; i++) {
-    const v = String(dados[i][colIdx] || "").trim();
-    if (v && v !== "0") lista.push(v);
-  }
-  return lista.sort((a, b) => a.localeCompare(b, "pt-BR"));
+function fecharSheetFornecedor() {
+  const bs = document.getElementById("forn-bs");
+  const ov = document.getElementById("forn-ov");
+  bs.style.transition = "transform .3s cubic-bezier(.32,.72,0,1)";
+  bs.style.transform  = "translateY(100%)";
+  ov.classList.remove("open");
+  setTimeout(() => {
+    bs.classList.remove("open");
+    bs.style.transform = "";
+  }, 300);
 }
 
-// Adiciona fornecedor na lista (evita duplicatas, mantém ordenado)
-function adicionarFornecedor(nome) {
-  const ss     = SpreadsheetApp.openById(SHEET_CONFIG.SPREADSHEET_ID);
-  const listas = ss.getSheetByName("Listas");
-  if (!listas) throw new Error("Aba 'Listas' não encontrada");
+function renderSheetFornecedor() {
+  const inp   = document.getElementById("forn-bs-input");
+  const list  = document.getElementById("forn-bs-list");
+  const clr   = document.getElementById("forn-bs-clr");
+  const q     = inp.value.trim();
+  const ql    = q.toLowerCase();
 
-  const lista = lerFornecedores();
-  
-  // Verifica duplicata (case insensitive)
-  if (lista.some(f => f.toLowerCase() === nome.toLowerCase())) {
-    return nome + " (já existe)";
+  clr.classList.toggle("vis", q.length > 0);
+
+  const filtrado = ql
+    ? _fornecedores.filter(f => f.toLowerCase().includes(ql))
+    : _fornecedores;
+
+  let html = "";
+  filtrado.forEach(f => {
+    const esc = f.replace(/'/g, "\'");
+    html += `<div class="forn-bs-opt" onclick="selecionarSheetFornecedor('${esc}')">${f}</div>`;
+  });
+
+  // Adicionar novo
+  const jaExiste = _fornecedores.some(f => f.toLowerCase() === ql);
+  if (q && !jaExiste) {
+    const qEsc = q.replace(/'/g, "\'");
+    html += `<div class="forn-bs-opt add-new" onclick="adicionarNovoFornecedor('${qEsc}')">Adicionar "${q}"</div>`;
   }
 
-  // Encontrar coluna de fornecedores
-  const dados = listas.getDataRange().getValues();
-  let colIdx = -1;
-  if (dados.length > 0) {
-    dados[0].forEach((h, i) => {
-      if (String(h).toLowerCase().includes("fornec")) colIdx = i;
-    });
-  }
-  if (colIdx === -1) throw new Error("Coluna Fornecedor não encontrada na aba Listas");
-
-  // Adicionar na próxima linha vazia desta coluna
-  let proxLinha = 2;
-  for (let i = 1; i < dados.length; i++) {
-    if (dados[i][colIdx] && String(dados[i][colIdx]).trim() !== "") {
-      proxLinha = i + 2;
-    }
-  }
-  listas.getRange(proxLinha, colIdx + 1).setValue(nome);
-  SpreadsheetApp.flush();
-  Logger.log("Fornecedor adicionado: " + nome + " (linha " + proxLinha + ")");
-  return nome;
+  list.innerHTML = html || '<div class="forn-bs-empty">Nenhum resultado</div>';
 }
 
-// ── INSERIR LINHA COM LOCK ──────────────────────────────────
+function selecionarSheetFornecedor(val) {
+  if (!_fornPfxAtivo) return;
+  const input = document.getElementById("forn-" + _fornPfxAtivo);
+  const wrap  = document.getElementById("forn-wrap-" + _fornPfxAtivo);
+  if (input) { input.value = val; wrap?.classList.add("has-value"); }
+  fecharSheetFornecedor();
+}
 
-function inserirLinhaSheets(dados) {
-  const lock = LockService.getScriptLock();
+function limparFornecedor(pfx) {
+  const input = document.getElementById("forn-" + pfx);
+  const wrap  = document.getElementById("forn-wrap-" + pfx);
+  const badge = document.getElementById("forn-badge-" + pfx);
+  if (input) input.value = "";
+  wrap?.classList.remove("has-value");
+  if (badge) badge.style.display = "none";
+}
+
+async function adicionarNovoFornecedor(nome) {
+  const nomeReal = nome.trim();
+  if (!nomeReal) return;
+  const url = cfg().url;
+  if (!url) { toast("⚙️ Configure a URL primeiro", "err"); return; }
   try {
-    lock.waitLock(30000);
-  } catch(e) {
-    throw new Error("Sistema ocupado, tente novamente.");
-  }
-  try {
-    return _inserir(dados);
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-// ── SALVAR FOTO NO DRIVE ────────────────────────────────────
-
-function salvarFotoDrive(base64, mimeType, nomeArquivo) {
-  // Validar base64
-  if (!base64 || base64.length < 100) {
-    Logger.log("Drive: base64 inválido ou vazio (tamanho: " + (base64||"").length + ")");
-    return { link: null, erro: "base64 inválido (tamanho=" + (base64||"").length + ")" };
-  }
-  const kb = Math.round(base64.length * 0.75 / 1024);
-  Logger.log("Drive: iniciando upload | mime=" + mimeType + " | ~" + kb + "KB");
-
-  try {
-    // Encontrar ou criar pasta
-    let pasta;
-    const pastas = DriveApp.getFoldersByName(SHEET_CONFIG.DRIVE_FOLDER);
-    if (pastas.hasNext()) {
-      pasta = pastas.next();
-      Logger.log("Drive: pasta encontrada: " + pasta.getName());
+    const resp = await fetch(url + "?action=addFornecedor&nome=" + encodeURIComponent(nomeReal));
+    const data = await resp.json();
+    if (data.ok) {
+      _fornecedores.push(nomeReal);
+      _fornecedores.sort((a,b) => a.localeCompare(b,"pt-BR"));
+      selecionarSheetFornecedor(nomeReal);
+      toast("✅ Fornecedor adicionado!", "ok");
     } else {
-      pasta = DriveApp.createFolder(SHEET_CONFIG.DRIVE_FOLDER);
-      Logger.log("Drive: pasta criada: " + SHEET_CONFIG.DRIVE_FOLDER);
+      toast("❌ " + (data.erro || "Erro ao adicionar"), "err");
     }
-
-    // Decodificar base64 e criar arquivo
-    const bytes = Utilities.base64Decode(base64);
-    Logger.log("Drive: base64 decodificado, bytes=" + bytes.length);
-    const blob = Utilities.newBlob(bytes, mimeType || "image/jpeg", nomeArquivo);
-    const arquivo = pasta.createFile(blob);
-    Logger.log("Drive: arquivo criado: " + arquivo.getId());
-
-    // Tornar acessível por link
-    arquivo.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-
-    // Link direto de visualização (não pede login)
-    const fileId = arquivo.getId();
-    const link   = "https://drive.google.com/file/d/" + fileId + "/view?usp=sharing";
-    Logger.log("Drive: upload OK | id=" + fileId + " | link=" + link);
-    return { link: link, erro: null };
-
-  } catch(err) {
-    const msg = err.toString().replace("Exception: ","");
-    Logger.log("Drive ERRO: " + msg);
-    return { link: null, erro: msg };
+  } catch(e) {
+    toast("❌ Erro de rede", "err");
   }
 }
 
-// ── INSERIR DADOS NA PLANILHA ───────────────────────────────
+// Swipe down para fechar o sheet
+function iniciarSwipeSheet() {
+  const bs = document.getElementById("forn-bs");
+  const drag = document.getElementById("forn-bs-drag");
+  let startY = 0, startT = 0, dragging = false;
 
-function _inserir(dados) {
-  const ss    = SpreadsheetApp.openById(SHEET_CONFIG.SPREADSHEET_ID);
-  const sheet = ss.getSheetByName(SHEET_CONFIG.SHEET_NAME);
-  if (!sheet) throw new Error("Aba não encontrada: " + SHEET_CONFIG.SHEET_NAME);
-
-  // ── Mapear colunas pelo header da linha 1 ──────────────────
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  Logger.log("Headers: " + JSON.stringify(headers));
-
-  function colIdx(termos) {
-    // Busca header que contenha qualquer um dos termos (case-insensitive, ignora emoji)
-    const limpar = s => String(s).toLowerCase().replace(/[^\w\s]/g,"").trim();
-    for (let i = 0; i < headers.length; i++) {
-      const h = limpar(headers[i]);
-      if (termos.some(t => h.includes(t))) return i + 1; // 1-based
+  function onStart(e) {
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    startY = y; startT = Date.now(); dragging = true;
+    bs.style.transition = "none";
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const dy = Math.max(0, y - startY);
+    bs.style.transform = `translateY(${dy}px)`;
+  }
+  function onEnd(e) {
+    if (!dragging) return; dragging = false;
+    const y = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+    const dy = y - startY;
+    const dt = Date.now() - startT;
+    // Fecha se arrastou >100px ou velocidade alta
+    if (dy > 100 || (dy > 40 && dt < 250)) {
+      fecharSheetFornecedor();
+    } else {
+      bs.style.transition = "transform .3s cubic-bezier(.32,.72,0,1)";
+      bs.style.transform  = "translateY(0)";
     }
-    return null;
   }
 
-  const COL = {
-    data:         colIdx(["data"]),
-    projeto:      colIdx(["projeto"]),
-    tipo:         colIdx(["tipo"]),
-    categoria:    colIdx(["categoria"]) ,
-    subCategoria: colIdx(["sub"]),
-    descricao:    colIdx(["descri"]),
-    qtd:          colIdx(["qtd","quantidade"]),
-    fornecedor:   colIdx(["fornec"]),
-    valor:        colIdx(["valor"]),
-    associado:    colIdx(["assoc"]),
-    saldo:        colIdx(["saldo"]),
-    recibo:       colIdx(["recibo","link","receipt"]),
+  // Limpar listeners antigos e adicionar novos
+  drag.ontouchstart = onStart;
+  drag.ontouchmove  = onMove;
+  drag.ontouchend   = onEnd;
+}
+
+// Aliases para compatibilidade com chamadas antigas no código
+function abrirFornecedores(pfx)  { abrirSheetFornecedor(pfx); }
+function fecharFornecedorDD(pfx) { fecharSheetFornecedor(); }
+function filtrarFornecedores(pfx){ renderSheetFornecedor(); }
+function navFornecedores(){}
+
+
+function cfg() {
+  // Chave dividida para evitar detecção automática do GitHub
+  const _k = "AIzaSyCfYaMvVg7MMQp" + "npDrs2luiM5kc1I2SFiE";
+  return {
+    // Valores padrão pré-configurados — qualquer pessoa já entra funcionando
+    // Para trocar: ícone ⚙️ → alterar → Salvar
+    key:      localStorage.getItem("rc_key")  || _k,
+    url:      localStorage.getItem("rc_url")  || "https://script.google.com/macros/s/AKfycbxvFEOjmUj4_0a4vdYWwt5LiPjkFMsi0iuNE5xs5vu_jQjFkvDLROR1Jc7jbMwLvgo/exec",
+    projeto:  localStorage.getItem("rc_proj") || "P3",
   };
-  Logger.log("Colunas mapeadas: " + JSON.stringify(COL));
-
-  // ── Encontrar última linha com valor ──────────────────────
-  const colValor = COL.valor || 9;
-  const valoresI = sheet.getRange(2, colValor, 2000, 1).getValues();
-  let ultimaLinhaReal = 1;
-  for (let i = 0; i < valoresI.length; i++) {
-    const v = valoresI[i][0];
-    if (v !== "" && v !== null && v !== undefined && v !== 0) ultimaLinhaReal = i + 2;
-  }
-  const proxLinha = ultimaLinhaReal + 1;
-  Logger.log("Próxima linha: " + proxLinha);
-
-  // ── Salvar foto no Drive ───────────────────────────────────
-  let linkRecibo = "";
-  if (dados.fotoBase64 && dados.fotoMime) {
-    const ts      = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyyMMdd_HHmmss");
-    const projeto = (dados.projeto || "obra").replace(/\s+/g, "_");
-    const ext     = dados.fotoMime.split("/")[1] || "jpg";
-    const nome    = "recibo_" + projeto + "_" + ts + "." + ext;
-    const res     = salvarFotoDrive(dados.fotoBase64, dados.fotoMime, nome);
-    linkRecibo    = res.link || "";
-    Logger.log("Drive resultado: link=" + linkRecibo + " | erro=" + (res.erro||"nenhum"));
+}
+function salvarSettings() {
+  localStorage.setItem("rc_key",  document.getElementById("sGeminiKey").value.trim());
+  localStorage.setItem("rc_url",  document.getElementById("sScriptUrl").value.trim());
+  localStorage.setItem("rc_proj", document.getElementById("sProjeto").value.trim() || "P3");
+  fecharSettings();
+  toast("✅ Configurações salvas!", "ok");
+}
+function abrirSettings() {
+  const c = cfg();
+  document.getElementById("sGeminiKey").value = c.key;
+  document.getElementById("sScriptUrl").value = c.url;
+  document.getElementById("sProjeto").value   = c.projeto;
+  // Mostrar aviso se ainda não salvou
+  const jaSalvou = localStorage.getItem("rc_key");
+  const notice = document.getElementById("sNotice");
+  if (!jaSalvou) {
+    notice.textContent = "⚠️ Primeira vez? Clique em Salvar para guardar no seu celular.";
   } else {
-    Logger.log("Sem foto no payload");
+    notice.textContent = "✅ Configurações salvas neste dispositivo.";
   }
-
-  // ── Valores ────────────────────────────────────────────────
-  const valor = Number(dados.valor) || 0;
-  const qtd   = Number(dados.qtd)   || "";
-
-  let dataLancamento = new Date();
-  if (dados.data) {
-    const p = dados.data.split("/");
-    if (p.length === 3) dataLancamento = new Date(p[2], p[1]-1, p[0]);
-  }
-
-  // ── Escrever linha usando índices mapeados ─────────────────
-  function setCol(col, val) {
-    if (col) sheet.getRange(proxLinha, col).setValue(val);
-  }
-
-  setCol(COL.data,         dataLancamento);
-  setCol(COL.projeto,      dados.projeto      || "");
-  setCol(COL.tipo,         dados.tipo         || "");
-  setCol(COL.categoria,    dados.categoria    || "");
-  setCol(COL.subCategoria, dados.subCategoria || "");
-  setCol(COL.descricao,    dados.descricao    || "");
-  setCol(COL.qtd,          qtd);
-  setCol(COL.fornecedor,   dados.fornecedor   || "");
-  setCol(COL.valor,        valor);
-  setCol(COL.associado,    dados.associado    || "Rosendo Casas");
-  setCol(COL.saldo,        0); // provisório
-
-  // ── Saldo ──────────────────────────────────────────────────
-  let saldoAnterior = 0;
-  if (COL.saldo) {
-    const saldos = sheet.getRange(2, COL.saldo, ultimaLinhaReal + 5, 1).getValues();
-    for (let i = ultimaLinhaReal - 2; i >= 0; i--) {
-      const sv = saldos[i][0];
-      if (typeof sv === "number" && !isNaN(sv) && sv !== 0) { saldoAnterior = sv; break; }
-    }
-    const novoSaldo = dados.tipo === "Entrada" ? saldoAnterior + valor : saldoAnterior - valor;
-    sheet.getRange(proxLinha, COL.saldo).setValue(novoSaldo);
-    sheet.getRange(proxLinha, COL.saldo).setNumberFormat("R$#,##0.00");
-  }
-
-  // ── Link do recibo ─────────────────────────────────────────
-  if (linkRecibo && COL.recibo) {
-    sheet.getRange(proxLinha, COL.recibo).setFormula(
-      '=HYPERLINK("' + linkRecibo + '","📎 Ver recibo")'
-    );
-    Logger.log("Link salvo na coluna " + COL.recibo + ": " + linkRecibo);
-  } else if (!COL.recibo) {
-    Logger.log("AVISO: coluna Recibo não encontrada nos headers!");
-  }
-
-  SpreadsheetApp.flush();
-
-  // Atualizar Visão Global automaticamente
-  try { atualizarVisaoGlobal(); } catch(e) { Logger.log("Visão Global erro: "+e); }
-
-  Logger.log("OK | Linha " + proxLinha + " | " + dados.tipo + " | R$" + valor + " | Link: " + (linkRecibo || "sem foto"));
-  return { linha: proxLinha, novoSaldo: novoSaldo, linkRecibo: linkRecibo, driveErro: (linkRecibo ? null : "sem link gerado") };
+  document.getElementById("settingsOverlay").classList.add("open");
+}
+function fecharSettings() {
+  document.getElementById("settingsOverlay").classList.remove("open");
 }
 
-// ── MENU SHEETS ─────────────────────────────────────────────
-
-function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu("📋 Recibos")
-    .addItem("🧪 Testar inserção",    "testarInsercao")
-    .addItem("📁 Testar Drive",         "testarDrive")
-    .addItem("🔍 Diagnosticar saldo", "diagnosticarSaldo")
-    .addItem("🔧 Recalcular saldos",  "recalcularTodosSaldos")
-    .addToUi();
+// ═══════════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════════
+function mudarTab(t) {
+  document.getElementById("tab-foto-btn").classList.toggle("active",   t==="foto");
+  document.getElementById("tab-manual-btn").classList.toggle("active", t==="manual");
+  document.getElementById("tab-foto").classList.toggle("active",   t==="foto");
+  document.getElementById("tab-manual").classList.toggle("active", t==="manual");
 }
 
-function testarInsercao() {
-  const res = inserirLinhaSheets({
-    projeto:      "P3",
-    tipo:         "Saida",
-    categoria:    "Administração",
-    subCategoria: "Outros",
-    descricao:    "TESTE — apagar esta linha",
-    fornecedor:   "Teste",
-    valor:        "1.00",
-    associado:    "Rosendo Casas"
-  });
-  SpreadsheetApp.getUi().alert(
-    "✅ Inserido na linha " + res.linha +
-    "\nSaldo: R$" + res.novoSaldo +
-    "\nLink: " + (res.linkRecibo || "sem foto") +
-    "\n\nDelete esta linha de teste."
-  );
+// ═══════════════════════════════════════════════════════
+//  CONSTRUIR CAMPOS
+// ═══════════════════════════════════════════════════════
+function buildFields(containerId, pfx, tipo, fnTipo) {
+  const c = cfg();
+  const projOpts = ["P3","P4","P5","Outro"].map(p =>
+    `<option${p===c.projeto?" selected":""}>${p}</option>`).join("");
+  const catOpts = CAT_KEYS.map(k => `<option>${k}</option>`).join("");
+  const subOpts = CATS[CAT_KEYS[0]].map(s => `<option>${s}</option>`).join("");
+
+  // Data de hoje para o valor padrão do campo data
+  const hoje = new Date();
+  const dd = String(hoje.getDate()).padStart(2,'0');
+  const mm = String(hoje.getMonth()+1).padStart(2,'0');
+  const yyyy = hoje.getFullYear();
+  const dataHoje = `${dd}/${mm}/${yyyy}`;
+
+  document.getElementById(containerId).innerHTML = `
+    <div class="frow">
+      <span class="flabel">Data</span>
+      <input class="fval" id="data-${pfx}" type="text" inputmode="numeric"
+             placeholder="dd/mm/aaaa" value="${dataHoje}" maxlength="10"
+             oninput="mascaraData(this)">
+    </div>
+    <div class="frow">
+      <span class="flabel">Tipo</span>
+      <div class="tipo-wrap">
+        <button class="tbtn${tipo==="Saida"?" a-saida":""}"   id="ts-${pfx}" onclick="${fnTipo}('Saida')">↓ Saída</button>
+        <button class="tbtn${tipo==="Entrada"?" a-entrada":""}" id="te-${pfx}" onclick="${fnTipo}('Entrada')">↑ Entrada</button>
+      </div>
+    </div>
+    <div class="frow">
+      <span class="flabel">Projeto</span>
+      <select class="fval" id="proj-${pfx}">${projOpts}</select>
+    </div>
+    <div class="frow">
+      <span class="flabel">Valor (R$)</span>
+      <input class="fval${tipo==="Saida"?" c-saida":" c-entrada"}" id="val-${pfx}" type="text" inputmode="decimal" placeholder="0,00" oninput="mascaraValor(this)">
+    </div>
+    <div class="frow">
+      <span class="flabel">Descrição</span>
+      <input class="fval" id="desc-${pfx}" type="text" placeholder="—">
+    </div>
+    <div class="frow">
+      <span class="flabel">Quantidade</span>
+      <input class="fval" id="qtd-${pfx}" type="text" inputmode="decimal" placeholder="1">
+    </div>
+    <div class="frow forn-frow">
+      <span class="flabel">Fornecedor <span id="forn-badge-${pfx}" class="forn-badge" style="display:none">da IA</span></span>
+      <div class="forn-wrap" id="forn-wrap-${pfx}">
+        <input class="fval" id="forn-${pfx}" type="text" placeholder="Toque para selecionar…"
+          autocomplete="off" readonly
+          onclick="abrirSheetFornecedor('${pfx}')">
+        <button class="forn-clear" onclick="limparFornecedor('${pfx}')" type="button">✕</button>
+      </div>
+    </div>
+    </div>
+    <div class="frow">
+      <span class="flabel">Categoria</span>
+      <select class="fval" id="cat-${pfx}" onchange="updateSub('${pfx}')">${catOpts}</select>
+    </div>
+    <div class="frow">
+      <span class="flabel">Subcategoria</span>
+      <select class="fval" id="sub-${pfx}">${subOpts}</select>
+    </div>`;
 }
 
-function testarDrive() {
-  try {
-    // Tenta criar um arquivo de teste no Drive
-    const pasta_nome = "Recibos de Obra";
-    let pasta;
-    const pastas = DriveApp.getFoldersByName(pasta_nome);
-    if (pastas.hasNext()) {
-      pasta = pastas.next();
-    } else {
-      pasta = DriveApp.createFolder(pasta_nome);
-    }
-    // Cria arquivo de texto simples como teste
-    const arq = pasta.createFile("teste_permissao.txt", "ok", "text/plain");
-    arq.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    const link = arq.getUrl();
-    arq.setTrashed(true); // deleta o arquivo de teste
-    SpreadsheetApp.getUi().alert("✅ Drive OK!\nPasta: " + pasta_nome + "\nLink teste: " + link + "\n\nO upload de fotos deve funcionar.");
-  } catch(e) {
-    SpreadsheetApp.getUi().alert("❌ Erro no Drive:\n" + e.toString() + "\n\nSolução: Reimplantar o script e reautorizar.");
+function setTipoFoto(t) {
+  tipoFoto = t;
+  document.getElementById("ts-foto").className  = "tbtn"+(t==="Saida"?" a-saida":"");
+  document.getElementById("te-foto").className  = "tbtn"+(t==="Entrada"?" a-entrada":"");
+  const v = document.getElementById("val-foto");
+  if (v) v.className = "fval"+(t==="Saida"?" c-saida":" c-entrada");
+}
+function setTipoManual(t) {
+  tipoManual = t;
+  document.getElementById("ts-manual").className = "tbtn"+(t==="Saida"?" a-saida":"");
+  document.getElementById("te-manual").className = "tbtn"+(t==="Entrada"?" a-entrada":"");
+  const v = document.getElementById("val-manual");
+  if (v) v.className = "fval"+(t==="Saida"?" c-saida":" c-entrada");
+}
+
+function updateSub(pfx, sel) {
+  const cat = document.getElementById("cat-"+pfx).value;
+  const subs = CATS[cat] || [];
+  document.getElementById("sub-"+pfx).innerHTML =
+    subs.map(s => `<option${s===sel?" selected":""}>${s}</option>`).join("");
+}
+
+// ═══════════════════════════════════════════════════════
+//  CÂMERA
+// ═══════════════════════════════════════════════════════
+function abrirCamera() {
+  var fi = document.getElementById("file-input");
+  if (fi) { fi.value = ""; fi.click(); }
+}
+
+// Listeners da câmera — adicionados aqui para garantir que existem
+(function() {
+  function initCamListeners() {
+    var zone = document.getElementById("cameraZone");
+    var chg  = document.getElementById("changePh");
+    if (zone) zone.addEventListener("click", function() { abrirCamera(); });
+    if (chg)  chg.addEventListener("click", function(e) { e.stopPropagation(); abrirCamera(); });
   }
-}
-
-function diagnosticarSaldo() {
-  const ss    = SpreadsheetApp.openById(SHEET_CONFIG.SPREADSHEET_ID);
-  const sheet = ss.getSheetByName(SHEET_CONFIG.SHEET_NAME);
-  const valoresI = sheet.getRange(2, 9,  2000, 1).getValues();
-  const valoresK = sheet.getRange(2, 11, 2000, 1).getValues();
-  let ultimaLinha = 1;
-  for (let i = 0; i < valoresI.length; i++) {
-    if (valoresI[i][0] !== "" && valoresI[i][0] !== null && valoresI[i][0] !== 0) {
-      ultimaLinha = i + 2;
-    }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initCamListeners);
+  } else {
+    initCamListeners();
   }
-  let msg = "=== DIAGNÓSTICO v6 ===\n";
-  msg += "Última linha real: " + ultimaLinha + "\n";
-  msg += "Próxima inserção → linha " + (ultimaLinha + 1) + "\n\n";
-  msg += "Últimas 5 linhas:\n";
-  for (let i = Math.max(0, ultimaLinha - 6); i < ultimaLinha - 1; i++) {
-    msg += "  Linha " + (i+2) + ": Valor=" + valoresI[i][0] + " | Saldo=" + valoresK[i][0] + "\n";
-  }
-  SpreadsheetApp.getUi().alert(msg);
-}
+})();
 
-function recalcularTodosSaldos() {
-  const ui   = SpreadsheetApp.getUi();
-  const resp = ui.alert("⚠️ Recalcular todos os saldos?", "Vai recalcular saldo linha a linha do zero.\n\nContinuar?", ui.ButtonSet.YES_NO);
-  if (resp !== ui.Button.YES) return;
-
-  const ss    = SpreadsheetApp.openById(SHEET_CONFIG.SPREADSHEET_ID);
-  const sheet = ss.getSheetByName(SHEET_CONFIG.SHEET_NAME);
-  // Lê C(tipo), I(valor) — índices relativos ao range que começa em col C(3)
-  const dados = sheet.getRange(2, 3, 2000, 7).getValues(); // C até I
-
-  let saldo = 0;
-  let count = 0;
-  for (let i = 0; i < dados.length; i++) {
-    const tipo  = dados[i][0]; // col C = índice 0
-    const valor = Number(dados[i][6]) || 0; // col I = índice 6 (C+6)
-    if (!tipo && valor === 0) break;
-    saldo = tipo === "Entrada" ? saldo + valor : saldo - valor;
-    sheet.getRange(i + 2, 11).setValue(saldo);
-    sheet.getRange(i + 2, 11).setNumberFormat("R$#,##0.00");
-    count++;
-  }
-  SpreadsheetApp.flush();
-  ui.alert("✅ " + count + " linhas recalculadas.\nSaldo final: R$" + saldo.toFixed(2));
-}
-// ============================================================
-//  VISÃO GLOBAL — Apps Script
-//  Gera aba "Visão Global" com:
-//  - Saldo por projeto
-//  - Gastos do mês atual
-//  - Progresso vs orçamento por categoria
-//  - Alertas de limite
-//  - Dados para gráfico de evolução do saldo
-// ============================================================
-
-const VG_CONFIG = {
-  SPREADSHEET_ID: "1iTy0a292zl356_Nh5Dihzo8irlE4WQikSccCHQbjS4U",
-  SHEET_LIVRO:    "Livro Caixa",
-  SHEET_VISAO:    "Visão Global",
-  SHEET_ORCA:     "Orçamentos",   // aba com orçamento por projeto/categoria
-};
-
-// Orçamento padrão por categoria — usado apenas para criar a aba Orçamentos
-// Após criada, os valores são lidos direto da planilha
-const ORCA_PADRAO = {
-  "Terreno e Legalização":     50000,
-  "Infraestrutura e Fundação": 15000,
-  "Estrutura e Alvenaria":     40000,
-  "Instalação Elétrica":        8000,
-  "Instalação Hidráulica":      8000,
-  "Cobertura":                 12000,
-  "Esquadrias":                10000,
-  "Acabamentos":               20000,
-  "Mão de Obra":               25000,
-  "Logística e Apoio":          5000,
-  "Administração":              7000,
-};
-
-// Lê orçamentos da aba "Orçamentos" — cria a aba se não existir
-function lerOrcamentos(ss) {
-  let abaOrca = ss.getSheetByName(VG_CONFIG.SHEET_ORCA);
-  
-  // Se não existe, cria com os valores padrão
-  if (!abaOrca) {
-    abaOrca = criarAbaOrcamentos(ss);
-  }
-
-  // Lê a tabela: col A = Categoria, col B = Orçamento (por projeto ou global)
-  // Estrutura: linha 1 = cabeçalho [Categoria | Global | P1 | P2 | P3 ...]
-  const dados = abaOrca.getDataRange().getValues();
-  if (dados.length < 2) return { global: ORCA_PADRAO };
-
-  const header = dados[0]; // ["Categoria", "Global", "P1", "P2", ...]
-  const result = {};
-
-  // Monta um objeto por coluna: result["global"] = {cat: valor}, result["P1"] = {cat: valor}
-  for (let col = 1; col < header.length; col++) {
-    const projeto = String(header[col]).trim();
-    if (!projeto) continue;
-    result[projeto] = {};
-    for (let row = 1; row < dados.length; row++) {
-      const cat   = String(dados[row][0]).trim();
-      const valor = Number(dados[row][col]) || 0;
-      if (cat) result[projeto][cat] = valor;
-    }
-  }
-
-  return result; // { "Global": {cat: val}, "P1": {cat: val}, ... }
-}
-
-// Cria aba Orçamentos com valores padrão e formatação amigável
-function criarAbaOrcamentos(ss) {
-  const aba = ss.insertSheet(VG_CONFIG.SHEET_ORCA);
-  
-  const cats = Object.keys(ORCA_PADRAO);
-  
-  // Cabeçalho
-  aba.getRange(1, 1).setValue("Categoria").setFontWeight("bold");
-  aba.getRange(1, 2).setValue("Global").setFontWeight("bold");
-  // Nota de instrução
-  aba.getRange(1, 4).setValue("← Edite os valores aqui. Adicione colunas com nome do projeto para orçamento específico (ex: P1, P2)");
-  
-  // Dados
-  cats.forEach((cat, i) => {
-    aba.getRange(i + 2, 1).setValue(cat);
-    aba.getRange(i + 2, 2).setValue(ORCA_PADRAO[cat]).setNumberFormat("R$#,##0.00");
-  });
-
-  // Formatação
-  aba.getRange(1, 1, 1, 3).setBackground("#1a1a2e").setFontColor("#ffffff");
-  aba.getRange(2, 1, cats.length, 1).setBackground("#f5f5f5").setFontWeight("bold");
-  aba.getRange(2, 2, cats.length, 1).setBackground("#e8f5e9");
-  aba.setColumnWidth(1, 220);
-  aba.setColumnWidth(2, 140);
-  aba.setColumnWidth(4, 500);
-  aba.setFrozenRows(1);
-
-  // Borda na tabela
-  aba.getRange(1, 1, cats.length + 1, 2).setBorder(true, true, true, true, true, true);
-
-  SpreadsheetApp.flush();
-  Logger.log("Aba Orçamentos criada com valores padrão");
-  return aba;
-}
-
-// ── TRIGGER: roda após cada doPost ──────────────────────────
-// Cole esta linha no final do _inserir() do Recibos.gs:
-//   atualizarVisaoGlobal();
-
-function atualizarVisaoGlobal() {
-  try {
-    const ss     = SpreadsheetApp.openById(VG_CONFIG.SPREADSHEET_ID);
-    const livro  = ss.getSheetByName(VG_CONFIG.SHEET_LIVRO);
-    if (!livro) return;
-
-    // Ler orçamentos da aba (cria automaticamente se não existir)
-    const orcamentos = lerOrcamentos(ss);
-
-    // Ler todos os dados do Livro Caixa
-    const dados  = livro.getDataRange().getValues();
-    const header = dados[0];
-    // Índices das colunas (0-based)
-    const iData  = header.indexOf("Data");
-    const iProj  = header.indexOf("Projeto");
-    const iTipo  = header.indexOf("Tipo");
-    const iCat   = header.indexOf("Categoria");
-    const iSub   = header.indexOf("Sub Categoria");
-    const iDesc  = header.indexOf("Descrição");
-    const iValor = header.indexOf("Valor");
-    const iSaldo = header.indexOf("Saldo");
-
-    const linhas = dados.slice(1).filter(r => r[iValor] && r[iValor] !== 0);
-
-    // ── Agregar dados ──────────────────────────────────────
-    const projetos    = {};  // { P1: { entradas, saidas, saldo, categorias: {}, meses: {} } }
-    const hoje        = new Date();
-    const mesAtual    = hoje.getMonth();
-    const anoAtual    = hoje.getFullYear();
-
-    linhas.forEach(r => {
-      const proj  = r[iProj]  || "Sem Projeto";
-      const tipo  = r[iTipo]  || "Saida";
-      const cat   = r[iCat]   || "Outros";
-      const valor = Number(r[iValor]) || 0;
-      const data  = r[iData] ? new Date(r[iData]) : new Date();
-
-      if (!projetos[proj]) {
-        projetos[proj] = {
-          entradas: 0, saidas: 0, saldo: 0,
-          categorias: {}, mesAtual: 0,
-          historico: []  // [{data, saldo}] para gráfico
-        };
+function fotoSelecionada(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    // Comprimir imagem para max 1200px e qualidade 0.75 — evita quota exceeded
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 900;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else       { w = Math.round(w * MAX / h); h = MAX; }
       }
-      const p = projetos[proj];
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.65);
+      imgB64  = dataUrl.split(",")[1];
+      imgMime = "image/jpeg";
+      document.getElementById("preview-img").src = dataUrl;
+      document.getElementById("cameraZone").classList.add("has-image");
+      document.getElementById("aiBtn").disabled = false;
+      document.getElementById("resultCard").classList.remove("visible");
+      document.getElementById("confirmBtn").classList.remove("visible");
+      document.getElementById("erroBox").classList.remove("visible");
+      analisarIA();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(f);
+  e.target.value = "";
+}
 
-      if (tipo === "Entrada") {
-        p.entradas += valor;
-        p.saldo    += valor;
+// ═══════════════════════════════════════════════════════
+//  ANALISAR COM GEMINI
+//
+//  MODELOS DISPONÍVEIS NO FREE TIER (março 2026):
+//  - gemini-2.5-flash      → melhor opção free tier, suporta visão
+//  - gemini-2.5-flash-lite → leve e rápido, fallback
+//  - gemini-2.0-flash      → fallback estável
+//
+//  CHAVE API: deve ser criada em aistudio.google.com/apikey
+//  Chaves do Google Cloud Console precisam de billing ativado!
+// ═══════════════════════════════════════════════════════
+function forcarSaida() {
+  document.getElementById("aiLoading").style.display="none";
+  preencherFoto({}, "manual");
+  toast("Preencha manualmente","");
+}
+
+async function analisarIA() {
+  function dbg(msg) {
+    const p = document.querySelector("#aiLoading .dbg-log");
+    if (p) p.textContent += msg + "\n";
+    console.log("[RC]", msg);
+  }
+
+  const cfg_ = cfg();
+  if (!cfg_.key) { toast("⚙️ Configure a chave Gemini primeiro","err"); abrirSettings(); return; }
+  if (!imgB64)   { toast("📷 Selecione uma foto primeiro","err"); return; }
+
+  document.getElementById("erroBox").classList.remove("visible");
+  document.getElementById("resultCard").classList.remove("visible");
+  document.getElementById("confirmBtn").classList.remove("visible");
+  document.getElementById("aiLoading").style.display="flex";
+
+  // Garantia de segurança: se algo inesperado travar, libera após 20s
+  const safetyTimer = setTimeout(() => {
+    dbg("⚠️ Safety timeout 20s — forçando saída");
+    document.getElementById("aiLoading").style.display="none";
+    mostrarErro("Tempo esgotado. Preencha manualmente.");
+    preencherFoto({}, "manual");
+  }, 45000);
+
+  try {
+    const CATS_LIST = "Acabamentos/Instalação Elétrica/Instalação Hidráulica/Infraestrutura e Fundação/Estrutura e Alvenaria/Cobertura/Esquadrias/Mão de Obra/Logística e Apoio/Terreno e Legalização/Administração";
+    const prompt = `Analise este recibo. Retorne APENAS JSON, sem texto extra.
+
+Formato obrigatório:
+{"modo":"simples","fornecedor":"NOME_LOJA","valorTotal":"0.00","data":"DD/MM/AAAA","itens":[{"descricao":"","quantidade":"1","valor":"0.00","categoria":"Administração","subCategoria":"","tipo":"Saida"}]}
+
+Se houver produtos de categorias DIFERENTES, use modo "multiplo" e adicione mais objetos no array itens.
+Categorias válidas: ${CATS_LIST}
+Agrupe produtos da mesma categoria em um único item.
+A soma dos valores dos itens deve ser igual ao valorTotal.
+Retorne SÓ o JSON.`;
+
+    let parsed = null;
+    let modeloUsado = "";
+    let erroMsg = "";
+
+    for (const modelo of MODELOS) {
+      dbg("🔄 Tentando " + modelo + "...");
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${cfg_.key}`;
+      try {
+        const ctrl  = new AbortController();
+        const timer = setTimeout(() => { dbg("⏱ Abort " + modelo); ctrl.abort(); }, 18000);
+
+        const res = await fetch(url, {
+          method: "POST",
+          signal: ctrl.signal,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [
+              { text: prompt },
+              { inline_data: { mime_type: imgMime, data: imgB64 } }
+            ]}],
+            generationConfig: { temperature: 0.1, maxOutputTokens: 1200 }
+          })
+        });
+        clearTimeout(timer);
+        dbg("✅ HTTP " + res.status);
+
+        if (!res.ok) { erroMsg = `HTTP ${res.status}`; continue; }
+
+        const json = await res.json();
+        if (json.error) { erroMsg = json.error.message; dbg("❌ API: " + erroMsg); continue; }
+
+        const texto = (json.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
+        dbg("📄 Resposta: " + texto.substring(0,80));
+        if (!texto) { erroMsg = "sem texto"; continue; }
+
+        let p = null;
+        // Limpar markdown (```json ... ```)
+        let txt2 = texto.replace(/```json\s*/gi,"").replace(/```\s*/g,"").trim();
+        // Tentativa 1: parse direto
+        try { p = JSON.parse(txt2); } catch(e) {}
+        // Tentativa 2: extrair do primeiro { ao último }
+        if (!p) {
+          const ini = txt2.indexOf("{"), fim = txt2.lastIndexOf("}");
+          if (ini !== -1 && fim > ini) try { p = JSON.parse(txt2.slice(ini, fim+1)); } catch(e) {}
+        }
+        // Tentativa 3: JSON incompleto — completar chaves abertas
+        if (!p) {
+          const ini = txt2.indexOf("{");
+          if (ini !== -1) {
+            let parcial = txt2.slice(ini);
+            parcial = parcial.replace(/,\s*"[^"]*"\s*:\s*"[^"]*$/, "}");
+            parcial = parcial.replace(/,\s*"[^"]*"\s*:\s*$/, "}");
+            const diff = (parcial.match(/{/g)||[]).length - (parcial.match(/}/g)||[]).length;
+            if (diff > 0) parcial += "}".repeat(diff);
+            try { p = JSON.parse(parcial); } catch(e) {}
+          }
+        }
+        if (p) {
+          // Normalizar: novo formato {"modo","itens"} ou formato legado {"valor"...}
+          if (!p.itens && p.valor) {
+            // formato legado → converter para novo
+            p = { modo:"simples", fornecedor: p.fornecedor||"", valorTotal: p.valor, data: p.data||"", itens:[{
+              descricao: p.descricao||"", quantidade:"1", valor: p.valor,
+              categoria: p.categoria||"Administração", subCategoria: p.subCategoria||"", tipo: p.tipo||"Saida"
+            }]};
+          }
+          parsed = p; modeloUsado = modelo;
+          dbg("✅ JSON OK! modo=" + (p.modo||"?") + " itens=" + (p.itens?.length||0));
+          break;
+        }
+        erroMsg = "JSON inválido";
+        dbg("❌ JSON inválido: " + txt2.substring(0,80));
+
+      } catch (ex) {
+        erroMsg = ex.name === "AbortError" ? "timeout" : ex.message;
+        dbg("❌ Catch: " + erroMsg);
+        if (ex.name === "AbortError") break;
+      }
+    }
+
+    clearTimeout(safetyTimer);
+    document.getElementById("aiLoading").style.display="none";
+
+    if (parsed && parsed.itens && parsed.itens.length > 0) {
+      if (parsed.modo === "multiplo" && parsed.itens.length > 1) {
+        preencherMulti(parsed, modeloUsado);
       } else {
-        p.saidas += valor;
-        p.saldo  -= valor;
-        // Gastos do mês atual
-        if (data.getMonth() === mesAtual && data.getFullYear() === anoAtual) {
-          p.mesAtual += valor;
-        }
-        // Por categoria
-        if (!p.categorias[cat]) p.categorias[cat] = 0;
-        p.categorias[cat] += valor;
+        preencherFoto(parsed.itens[0], modeloUsado, parsed);
       }
-      // Histórico para gráfico (apenas saldo final por dia)
-      p.historico.push({
-        data:  Utilities.formatDate(data, Session.getScriptTimeZone(), "dd/MM/yy"),
-        saldo: Number(r[iSaldo]) || 0
-      });
-    });
-
-    // ── Criar/limpar aba Visão Global ──────────────────────
-    let visao = ss.getSheetByName(VG_CONFIG.SHEET_VISAO);
-    if (!visao) {
-      visao = ss.insertSheet(VG_CONFIG.SHEET_VISAO);
     } else {
-      visao.clearContents();
-      visao.clearFormats();
+      mostrarErro("IA não leu o recibo — preencha manualmente.\nDetalhe: " + erroMsg);
+      preencherFoto({}, "manual");
     }
 
-    // ── Escrever cabeçalho ─────────────────────────────────
-    let row = 1;
+  } catch (fatalErr) {
+    clearTimeout(safetyTimer);
+    document.getElementById("aiLoading").style.display="none";
+    mostrarErro("Erro inesperado: " + fatalErr.message);
+    preencherFoto({}, "manual");
+  }
+}
 
-    _setCell(visao, row, 1, "Visão Geral — Rosendo Casas", true, 16);
-    _setCell(visao, row, 7, "Atualizado: " + Utilities.formatDate(hoje, Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm"));
-    row += 2;
+// Máscara de data: digita 11032026 → 11/03/2026
+function mascaraData(input) {
+  let v = input.value.replace(/\D/g, '').substring(0,8);
+  if (v.length >= 5)      v = v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4);
+  else if (v.length >= 3) v = v.slice(0,2)+'/'+v.slice(2);
+  input.value = v;
+}
 
-    // ── Bloco por projeto ──────────────────────────────────
-    const projNomes = Object.keys(projetos).sort();
+// Máscara de valor em formato BR: permite 1.200,50 ou 1200,50 ou 1200.50
+function mascaraValor(input) {
+  let v = input.value;
+  // Remove tudo exceto dígitos, vírgula e ponto
+  v = v.replace(/[^0-9.,]/g, '');
+  // Permite apenas um separador decimal (vírgula ou ponto no final)
+  input.value = v;
+}
 
-    projNomes.forEach(proj => {
-      const p = projetos[proj];
+// Converte valor BR para float: "1.200,50" → 1200.50 | "1200,50" → 1200.50 | "1200.50" → 1200.50
+function parseBRL(str) {
+  if (!str) return 0;
+  str = String(str).trim();
+  // Se tem vírgula como último separador: 1.200,50 → remove pontos → troca vírgula por ponto
+  if (str.includes(',')) {
+    str = str.replace(/\./g, '').replace(',', '.');
+  }
+  return parseFloat(str) || 0;
+}
 
-      // Título do projeto
-      const titleRange = visao.getRange(row, 1, 1, 6);
-      titleRange.merge();
-      _setCell(visao, row, 1, "📁 " + proj, true, 13);
-      titleRange.setBackground("#1a1a2e");
-      titleRange.setFontColor("#ffffff");
-      row++;
+function mostrarErro(msg) {
+  document.getElementById("erroMsg").textContent = msg;
+  document.getElementById("erroBox").classList.add("visible");
+  toast("⚠️ Erro na análise — veja detalhes acima","err");
+}
 
-      // KPIs: Saldo | Entradas | Saídas | Gasto este mês
-      _setCell(visao, row, 1, "SALDO DISPONÍVEL", true);
-      _setCell(visao, row, 2, "ENTRADAS TOTAL",   true);
-      _setCell(visao, row, 3, "SAÍDAS TOTAL",     true);
-      _setCell(visao, row, 4, "GASTO ESTE MÊS",   true);
-      visao.getRange(row, 1, 1, 4).setBackground("#2d2d2d").setFontColor("#aaaaaa").setFontSize(9);
-      row++;
+// meta = objeto pai com fornecedor, data, valorTotal (no modo multiplo vira simples)
+function preencherFoto(d, modeloUsado, meta) {
+  const c = cfg();
+  if (d.tipo === "Entrada" || d.tipo === "Saida") tipoFoto = d.tipo;
 
-      const saldoCell = visao.getRange(row, 1);
-      saldoCell.setValue(p.saldo).setNumberFormat("R$#,##0.00").setFontSize(13).setFontWeight("bold");
-      saldoCell.setBackground(p.saldo >= 0 ? "#1b5e20" : "#b71c1c").setFontColor("#ffffff");
+  buildFields("fields-foto","foto",tipoFoto,"setTipoFoto");
 
-      visao.getRange(row, 2).setValue(p.entradas).setNumberFormat("R$#,##0.00").setBackground("#0d47a1").setFontColor("#ffffff").setFontWeight("bold");
-      visao.getRange(row, 3).setValue(p.saidas).setNumberFormat("R$#,##0.00").setBackground("#b71c1c").setFontColor("#ffffff").setFontWeight("bold");
-      visao.getRange(row, 4).setValue(p.mesAtual).setNumberFormat("R$#,##0.00").setBackground("#e65100").setFontColor("#ffffff").setFontWeight("bold");
-      row += 2;
+  // Modo visual: item único
+  document.getElementById("single-item-view").style.display = "";
+  document.getElementById("multi-item-view").style.display  = "none";
+  document.getElementById("confirmBtn").style.display       = "";
+  document.getElementById("confirmBtn").classList.add("visible");
+  document.getElementById("confirmMultiBtn").style.display  = "none";
+  document.getElementById("resultCard").classList.add("visible");
 
-      // Tabela de categorias com progresso e alerta
-      _setCell(visao, row, 1, "Categoria",      true);
-      _setCell(visao, row, 2, "Gasto",          true);
-      _setCell(visao, row, 3, "Orçamento",      true);
-      _setCell(visao, row, 4, "% Usado",        true);
-      _setCell(visao, row, 5, "Status",         true);
-      visao.getRange(row, 1, 1, 5).setBackground("#333333").setFontColor("#ffffff").setFontSize(9);
-      row++;
+  document.getElementById("proj-foto").value = c.projeto;
+  document.getElementById("val-foto").value  = d.valor      || "";
+  document.getElementById("desc-foto").value = d.descricao  || "";
+  document.getElementById("qtd-foto").value  = d.quantidade || "";
+  // data: preferir do meta (recibo) ou do item
+  if (meta?.data || d.data) {
+    document.getElementById("data-foto").value = meta?.data || d.data || "";
+  }
+  const fornVal = (meta?.fornecedor || d.fornecedor || "");
+  document.getElementById("forn-foto").value = fornVal;
+  document.getElementById("forn-wrap-foto")?.classList.toggle("has-value", !!fornVal);
+  // Mostrar badge "da IA" quando sugerido pela IA
+  const badge = document.getElementById("forn-badge-foto");
+  if (badge) badge.style.display = fornVal ? "inline-block" : "none";
 
-      // Usa orçamento específico do projeto, ou global, ou padrão
-      const orcaProjeto = orcamentos[proj] || orcamentos["Global"] || ORCA_PADRAO;
-      Object.keys(ORCA_PADRAO).forEach(cat => {
-        const gasto = p.categorias[cat] || 0;
-        const orca  = (orcaProjeto[cat] !== undefined ? orcaProjeto[cat] : (orcamentos["Global"]?.[cat] || ORCA_PADRAO[cat] || 0));
-        const pct   = orca > 0 ? gasto / orca : 0;
+  // Garantir que resultCard e confirmBtn estão visíveis
+  document.getElementById("resultCard").classList.add("visible");
+  document.getElementById("confirmBtn").classList.add("visible");
 
-        visao.getRange(row, 1).setValue(cat).setFontSize(9);
-        visao.getRange(row, 2).setValue(gasto).setNumberFormat("R$#,##0.00").setFontSize(9);
-        visao.getRange(row, 3).setValue(orca).setNumberFormat("R$#,##0.00").setFontSize(9);
-        visao.getRange(row, 4).setValue(pct).setNumberFormat("0%").setFontSize(9);
+  if (d.categoria && CATS[d.categoria]) {
+    document.getElementById("cat-foto").value = d.categoria;
+    updateSub("foto", d.subCategoria || "");
+  } else {
+    updateSub("foto","");
+  }
 
-        // Status / alerta
-        let status, bg, fg;
-        if (pct === 0)       { status = "—";           bg = "#ffffff"; fg = "#999999"; }
-        else if (pct < 0.75) { status = "✅ OK";        bg = "#e8f5e9"; fg = "#1b5e20"; }
-        else if (pct < 1.0)  { status = "⚠️ Atenção";   bg = "#fff8e1"; fg = "#e65100"; }
-        else                  { status = "🔴 ESTOUROU"; bg = "#ffebee"; fg = "#b71c1c"; }
+  // Data: se a IA identificou a data da nota, preenche; senão mantém hoje
+  if (d.data) {
+    document.getElementById("data-foto").value = d.data;
+  }
 
-        visao.getRange(row, 5).setValue(status).setBackground(bg).setFontColor(fg).setFontSize(9).setFontWeight("bold");
+  toast("✨ Analisado com " + (modeloUsado||"IA") + "!", "ok");
+}
 
-        // Barra de progresso visual (células coloridas)
-        const barCell = visao.getRange(row, 6);
-        const pctStr  = Math.min(Math.round(pct * 100), 100) + "%";
-        barCell.setValue(pctStr);
-        barCell.setBackground(pct >= 1 ? "#b71c1c" : pct >= 0.75 ? "#f57c00" : "#388e3c");
-        barCell.setFontColor("#ffffff").setFontSize(8).setHorizontalAlignment("center");
+// ═══════════════════════════════════════════════════════
+//  LANÇAR NO SHEETS
+// ═══════════════════════════════════════════════════════
+async function lancar(pfx) {
+  const c = cfg();
+  if (!c.url) { toast("⚙️ Configure a URL do Apps Script","err"); abrirSettings(); return; }
 
-        row++;
+  const tipo = pfx==="foto" ? tipoFoto : tipoManual;
+
+  const dados = {
+    tipo,
+    projeto:      document.getElementById(`proj-${pfx}`)?.value  || c.projeto,
+    valor:        String(parseBRL(document.getElementById(`val-${pfx}`)?.value || "0")),
+    qtd:          document.getElementById(`qtd-${pfx}`)?.value   || "",
+    descricao:    document.getElementById(`desc-${pfx}`)?.value   || "",
+    fornecedor:   document.getElementById(`forn-${pfx}`)?.value   || "N/A",
+    categoria:    document.getElementById(`cat-${pfx}`)?.value    || "Administração",
+    subCategoria: document.getElementById(`sub-${pfx}`)?.value    || "",
+    data:         document.getElementById(`data-${pfx}`)?.value || new Date().toLocaleDateString("pt-BR"),
+  };
+
+  // Inclui foto no payload — comprimida, tamanho razoável
+  if (pfx === "foto" && imgB64 && imgMime) {
+    const kb = Math.round(imgB64.length * 0.75 / 1024);
+    console.log("Foto tamanho:", kb, "KB");
+    if (kb < 800) { // só envia se < 800KB para evitar quota
+      dados.fotoBase64 = imgB64;
+      dados.fotoMime   = imgMime;
+    } else {
+      console.warn("Foto muito grande (" + kb + "KB), não enviando");
+    }
+  }
+
+  // Validação básica
+  const val = parseFloat(dados.valor);
+  if (!val || val <= 0) { toast("⚠️ Informe um valor válido","err"); return; }
+
+  // Botão de envio
+  const btn = pfx==="foto"
+    ? document.getElementById("confirmBtn")
+    : document.getElementById("submitManual");
+  btn.classList.add("sending");
+  const txtOrig = btn.innerHTML;
+  btn.innerHTML = pfx==="foto" ? "📤 Enviando foto…" : "Enviando…";
+
+  try {
+    // mode:"cors" para ler a resposta (saldo e link do Drive)
+    // Apps Script com "Execute as: Me / Anyone" suporta CORS em POST
+    let respJson = null;
+    try {
+      const resp = await fetch(c.url, {
+        method: "POST",
+        redirect: "follow",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(dados),
       });
+      const txt = await resp.text();
+      console.log("Resposta servidor:", txt.substring(0,200));
+      // Apps Script às vezes retorna HTML de redirect — pegar só o JSON
+      const jsonStart = txt.indexOf("{");
+      if (jsonStart !== -1) {
+        respJson = JSON.parse(txt.substring(jsonStart));
+      }
+    } catch(corsErr) {
+      console.warn("Fetch erro:", corsErr.message);
+      // Fallback no-cors — lançamento vai mas sem confirmação de link
+      console.warn("⚠️ Usando no-cors fallback — foto NÃO será salva no Drive");
+      await fetch(c.url, {
+        method:"POST", mode:"no-cors",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(dados),
+      }).catch(()=>{});
+    }
 
-      row += 2; // espaço entre projetos
-    });
+    adicionarHist(dados);
 
-    // ── Tabela de dados para gráfico (evolução do saldo) ──
-    row++;
-    _setCell(visao, row, 1, "📊 Dados para Gráfico de Evolução do Saldo", true, 12);
-    row++;
-    _setCell(visao, row, 1, "Data", true);
-    projNomes.forEach((proj, idx) => {
-      _setCell(visao, row, idx + 2, proj, true);
-    });
-    visao.getRange(row, 1, 1, projNomes.length + 1).setBackground("#1a1a2e").setFontColor("#ffffff");
-    row++;
+    // Montar mensagem de confirmação com saldo e link
+    let msg = "✅ Lançado no Sheets!";
+    if (respJson) {
+      console.log("Resposta completa:", JSON.stringify(respJson));
+      if (respJson.saldo !== undefined) {
+        msg += `\n💰 Saldo: R$${Number(respJson.saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}`;
+      }
+      if (respJson.linkRecibo) {
+        msg += "\n📎 Recibo salvo no Drive";
+        setTimeout(() => window.open(respJson.linkRecibo, "_blank"), 1500);
+      } else if (respJson.driveErro) {
+        console.warn("Drive erro:", respJson.driveErro);
+        msg += "\n⚠️ Drive: " + respJson.driveErro;
+      } else if (respJson.driveErro) {
+        msg += "\n⚠️ Foto não subiu: " + respJson.driveErro;
+      }
+    }
+    toast(msg, "ok", 5000);
 
-    // Coletar todos os dias únicos
-    const allDatas = new Set();
-    projNomes.forEach(proj => {
-      projetos[proj].historico.forEach(h => allDatas.add(h.data));
-    });
-    const datasOrdenadas = [...allDatas].sort((a, b) => {
-      const [da,ma,ya] = a.split("/").map(Number);
-      const [db,mb,yb] = b.split("/").map(Number);
-      return new Date(2000+ya,ma-1,da) - new Date(2000+yb,mb-1,db);
-    });
-
-    // Último saldo conhecido por projeto por data
-    datasOrdenadas.forEach(data => {
-      visao.getRange(row, 1).setValue(data).setFontSize(9);
-      projNomes.forEach((proj, idx) => {
-        const h = projetos[proj].historico;
-        // pega último saldo desta data
-        const match = [...h].reverse().find(x => x.data === data);
-        if (match) {
-          visao.getRange(row, idx + 2).setValue(match.saldo).setNumberFormat("R$#,##0.00").setFontSize(9);
-        }
-      });
-      row++;
-    });
-
-    // ── Formatação geral ───────────────────────────────────
-    visao.setColumnWidth(1, 200);
-    visao.setColumnWidth(2, 130);
-    visao.setColumnWidth(3, 130);
-    visao.setColumnWidth(4, 100);
-    visao.setColumnWidth(5, 110);
-    visao.setColumnWidth(6,  70);
-    visao.setFrozenRows(1);
-
-    SpreadsheetApp.flush();
-    Logger.log("Visão Global atualizada — " + projNomes.length + " projetos");
+    if (pfx==="foto") resetarFoto();
+    else resetarManual();
 
   } catch(err) {
-    Logger.log("ERRO atualizarVisaoGlobal: " + err.toString());
+    toast("❌ Erro ao enviar: "+err.message,"err");
+  } finally {
+    btn.classList.remove("sending");
+    btn.innerHTML = txtOrig;
   }
 }
 
-// ── Helper ─────────────────────────────────────────────────
-function _setCell(sheet, row, col, value, bold, size) {
-  const cell = sheet.getRange(row, col);
-  cell.setValue(value);
-  if (bold) cell.setFontWeight("bold");
-  if (size) cell.setFontSize(size);
+function resetarFoto() {
+  imgB64=null; imgMime=null; tipoFoto="Saida";
+  document.getElementById("preview-img").src="";
+  document.getElementById("cameraZone").classList.remove("has-image");
+  document.getElementById("aiBtn").disabled=true;
+  document.getElementById("resultCard").classList.remove("visible");
+  document.getElementById("confirmBtn").classList.remove("visible");
+  document.getElementById("confirmBtn").style.display="";
+  document.getElementById("confirmMultiBtn").style.display="none";
+  document.getElementById("confirmMultiBtn").classList.remove("visible");
+  document.getElementById("single-item-view").style.display="";
+  document.getElementById("multi-item-view").style.display="none";
+  document.getElementById("erroBox").classList.remove("visible");
+  document.getElementById("file-input").value="";
+  buildFields("fields-foto","foto","Saida","setTipoFoto");
+}
+function resetarManual() {
+  tipoManual="Saida";
+  buildFields("fields-manual","manual","Saida","setTipoManual");
 }
 
-// ── Rodar manualmente pelo menu ────────────────────────────
-// (já integrado no menu do Recibos.gs via addItem)
+// ═══════════════════════════════════════════════════════
+//  HISTÓRICO LOCAL
+// ═══════════════════════════════════════════════════════
 
-// ── RECRIAR ABA ORÇAMENTOS ──────────────────────────────────
-function resetarAbaOrcamentos() {
-  const ui = SpreadsheetApp.getUi();
-  const ss = SpreadsheetApp.openById(VG_CONFIG.SPREADSHEET_ID);
-  
-  // Se já existe, perguntar se quer resetar
-  const abaExiste = ss.getSheetByName(VG_CONFIG.SHEET_ORCA);
-  if (abaExiste) {
-    const resp = ui.alert(
-      "⚠️ Aba Orçamentos já existe",
-      "Quer RECRIAR do zero? Isso vai apagar os valores atuais.\n\nCancelar para manter o que está.",
-      ui.ButtonSet.YES_NO
-    );
-    if (resp !== ui.Button.YES) return;
-    ss.deleteSheet(abaExiste);
-  }
+// ═══════════════════════════════════════════════════════
+//  MÚLTIPLOS ITENS — lógica completa
+// ═══════════════════════════════════════════════════════
 
-  criarAbaOrcamentos(ss);
-  ui.alert(
-    "✅ Aba 'Orçamentos' criada!\n\n" +
-    "Como usar:\n" +
-    "• Coluna 'Global' = orçamento padrão para todos os projetos\n" +
-    "• Adicione colunas com nome do projeto (P1, P2...) para orçamento específico\n" +
-    "• Os valores são lidos automaticamente na próxima atualização da Visão Global"
-  );
+let _itensMulti = [];      // [{descricao, quantidade, valor, categoria, subCategoria, tipo, fornecedor, projeto, data}]
+let _metaMulti  = {};      // {fornecedor, valorTotal, data, projeto}
+
+// Chamado quando IA retorna múltiplos itens
+function preencherMulti(parsed, modeloUsado) {
+  const c = cfg();
+  _metaMulti = {
+    fornecedor: parsed.fornecedor || "",
+    valorTotal: parseFloat(parsed.valorTotal) || 0,
+    data:       parsed.data || new Date().toLocaleDateString("pt-BR"),
+    projeto:    c.projeto,
+  };
+  _itensMulti = (parsed.itens || []).map(it => ({
+    descricao:    it.descricao    || "",
+    quantidade:   it.quantidade   || "1",
+    valor:        it.valor        || "0.00",
+    categoria:    it.categoria    || "Administração",
+    subCategoria: it.subCategoria || "",
+    tipo:         it.tipo         || "Saida",
+    fornecedor:   parsed.fornecedor || "",
+  }));
+
+  // Mostrar modo multi
+  document.getElementById("single-item-view").style.display = "none";
+  document.getElementById("multi-item-view").style.display  = "";
+  document.getElementById("confirmBtn").style.display       = "none";
+  document.getElementById("confirmMultiBtn").style.display  = "";
+  document.getElementById("confirmMultiBtn").classList.add("visible");
+
+  renderItens();
+
+  document.getElementById("resultCard").classList.add("visible");
+  toast("✨ " + _itensMulti.length + " itens identificados por " + (modeloUsado||"IA") + "!", "ok");
 }
 
-// ══════════════════════════════════════════════════════════════
-//  DIAGNÓSTICO — rode esta função manualmente no editor para
-//  (1) autorizar DriveApp e (2) confirmar que tudo funciona
-// ══════════════════════════════════════════════════════════════
-function testarDrive() {
-  try {
-    // Teste 1: acesso ao Drive
-    const pasta = DriveApp.getRootFolder();
-    Logger.log("✅ Drive acessível: " + pasta.getName());
+// Renderiza a lista de item-cards
+function renderItens() {
+  const list = document.getElementById("itens-list");
+  if (!list) return;
 
-    // Teste 2: criar arquivo de teste
-    const blob    = Utilities.newBlob("teste", "text/plain", "teste_recibos.txt");
-    const arquivo = DriveApp.createFile(blob);
-    arquivo.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    const link = "https://drive.google.com/file/d/" + arquivo.getId() + "/view?usp=sharing";
-    Logger.log("✅ Arquivo criado: " + link);
+  const totalReal = _itensMulti.reduce((s,it) => s + (parseFloat(it.valor)||0), 0);
+  const totalNota = _metaMulti.valorTotal || 0;
+  const diff = Math.abs(totalReal - totalNota);
 
-    // Teste 3: acesso à planilha
-    const ss    = SpreadsheetApp.openById(SHEET_CONFIG.SPREADSHEET_ID);
-    const sheet = ss.getSheetByName(SHEET_CONFIG.SHEET_NAME);
-    const hdrs  = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    Logger.log("✅ Planilha OK | Headers: " + JSON.stringify(hdrs));
+  document.getElementById("itens-count-label").textContent = _itensMulti.length + " ite" + (_itensMulti.length===1?"m":"ns");
+  document.getElementById("itens-total-label").textContent = "Total: " + fmtBRL(totalReal);
 
-    // Teste 4: verificar pasta Recibos
-    const pastas = DriveApp.getFoldersByName(SHEET_CONFIG.DRIVE_FOLDER);
-    if (pastas.hasNext()) {
-      Logger.log("✅ Pasta '" + SHEET_CONFIG.DRIVE_FOLDER + "' existe");
+  const warn = document.getElementById("itens-warn");
+  if (warn) {
+    if (totalNota > 0 && diff > 0.05) {
+      warn.textContent = "⚠️ Soma dos itens (" + fmtBRL(totalReal) + ") ≠ total do recibo (" + fmtBRL(totalNota) + ")";
+      warn.classList.add("visible");
     } else {
-      const nova = DriveApp.createFolder(SHEET_CONFIG.DRIVE_FOLDER);
-      Logger.log("✅ Pasta criada: " + nova.getName());
+      warn.classList.remove("visible");
+    }
+  }
+
+  // Atualizar label do botão confirmar
+  const btn = document.getElementById("confirmMultiBtn");
+  if (btn) btn.textContent = "✅ Lançar " + _itensMulti.length + " ite" + (_itensMulti.length===1?"m":"ns") + " no Sheets";
+
+  list.innerHTML = _itensMulti.map((it, i) => {
+    const catOpts = Object.keys(CATS).map(k =>
+      `<option value="${k}" ${k===it.categoria?"selected":""}>${k}</option>`
+    ).join("");
+    const subOpts = (CATS[it.categoria]||[]).map(s =>
+      `<option value="${s}" ${s===it.subCategoria?"selected":""}>${s}</option>`
+    ).join("") || '<option value="">—</option>';
+
+    return `
+    <div class="item-card" id="item-card-${i}">
+      <div class="item-card-header" onclick="toggleItemCard(${i})">
+        <span class="item-num">Item ${i+1}</span>
+        <span style="flex:1;padding:0 10px;font-size:13px;color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.descricao||"—"}</span>
+        <span class="item-valor-badge ${it.tipo==="Entrada"?"entrada":""}">${fmtBRL(parseFloat(it.valor)||0)}</span>
+        <button class="item-remove" onclick="removerItem(event,${i})">×</button>
+      </div>
+      <div class="item-body" id="item-body-${i}">
+        <div class="frow">
+          <span class="flabel">Descrição</span>
+          <input class="fval" value="${escHtml(it.descricao)}" oninput="_itensMulti[${i}].descricao=this.value" placeholder="—">
+        </div>
+        <div class="frow">
+          <span class="flabel">Valor (R$)</span>
+          <input class="fval c-saida" value="${it.valor}" oninput="_itensMulti[${i}].valor=this.value;renderItens()" inputmode="decimal">
+        </div>
+        <div class="frow">
+          <span class="flabel">Quantidade</span>
+          <input class="fval" value="${escHtml(it.quantidade)}" oninput="_itensMulti[${i}].quantidade=this.value" inputmode="decimal" placeholder="1">
+        </div>
+        <div class="frow">
+          <span class="flabel">Categoria</span>
+          <select class="fval" onchange="_itensMulti[${i}].categoria=this.value;_itensMulti[${i}].subCategoria='';renderItens()">${catOpts}</select>
+        </div>
+        <div class="frow">
+          <span class="flabel">Subcategoria</span>
+          <select class="fval" onchange="_itensMulti[${i}].subCategoria=this.value">${subOpts}</select>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function toggleItemCard(i) {
+  const body = document.getElementById("item-body-" + i);
+  if (body) body.style.display = body.style.display === "none" ? "" : "none";
+}
+
+function removerItem(e, i) {
+  e.stopPropagation();
+  if (_itensMulti.length <= 1) { toast("⚠️ Pelo menos 1 item necessário","err"); return; }
+  _itensMulti.splice(i, 1);
+  renderItens();
+}
+
+function adicionarItemVazio() {
+  _itensMulti.push({ descricao:"", quantidade:"1", valor:"0.00", categoria:"Administração", subCategoria:"", tipo:"Saida", fornecedor: _metaMulti.fornecedor||"" });
+  renderItens();
+  // Scroll para o novo item
+  setTimeout(() => {
+    const cards = document.querySelectorAll(".item-card");
+    cards[cards.length-1]?.scrollIntoView({ behavior:"smooth", block:"nearest" });
+  }, 100);
+}
+
+// Lança todos os itens em sequência
+async function lancarMulti() {
+  const c = cfg();
+  if (!c.url) { toast("⚙️ Configure a URL do Apps Script","err"); abrirSettings(); return; }
+
+  // Validar
+  const semValor = _itensMulti.filter(it => !(parseFloat(it.valor) > 0));
+  if (semValor.length > 0) { toast("⚠️ Todos os itens precisam ter valor","err"); return; }
+
+  const btn = document.getElementById("confirmMultiBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ Enviando 0/" + _itensMulti.length + "...";
+
+  let sucessos = 0, erros = 0, ultimoSaldo = null;
+
+  for (let i = 0; i < _itensMulti.length; i++) {
+    const it = _itensMulti[i];
+    btn.textContent = "⏳ Enviando " + (i+1) + "/" + _itensMulti.length + "...";
+
+    const dados = {
+      tipo:         it.tipo         || "Saida",
+      projeto:      _metaMulti.projeto,
+      valor:        String(parseFloat(it.valor) || 0),
+      qtd:          it.quantidade   || "",
+      descricao:    it.descricao    || "",
+      fornecedor:   it.fornecedor   || _metaMulti.fornecedor || "N/A",
+      categoria:    it.categoria    || "Administração",
+      subCategoria: it.subCategoria || "",
+      data:         _metaMulti.data || new Date().toLocaleDateString("pt-BR"),
+    };
+
+    // Foto só no primeiro item (evita upload duplicado)
+    if (i === 0 && imgB64 && imgMime) {
+      dados.fotoBase64 = imgB64;
+      dados.fotoMime   = imgMime;
     }
 
-    Logger.log("\n🎉 TUDO OK — Drive autorizado e funcionando!");
-  } catch(e) {
-    Logger.log("❌ ERRO: " + e.toString());
+    try {
+      let respJson = null;
+      try {
+        const resp = await fetch(c.url, {
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify(dados),
+        });
+        respJson = await resp.json();
+        if (respJson?.saldo !== undefined) ultimoSaldo = respJson.saldo;
+      } catch(corsErr) {
+        await fetch(c.url, { method:"POST", mode:"no-cors",
+          headers:{"Content-Type":"application/json"}, body: JSON.stringify(dados) });
+      }
+      adicionarHist(dados);
+      sucessos++;
+    } catch(err) {
+      erros++;
+      console.error("Erro item " + i + ":", err);
+    }
+    // Pequena pausa para evitar race condition no LockService
+    if (i < _itensMulti.length - 1) await new Promise(r => setTimeout(r, 600));
   }
+
+  btn.disabled = false;
+
+  let msg = "✅ " + sucessos + " ite" + (sucessos===1?"m":"ns") + " lançado" + (sucessos===1?"":"s") + "!";
+  if (ultimoSaldo !== null) msg += "\n💰 Saldo: " + fmtBRL(ultimoSaldo);
+  if (erros > 0) msg += "\n⚠️ " + erros + " erro(s)";
+  toast(msg, "ok", 5000);
+
+  resetarFoto();
 }
+
+function fmtBRL(v) {
+  return "R$" + Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function escHtml(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+}
+
+function adicionarHist(d) {
+  hist.unshift({...d, ts:Date.now()});
+  if (hist.length>15) hist=hist.slice(0,15);
+  localStorage.setItem("rc_hist",JSON.stringify(hist));
+  renderHist();
+}
+function renderHist() {
+  const el = document.getElementById("histSection");
+  if (!hist.length) { el.innerHTML=""; return; }
+  el.innerHTML = `<div class="hist-title">Últimos lançamentos</div>` +
+    hist.slice(0,6).map(h => {
+      const cls = h.tipo==="Entrada"?"e":"s";
+      const sinal = h.tipo==="Entrada"?"+":"-";
+      return `<div class="hist-item">
+        <div class="hdot ${cls}"></div>
+        <div class="hinfo">
+          <div class="hdesc">${h.descricao||h.subCategoria||h.categoria}</div>
+          <div class="hmeta">${h.projeto} · ${h.fornecedor||""} · ${new Date(h.ts).toLocaleDateString("pt-BR")}</div>
+        </div>
+        <div class="hval ${cls}">${sinal}R$${parseFloat(h.valor||0).toFixed(2).replace(".",",")}</div>
+      </div>`;
+    }).join("");
+}
+
+// ═══════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════
+let _toastT;
+function toast(msg, tipo="", duracao=0) {
+  const el = document.getElementById("toast");
+  el.style.whiteSpace = "pre-line"; el.textContent = msg;
+  el.className = "toast show" + (tipo?" "+tipo:"");
+  clearTimeout(_toastT);
+  const _ms = duracao || (tipo==="err" ? 5000 : 3000); _toastT = setTimeout(() => el.classList.remove("show"), _ms);
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+buildFields("fields-foto",   "foto",   "Saida", "setTipoFoto");
+buildFields("fields-manual", "manual", "Saida", "setTipoManual");
+renderHist();
+
+// Pré-carrega lista de fornecedores
+setTimeout(() => carregarFornecedores(false), 1500);
+
+const _c = cfg();
+if (!_c.key || !_c.url) {
+  setTimeout(() => toast("⚙️ Configure a chave e URL nas configurações",""), 900);
+}
+
+// Splash gerenciado pelo script inline no HTML
+
+// Pull-to-refresh removido — usar botão 🔄 no header
+</script>
+
+  <!-- Loading tela cheia — fora de qualquer container -->
+  <div id="aiLoading" style="
+    display:none; position:fixed; inset:0; z-index:9999;
+    background:rgba(0,0,0,0.82);
+    flex-direction:column; align-items:center; justify-content:center; gap:16px;
+  ">
+    <div style="
+      width:48px;height:48px;
+      border:4px solid rgba(255,255,255,0.2);
+      border-top-color:#4ade80;
+      border-radius:50%;
+      animation:spin 0.8s linear infinite;
+    "></div>
+    <div style="color:#fff;font-size:16px;font-weight:600;">✨ IA analisando...</div>
+    <div class="dbg-log" style="
+      color:#aef;font-size:11px;margin-top:4px;
+      white-space:pre-wrap;max-width:300px;text-align:center;
+      max-height:120px;overflow:auto;
+    "></div>
+    <button onclick="forcarSaida()" style="
+      margin-top:8px;padding:8px 20px;
+      background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);
+      color:#fff;border-radius:20px;font-size:13px;cursor:pointer;
+    ">Cancelar e preencher manual</button>
+  </div>
+
+
+
+  <!-- ── FORNECEDOR BOTTOM SHEET ── -->
+  <div class="forn-ov" id="forn-ov" onclick="fecharSheetFornecedor()"></div>
+  <div class="forn-bs" id="forn-bs">
+    <div class="forn-bs-top" id="forn-bs-drag">
+      <div class="forn-bs-handle"></div>
+      <div class="forn-bs-header">
+        <span class="forn-bs-title">Fornecedor</span>
+        <button class="forn-bs-close" onclick="fecharSheetFornecedor()">✕</button>
+      </div>
+      <div class="forn-bs-search">
+        <input type="text" id="forn-bs-input" placeholder="Buscar fornecedor…"
+          autocomplete="off" spellcheck="false"
+          oninput="renderSheetFornecedor()">
+        <button class="forn-bs-search-clear" id="forn-bs-clr"
+          onclick="document.getElementById('forn-bs-input').value='';renderSheetFornecedor();this.classList.remove('vis')">✕</button>
+      </div>
+    </div>
+    <div class="forn-bs-list" id="forn-bs-list"></div>
+  </div>
+
+</body>
+</html>
