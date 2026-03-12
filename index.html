@@ -189,7 +189,7 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
 </head>
 <body>
   <!-- SPLASH SCREEN — primeiro elemento do body -->
-  <div id="splash" style="position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#0f1f17 0%,#152b1e 60%,#0a1a10 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
+  <div id="splash" style="position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#0f1f17 0%,#152b1e 60%,#0a1a10 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease;">
     <img src="appicone.png" width="110" height="110" style="border-radius:26px;box-shadow:0 8px 40px rgba(74,222,128,0.25);margin-bottom:22px;" onerror="this.style.display='none'">
     <div style="color:#fff;font-size:26px;font-weight:700;letter-spacing:-0.5px;">Recibos</div>
     <div style="color:#4ade80;font-size:14px;font-weight:500;margin-top:6px;letter-spacing:0.5px;">Casas Rosendo</div>
@@ -197,6 +197,27 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
       <div id="splash-bar" style="height:100%;width:0%;background:#4ade80;border-radius:2px;transition:width 1.6s ease;"></div>
     </div>
   </div>
+  <!-- Script inline — executa IMEDIATAMENTE, não depende do resto do JS carregar -->
+  <script>
+    (function() {
+      var _splashDone = false;
+      function hideSplash() {
+        if (_splashDone) return;
+        _splashDone = true;
+        var s = document.getElementById('splash');
+        if (!s) return;
+        var bar = document.getElementById('splash-bar');
+        if (bar) bar.style.width = '100%';
+        setTimeout(function() {
+          s.style.opacity = '0';
+          setTimeout(function() { s.style.display = 'none'; }, 600);
+        }, 1600);
+      }
+      // Dispara em 2s no máximo — independente de qualquer outro JS
+      setTimeout(hideSplash, 2000);
+      window.addEventListener('load', function() { setTimeout(hideSplash, 200); });
+    })();
+  </script>
 <div class="app">
 
 <header>
@@ -1302,42 +1323,7 @@ if (!_c.key || !_c.url) {
   setTimeout(() => toast("⚙️ Configure a chave e URL nas configurações",""), 900);
 }
 
-// ═══════════════════════════════════════════════════════
-//  SPLASH SCREEN — múltiplos fallbacks para iOS PWA
-// ═══════════════════════════════════════════════════════
-(function() {
-  function esconderSplash() {
-    const splash = document.getElementById("splash");
-    if (!splash || splash._removido) return;
-    splash._removido = true;
-    // Inicia barra imediatamente
-    const bar = document.getElementById("splash-bar");
-    if (bar) bar.style.width = "100%";
-    // Fade out após 1.8s
-    setTimeout(() => {
-      splash.style.opacity = "0";
-      setTimeout(() => {
-        splash.style.display = "none";
-      }, 500);
-    }, 1800);
-  }
-
-  // Inicia barra assim que o elemento existir
-  const bar = document.getElementById("splash-bar");
-  if (bar) bar.style.width = "100%";
-
-  // Tentativa 1: imediato (página já carregada)
-  setTimeout(esconderSplash, 100);
-
-  // Tentativa 2: DOMContentLoaded
-  document.addEventListener("DOMContentLoaded", () => setTimeout(esconderSplash, 100));
-
-  // Tentativa 3: load completo
-  window.addEventListener("load", () => setTimeout(esconderSplash, 100));
-
-  // Tentativa 4: fallback absoluto — garante que some em 3.5s no máximo
-  setTimeout(esconderSplash, 3500);
-})();
+// Splash gerenciado pelo script inline no HTML
 
 // ═══════════════════════════════════════════════════════
 //  PULL TO REFRESH
