@@ -734,7 +734,7 @@ async function analisarIA() {
     document.getElementById("aiLoading").style.display="none";
     mostrarErro("Tempo esgotado. Preencha manualmente.");
     preencherFoto({}, "manual");
-  }, 20000);
+  }, 45000);
 
   try {
     const CATS_LIST = "Acabamentos/Instalação Elétrica/Instalação Hidráulica/Infraestrutura e Fundação/Estrutura e Alvenaria/Cobertura/Esquadrias/Mão de Obra/Logística e Apoio/Terreno e Legalização/Administração";
@@ -758,7 +758,7 @@ Retorne SÓ o JSON.`;
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${cfg_.key}`;
       try {
         const ctrl  = new AbortController();
-        const timer = setTimeout(() => { dbg("⏱ Abort " + modelo); ctrl.abort(); }, 12000);
+        const timer = setTimeout(() => { dbg("⏱ Abort " + modelo); ctrl.abort(); }, 18000);
 
         const res = await fetch(url, {
           method: "POST",
@@ -769,7 +769,7 @@ Retorne SÓ o JSON.`;
               { text: prompt },
               { inline_data: { mime_type: imgMime, data: imgB64 } }
             ]}],
-            generationConfig: { temperature: 0.1, maxOutputTokens: 1500 }
+            generationConfig: { temperature: 0.1, maxOutputTokens: 1200 }
           })
         });
         clearTimeout(timer);
@@ -914,6 +914,10 @@ function preencherFoto(d, modeloUsado, meta) {
   // Mostrar badge "da IA" quando sugerido pela IA
   const badge = document.getElementById("forn-badge-foto");
   if (badge) badge.style.display = fornVal ? "inline-block" : "none";
+
+  // Garantir que resultCard e confirmBtn estão visíveis
+  document.getElementById("resultCard").classList.add("visible");
+  document.getElementById("confirmBtn").classList.add("visible");
 
   if (d.categoria && CATS[d.categoria]) {
     document.getElementById("cat-foto").value = d.categoria;
