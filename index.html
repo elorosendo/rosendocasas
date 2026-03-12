@@ -413,81 +413,122 @@ async function carregarFornecedores(forcar) {
 
 // Abre dropdown ao focar no campo
 function abrirFornecedores(pfx) {
-  carregarFornecedores(false); // carrega se ainda não tem
-  filtrarFornecedores(pfx);
+  // Salva qual campo ativou o sheet
+  window._fornActivePfx = pfx;
+  carregarFornecedores(false);
+
+  // Abrir overlay + sheet
+  const overlay = document.getElementById("forn-overlay");
+  const sheet   = document.getElementById("forn-sheet");
+  const input   = document.getElementById("forn-sheet-input");
+
+  overlay.classList.add("open");
+  // Forçar reflow antes de animar
+  sheet.offsetHeight;
+  sheet.classList.add("open");
+
+  // Limpar busca e popular lista
+  if (input) { input.value = ""; input.focus(); }
+  filtrarFornecedores("_sheet");
 }
 
-// Filtra lista conforme digitação e renderiza dropdown
+// Filtra lista no sheet
 function filtrarFornecedores(pfx) {
-  const input = document.getElementById("forn-" + pfx);
-  const dd    = document.getElementById("forn-dd-" + pfx);
-  const wrap  = document.getElementById("forn-wrap-" + pfx);
-  const q     = (input?.value || "").trim().toLowerCase();
+  const isSheet = pfx === "_sheet";
+  const input = isSheet
+    ? document.getElementById("forn-sheet-input")
+    : document.getElementById("forn-" + pfx);
+  const dd = document.getElementById(isSheet ? "forn-dd-_sheet" : "forn-dd-" + pfx);
+  if (!dd) return;
 
-  // Atualiza botão de limpar
-  wrap?.classList.toggle("has-value", !!input?.value);
+  const q = (input?.value || "").trim().toLowerCase();
 
-  // Se ainda carregando
   if (_fornCarregando && _fornecedores.length === 0) {
     dd.innerHTML = '<div class="forn-loading">⏳ Carregando...</div>';
-    dd.classList.add("open");
     return;
   }
 
-  // Filtra
   const filtrado = q
     ? _fornecedores.filter(f => f.toLowerCase().includes(q))
     : _fornecedores;
 
   const jaExiste = _fornecedores.some(f => f.toLowerCase() === q);
+  const activePfx = isSheet ? (window._fornActivePfx || "foto") : pfx;
 
   let html = "";
   if (filtrado.length === 0 && !q) {
-    html = '<div class="forn-loading">Digite para buscar...</div>';
+    html = '<div class="forn-loading">Digite para buscar ou adicionar...</div>';
   } else {
-    filtrado.slice(0, 20).forEach((f, i) => {
-      html += `<div class="forn-opt" data-val="${f}" onclick="selecionarFornecedor('${pfx}','${f.replace(/'/g,"\'")}')">
+    filtrado.slice(0, 40).forEach(f => {
+      html += `<div class="forn-opt" onclick="selecionarFornecedor('${activePfx}','${f.replace(/'/g,"\'")}')">
         ${f}
       </div>`;
     });
   }
 
-  // Opção de adicionar novo (só aparece se não é duplicata e tem texto)
   if (q && !jaExiste) {
-    html += `<div class="forn-opt add-new" onclick="adicionarNovoFornecedor('${pfx}','${q.replace(/'/g,"\'")}')">
-      Adicionar "${input.value.trim()}"
+    const qDisplay = input?.value?.trim() || q;
+    html += `<div class="forn-opt add-new" onclick="adicionarNovoFornecedor('${activePfx}','${q.replace(/'/g,"\'")}')">
+      Adicionar "${qDisplay}"
     </div>`;
   }
 
   dd.innerHTML = html || '<div class="forn-loading">Nenhum resultado</div>';
-  dd.classList.toggle("open", !!html || q.length > 0);
 }
 
-// Seleciona item do dropdown
-function selecionarFornecedor(pfx, valor) {
+function selecionarFornecedor(pfx, val) {
   const input = document.getElementById("forn-" + pfx);
   const wrap  = document.getElementById("forn-wrap-" + pfx);
-  if (input) input.value = valor;
-  wrap?.classList.add("has-value");
+  if (input) { input.value = val; wrap?.classList.add("has-value"); }
   fecharFornecedorDD(pfx);
 }
 
-// Adiciona novo fornecedor no Sheets e seleciona
+function fecharFornecedorDD(pfx) {
+  const overlay = document.getElementById("forn-overlay");
+  const sheet   = document.getElementById("forn-sheet");
+  overlay?.classList.remove("open");
+  sheet?.classList.remove("open");
+  window._fornActivePfx = null;
+}
+
+function navFornecedores(e, pfx) {
+  // Navegação por teclado no sheet
+  const dd = document.getElementById("forn-dd-_sheet");
+  if (!dd) return;
+  const opts = dd.querySelectorAll(".forn-opt") || [];
+  const focused = dd.querySelector(".forn-opt.focused");
+  let idx = [...opts].indexOf(focused);
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    focused?.classList.remove("focused");
+    const next = opts[Math.min(idx + 1, opts.length - 1)];
+    next?.classList.add("focused");
+    next?.scrollIntoView({ block: "nearest" });
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    focused?.classList.remove("focused");
+    const prev = opts[Math.max(idx - 1, 0)];
+    prev?.classList.add("focused");
+    prev?.scrollIntoView({ block: "nearest" });
+  } else if (e.key === "Enter" && focused) {
+    e.preventDefault();
+    focused.click();
+  } else if (e.key === "Escape") {
+    fecharFornecedorDD(pfx);
+  }
+}
+
+
 async function adicionarNovoFornecedor(pfx, nome) {
-  if (!nome) return;
-  const nomeReal = document.getElementById("forn-" + pfx)?.value?.trim() || nome;
-  const url = cfg().url;
-  if (!url) { toast("⚙️ Configure a URL do Apps Script","err"); return; }
-
-  // Feedback visual
-  const dd = document.getElementById("forn-dd-" + pfx);
-  dd.innerHTML = '<div class="forn-loading">⏳ Salvando no Sheets...</div>';
-
+  const nomeReal = nome.trim();
+  if (!nomeReal) return;
+  const c = cfg();
+  if (!c.url) { toast("⚙️ Configure a URL do Apps Script","err"); return; }
   try {
-    const resp = await fetch(`${url}?action=addFornecedor&nome=${encodeURIComponent(nomeReal)}`);
+    const resp = await fetch(c.url + "?action=addFornecedor&nome=" + encodeURIComponent(nomeReal));
     const data = await resp.json();
     if (data.ok) {
-      _fornecedores.push(nomeReal); // atualiza cache local
+      _fornecedores.push(nomeReal);
       _fornecedores.sort((a,b) => a.localeCompare(b,"pt-BR"));
       selecionarFornecedor(pfx, nomeReal);
       toast("✅ \"" + nomeReal + "\" adicionado à lista!", "ok");
@@ -501,12 +542,6 @@ async function adicionarNovoFornecedor(pfx, nome) {
   }
 }
 
-// Fecha dropdown
-function fecharFornecedorDD(pfx) {
-  document.getElementById("forn-dd-" + pfx)?.classList.remove("open");
-}
-
-// Limpa campo
 function limparFornecedor(pfx) {
   const input = document.getElementById("forn-" + pfx);
   const wrap  = document.getElementById("forn-wrap-" + pfx);
@@ -514,44 +549,7 @@ function limparFornecedor(pfx) {
   if (input) input.value = "";
   wrap?.classList.remove("has-value");
   if (badge) badge.style.display = "none";
-  filtrarFornecedores(pfx);
-  input?.focus();
 }
-
-// Navegação por teclado no dropdown
-function navFornecedores(e, pfx) {
-  const dd   = document.getElementById("forn-dd-" + pfx);
-  const opts = dd?.querySelectorAll(".forn-opt") || [];
-  const focused = dd?.querySelector(".forn-opt.focused");
-  let idx = [...opts].indexOf(focused);
-
-  if (e.key === "ArrowDown") {
-    e.preventDefault();
-    if (focused) focused.classList.remove("focused");
-    const next = opts[Math.min(idx + 1, opts.length - 1)];
-    next?.classList.add("focused");
-    next?.scrollIntoView({ block: "nearest" });
-  } else if (e.key === "ArrowUp") {
-    e.preventDefault();
-    if (focused) focused.classList.remove("focused");
-    const prev = opts[Math.max(idx - 1, 0)];
-    prev?.classList.add("focused");
-    prev?.scrollIntoView({ block: "nearest" });
-  } else if (e.key === "Enter" && focused) {
-    e.preventDefault();
-    focused.click();
-  } else if (e.key === "Escape") {
-    fecharFornecedorDD(pfx);
-  }
-}
-
-// Fecha dropdown ao clicar fora
-document.addEventListener("click", e => {
-  ["foto","manual"].forEach(pfx => {
-    const wrap = document.getElementById("forn-wrap-" + pfx);
-    if (wrap && !wrap.contains(e.target)) fecharFornecedorDD(pfx);
-  });
-});
 
 function cfg() {
   // Chave dividida para evitar detecção automática do GitHub
@@ -650,13 +648,10 @@ function buildFields(containerId, pfx, tipo, fnTipo) {
     <div class="frow">
       <span class="flabel">Fornecedor <span id="forn-badge-${pfx}" class="forn-badge" style="display:none">da IA</span></span>
       <div class="forn-wrap" id="forn-wrap-${pfx}">
-        <input class="fval" id="forn-${pfx}" type="text" placeholder="Buscar ou digitar..."
-          autocomplete="off"
-          oninput="filtrarFornecedores('${pfx}')"
-          onfocus="abrirFornecedores('${pfx}')"
-          onkeydown="navFornecedores(event,'${pfx}')">
+        <input class="fval" id="forn-${pfx}" type="text" placeholder="Toque para selecionar..."
+          autocomplete="off" readonly
+          onclick="abrirFornecedores('${pfx}')">
         <button class="forn-clear" onclick="limparFornecedor('${pfx}')" type="button">✕</button>
-        <div class="forn-dropdown" id="forn-dd-${pfx}"></div>
       </div>
     </div>
     <div class="frow">
@@ -1409,5 +1404,19 @@ if (!_c.key || !_c.url) {
     ">Cancelar e preencher manual</button>
   </div>
 
+
+  <!-- FORNECEDOR BOTTOM SHEET -->
+  <div class="forn-overlay" id="forn-overlay" onclick="fecharFornecedorDD('_active')"></div>
+  <div class="forn-sheet" id="forn-sheet">
+    <div class="forn-sheet-handle"></div>
+    <div class="forn-sheet-title">Fornecedor</div>
+    <div class="forn-sheet-search">
+      <input type="text" id="forn-sheet-input" placeholder="Buscar fornecedor..."
+        oninput="filtrarFornecedores('_sheet')"
+        onkeydown="navFornecedores(event,'_sheet')">
+      <button class="forn-sheet-clear" id="forn-sheet-clear-btn" onclick="document.getElementById('forn-sheet-input').value='';filtrarFornecedores('_sheet')" type="button">✕</button>
+    </div>
+    <div class="forn-dropdown" id="forn-dd-_sheet"></div>
+  </div>
 </body>
 </html>
