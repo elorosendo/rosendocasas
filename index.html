@@ -1049,12 +1049,12 @@ async function lancar(pfx) {
   if (pfx === "foto" && imgB64 && imgMime) {
     const kb = Math.round(imgB64.length * 0.75 / 1024);
     dbg("📷 Foto: " + kb + "KB | mime: " + imgMime, "info");
-    if (kb < 400) {
+    if (kb < 600) {
       dados.fotoBase64 = imgB64;
       dados.fotoMime   = imgMime;
-      dbg("✅ Foto incluída no payload", "ok");
+      dbg("✅ Foto incluída no payload (" + kb + "KB)", "ok");
     } else {
-      dbg("⚠️ Foto muito grande (" + kb + "KB) — não enviando", "warn");
+      dbg("⚠️ Foto muito grande (" + kb + "KB) — não enviando. Tente foto menor.", "warn");
     }
   } else if (pfx === "foto") {
     dbg("⚠️ Sem foto: imgB64=" + (imgB64?"sim":"NÃO") + " imgMime=" + (imgMime||"NÃO"), "warn");
@@ -1114,13 +1114,17 @@ async function lancar(pfx) {
         msg += `\n💰 Saldo: R$${Number(respJson.saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}`;
       }
       if (respJson.linkRecibo) {
+        dbg("✅ Drive link: " + respJson.linkRecibo, "ok");
         msg += "\n📎 Recibo salvo no Drive";
-        setTimeout(() => window.open(respJson.linkRecibo, "_blank"), 1500);
+        // Mostrar botão de abrir link (não usar window.open automático — iOS bloqueia)
+        setTimeout(() => {
+          if (confirm("📎 Recibo salvo no Drive. Abrir?")) {
+            window.open(respJson.linkRecibo, "_blank");
+          }
+        }, 800);
       } else if (respJson.driveErro) {
-        console.warn("Drive erro:", respJson.driveErro);
+        dbg("❌ Drive erro: " + respJson.driveErro, "err");
         msg += "\n⚠️ Drive: " + respJson.driveErro;
-      } else if (respJson.driveErro) {
-        msg += "\n⚠️ Foto não subiu: " + respJson.driveErro;
       }
     }
     toast(msg, "ok", 5000);
