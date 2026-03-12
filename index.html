@@ -255,7 +255,7 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
     <div class="logo-icon">🧾</div>
     <div>
       <div class="logo-text">Recibos</div>
-      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.16</span></div>
+      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.17</span></div>
     </div>
   </div>
   <div class="hdr-right">
@@ -442,9 +442,10 @@ let hist = (function() {
 })();
 
 const MODELOS = [
+  "gemini-2.0-flash-exp",
   "gemini-2.0-flash",
-  "gemini-2.0-flash-lite",
-  "gemini-1.5-flash-latest",
+  "gemini-1.5-flash",
+  "gemini-1.5-flash-8b",
 ];
 
 // ═══════════════════════════════════════════════════════
@@ -1119,19 +1120,29 @@ async function lancar(pfx) {
     delete dadosSemFoto.fotoMime;
     const temFoto = !!dados.fotoBase64;
 
-    async function enviarPayload(payload, label) {
-      dbg("📤 " + label + " | " + c.url.substring(0,50), "info");
-      dbg("📦 tipo=" + payload.tipo + " val=" + payload.valor + " foto=" + (payload.fotoBase64?"SIM":"NÃO"), "info");
-      const resp = await fetch(c.url, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(payload),
+    // XHR em vez de fetch — iOS Safari PWA bloqueia fetch para script.google.com
+    function enviarXHR(payload) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", c.url, true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.timeout = 30000;
+        xhr.onload = function() {
+          const txt = xhr.responseText || "";
+          dbg("📥 XHR " + xhr.status + " (" + txt.length + "c)", xhr.status < 400 ? "ok" : "err");
+          const s = txt.indexOf("{");
+          if (s !== -1) { try { resolve(JSON.parse(txt.substring(s))); return; } catch(e) {} }
+          resolve(null);
+        };
+        xhr.onerror = function() { reject(new Error("XHR network error")); };
+        xhr.ontimeout = function() { reject(new Error("XHR timeout")); };
+        xhr.send(JSON.stringify(payload));
       });
-      const txt = await resp.text();
-      dbg("📥 HTTP " + resp.status + " (" + txt.length + " chars)", resp.ok ? "ok" : "err");
-      const s = txt.indexOf("{");
-      if (s !== -1) return JSON.parse(txt.substring(s));
-      return null;
+    }
+    async function enviarPayload(payload, label) {
+      dbg("📤 " + label + " | foto=" + (payload.fotoBase64?"SIM":"NÃO"), "info");
+      dbg("📦 tipo=" + payload.tipo + " val=" + payload.valor, "info");
+      return await enviarXHR(payload);
     }
 
     if (temFoto) {
@@ -1143,20 +1154,28 @@ async function lancar(pfx) {
           respJson = await enviarPayload(dadosSemFoto, "T2 sem foto");
         } catch(e2) {
           dbg("⚠️ T2 falhou: " + e2.message + " — no-cors", "warn");
-          await fetch(c.url, { method:"POST", mode:"no-cors",
-            headers:{"Content-Type":"application/json"},
-            body: JSON.stringify(dadosSemFoto) }).catch(()=>{});
-          dbg("📤 no-cors enviado (sem confirmação)", "warn");
+          // Último recurso: XHR sem ler resposta
+          try {
+            const x = new XMLHttpRequest();
+            x.open("POST", c.url, true);
+            x.setRequestHeader("Content-Type", "application/json");
+            x.send(JSON.stringify(dadosSemFoto));
+            dbg("📤 XHR fallback enviado", "warn");
+          } catch(e3) { dbg("❌ XHR fallback falhou: " + e3.message, "err"); }
         }
       }
     } else {
       try {
         respJson = await enviarPayload(dados, "T1 sem foto");
       } catch(e) {
-        dbg("⚠️ CORS falhou: " + e.message + " — no-cors", "warn");
-        await fetch(c.url, { method:"POST", mode:"no-cors",
-          headers:{"Content-Type":"application/json"},
-          body: JSON.stringify(dados) }).catch(()=>{});
+        dbg("⚠️ XHR falhou: " + e.message + " — retry", "warn");
+        try {
+          const x = new XMLHttpRequest();
+          x.open("POST", c.url, true);
+          x.setRequestHeader("Content-Type", "application/json");
+          x.send(JSON.stringify(dados));
+          dbg("📤 XHR retry enviado", "warn");
+        } catch(e2) { dbg("❌ Retry falhou: " + e2.message, "err"); }
       }
     }
 
@@ -1395,15 +1414,24 @@ async function lancarMulti() {
     try {
       let respJson = null;
       try {
-        const resp = await fetch(c.url, {
-          method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify(dados),
+        respJson = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", c.url, true);
+          xhr.setRequestHeader("Content-Type", "application/json");
+          xhr.timeout = 30000;
+          xhr.onload = () => {
+            const txt = xhr.responseText || "";
+            const s = txt.indexOf("{");
+            if (s !== -1) { try { resolve(JSON.parse(txt.substring(s))); return; } catch(e) {} }
+            resolve(null);
+          };
+          xhr.onerror = () => reject(new Error("XHR error"));
+          xhr.ontimeout = () => reject(new Error("XHR timeout"));
+          xhr.send(JSON.stringify(dados));
         });
-        respJson = await resp.json();
         if (respJson?.saldo !== undefined) ultimoSaldo = respJson.saldo;
-      } catch(corsErr) {
-        await fetch(c.url, { method:"POST", mode:"no-cors",
-          headers:{"Content-Type":"application/json"}, body: JSON.stringify(dados) });
+      } catch(xhrErr) {
+        dbg("⚠️ Multi XHR erro item " + i + ": " + xhrErr.message, "warn");
       }
       adicionarHist(dados);
       sucessos++;
