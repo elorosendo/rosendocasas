@@ -202,7 +202,7 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
 
 
 /* ── DEBUG PANEL ── */
-#debugPanel{position:fixed;bottom:0;left:0;right:0;max-height:50vh;background:#0a0a0a;border-top:2px solid #4ade80;z-index:9999;display:none;flex-direction:column;font-family:monospace}
+#debugPanel{position:fixed;bottom:0;left:0;right:0;height:45vh;background:#0a0a0a;border-top:2px solid #4ade80;z-index:9999;display:none;flex-direction:column;font-family:monospace}
 #debugPanel.open{display:flex}
 #debugHeader{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#111;flex-shrink:0}
 #debugHeader span{color:#4ade80;font-size:12px;font-weight:700}
@@ -759,7 +759,7 @@ function fotoSelecionada(e) {
     // Comprimir imagem para max 1200px e qualidade 0.75 — evita quota exceeded
     const img = new Image();
     img.onload = () => {
-      const MAX = 900;
+      const MAX = 700; // menor = menor arquivo = sem timeout
       let w = img.width, h = img.height;
       if (w > MAX || h > MAX) {
         if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
@@ -768,7 +768,7 @@ function fotoSelecionada(e) {
       const canvas = document.createElement("canvas");
       canvas.width = w; canvas.height = h;
       canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.65);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.45); // mais comprimido
       imgB64  = dataUrl.split(",")[1];
       imgMime = "image/jpeg";
       document.getElementById("preview-img").src = dataUrl;
@@ -1048,13 +1048,16 @@ async function lancar(pfx) {
   // Inclui foto no payload — comprimida, tamanho razoável
   if (pfx === "foto" && imgB64 && imgMime) {
     const kb = Math.round(imgB64.length * 0.75 / 1024);
-    console.log("Foto tamanho:", kb, "KB");
-    if (kb < 800) { // só envia se < 800KB para evitar quota
+    dbg("📷 Foto: " + kb + "KB | mime: " + imgMime, "info");
+    if (kb < 400) {
       dados.fotoBase64 = imgB64;
       dados.fotoMime   = imgMime;
+      dbg("✅ Foto incluída no payload", "ok");
     } else {
-      console.warn("Foto muito grande (" + kb + "KB), não enviando");
+      dbg("⚠️ Foto muito grande (" + kb + "KB) — não enviando", "warn");
     }
+  } else if (pfx === "foto") {
+    dbg("⚠️ Sem foto: imgB64=" + (imgB64?"sim":"NÃO") + " imgMime=" + (imgMime||"NÃO"), "warn");
   }
 
   // Validação básica
@@ -1074,6 +1077,8 @@ async function lancar(pfx) {
     // Apps Script com "Execute as: Me / Anyone" suporta CORS em POST
     let respJson = null;
     try {
+      dbg("📤 Enviando para: " + c.url.substring(0,60) + "...", "info");
+      dbg("📦 Payload: tipo=" + dados.tipo + " valor=" + dados.valor + " foto=" + (dados.fotoBase64 ? "SIM" : "NÃO"), "info");
       const resp = await fetch(c.url, {
         method: "POST",
         redirect: "follow",
@@ -1081,16 +1086,17 @@ async function lancar(pfx) {
         body: JSON.stringify(dados),
       });
       const txt = await resp.text();
-      console.log("Resposta servidor:", txt.substring(0,200));
-      // Apps Script às vezes retorna HTML de redirect — pegar só o JSON
+      dbg("📥 Resposta (" + txt.length + " chars): " + txt.substring(0,150), "info");
       const jsonStart = txt.indexOf("{");
       if (jsonStart !== -1) {
         respJson = JSON.parse(txt.substring(jsonStart));
+        dbg("✅ JSON ok | link=" + (respJson.linkRecibo||"NULO") + " | driveErro=" + (respJson.driveErro||"nenhum"), respJson.linkRecibo ? "ok" : "warn");
+      } else {
+        dbg("❌ Sem JSON na resposta", "err");
       }
     } catch(corsErr) {
-      console.warn("Fetch erro:", corsErr.message);
-      // Fallback no-cors — lançamento vai mas sem confirmação de link
-      console.warn("⚠️ Usando no-cors fallback — foto NÃO será salva no Drive");
+      dbg("❌ Fetch erro: " + corsErr.message, "err");
+      dbg("⚠️ Usando no-cors — foto NÃO será salva no Drive", "warn");
       await fetch(c.url, {
         method:"POST", mode:"no-cors",
         headers:{"Content-Type":"application/json"},
