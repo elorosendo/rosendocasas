@@ -706,14 +706,13 @@ function fotoSelecionada(e) {
 //  CHAVE API: deve ser criada em aistudio.google.com/apikey
 //  Chaves do Google Cloud Console precisam de billing ativado!
 // ═══════════════════════════════════════════════════════
-async function analisarIA() {
-  // Debug visual — aparece na tela durante análise
 function forcarSaida() {
-    document.getElementById("aiLoading").style.display="none";
-    preencherFoto({}, "manual");
-    toast("Preencha manualmente","");
-  }
+  document.getElementById("aiLoading").style.display="none";
+  preencherFoto({}, "manual");
+  toast("Preencha manualmente","");
+}
 
+async function analisarIA() {
   function dbg(msg) {
     const p = document.querySelector("#aiLoading .dbg-log");
     if (p) p.textContent += msg + "\n";
@@ -739,24 +738,16 @@ function forcarSaida() {
 
   try {
     const CATS_LIST = "Acabamentos/Instalação Elétrica/Instalação Hidráulica/Infraestrutura e Fundação/Estrutura e Alvenaria/Cobertura/Esquadrias/Mão de Obra/Logística e Apoio/Terreno e Legalização/Administração";
-    const prompt = `Analise este recibo de compra de materiais de construção.
+    const prompt = `Analise este recibo. Retorne APENAS JSON, sem texto extra.
 
-Se o recibo tem APENAS UM tipo de produto ou uma única categoria, retorne:
-{"modo":"simples","fornecedor":"","valorTotal":"0.00","data":"","itens":[{"descricao":"","quantidade":"1","valor":"0.00","categoria":"Administração","subCategoria":"","tipo":"Saida"}]}
+Formato obrigatório:
+{"modo":"simples","fornecedor":"NOME_LOJA","valorTotal":"0.00","data":"DD/MM/AAAA","itens":[{"descricao":"","quantidade":"1","valor":"0.00","categoria":"Administração","subCategoria":"","tipo":"Saida"}]}
 
-Se o recibo tem MÚLTIPLOS produtos de categorias DIFERENTES, separe em itens:
-{"modo":"multiplo","fornecedor":"","valorTotal":"0.00","data":"","itens":[{"descricao":"","quantidade":"1","valor":"0.00","categoria":"","subCategoria":"","tipo":"Saida"},{"descricao":"","quantidade":"1","valor":"0.00","categoria":"","subCategoria":"","tipo":"Saida"}]}
-
-Regras:
-- fornecedor = nome da loja/empresa no recibo
-- valorTotal = valor total do recibo (soma de todos os itens)
-- data = data do recibo no formato DD/MM/AAAA (se visível)
-- quantidade = quantidade comprada de cada item (número)
-- valor = valor total do item (preço unitário × quantidade)
-- categoria deve ser uma de: ${CATS_LIST}
-- Se vários produtos são da mesma categoria, agrupe em um item
-- A soma dos valores dos itens DEVE ser igual ao valorTotal
-- Retorne APENAS o JSON, sem explicações.`;
+Se houver produtos de categorias DIFERENTES, use modo "multiplo" e adicione mais objetos no array itens.
+Categorias válidas: ${CATS_LIST}
+Agrupe produtos da mesma categoria em um único item.
+A soma dos valores dos itens deve ser igual ao valorTotal.
+Retorne SÓ o JSON.`;
 
     let parsed = null;
     let modeloUsado = "";
@@ -778,7 +769,7 @@ Regras:
               { text: prompt },
               { inline_data: { mime_type: imgMime, data: imgB64 } }
             ]}],
-            generationConfig: { temperature: 0.1, maxOutputTokens: 800 }
+            generationConfig: { temperature: 0.1, maxOutputTokens: 1500 }
           })
         });
         clearTimeout(timer);
@@ -903,9 +894,11 @@ function preencherFoto(d, modeloUsado, meta) {
 
   // Modo visual: item único
   document.getElementById("single-item-view").style.display = "";
-  document.getElementById("multi-item-view").style.display = "none";
-  document.getElementById("confirmBtn").style.display = "";
-  document.getElementById("confirmMultiBtn").style.display = "none";
+  document.getElementById("multi-item-view").style.display  = "none";
+  document.getElementById("confirmBtn").style.display       = "";
+  document.getElementById("confirmBtn").classList.add("visible");
+  document.getElementById("confirmMultiBtn").style.display  = "none";
+  document.getElementById("resultCard").classList.add("visible");
 
   document.getElementById("proj-foto").value = c.projeto;
   document.getElementById("val-foto").value  = d.valor      || "";
@@ -934,8 +927,6 @@ function preencherFoto(d, modeloUsado, meta) {
     document.getElementById("data-foto").value = d.data;
   }
 
-  document.getElementById("resultCard").classList.add("visible");
-  document.getElementById("confirmBtn").classList.add("visible");
   toast("✨ Analisado com " + (modeloUsado||"IA") + "!", "ok");
 }
 
