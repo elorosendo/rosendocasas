@@ -255,7 +255,7 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
     <div class="logo-icon">🧾</div>
     <div>
       <div class="logo-text">Recibos</div>
-      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.17</span></div>
+      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.18</span></div>
     </div>
   </div>
   <div class="hdr-right">
@@ -442,10 +442,11 @@ let hist = (function() {
 })();
 
 const MODELOS = [
-  "gemini-2.0-flash-exp",
-  "gemini-2.0-flash",
-  "gemini-1.5-flash",
-  "gemini-1.5-flash-8b",
+  "gemini-2.0-flash-lite",   // mais rápido, menor quota
+  "gemini-2.0-flash",        // principal
+  "gemini-2.0-flash-exp",    // experimental
+  "gemini-1.5-flash",        // fallback (v1)
+  "gemini-1.5-flash-8b",     // fallback leve (v1)
 ];
 
 // ═══════════════════════════════════════════════════════
@@ -880,8 +881,10 @@ Retorne SÓ o JSON, sem nenhum texto antes ou depois.`;
     let erroMsg = "";
 
     for (const modelo of MODELOS) {
-      dbgAI("🔄 Tentando " + modelo + "...");
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${cfg_.key}`;
+      dbgAI("🔄 " + modelo + " [" + (modelo.startsWith("gemini-1")?"v1":"v1beta") + "]");
+      // gemini-2.x usa v1beta, gemini-1.x usa v1
+      const apiVer = modelo.startsWith("gemini-1") ? "v1" : "v1beta";
+      const url = `https://generativelanguage.googleapis.com/${apiVer}/models/${modelo}:generateContent?key=${cfg_.key}`;
       try {
         const ctrl  = new AbortController();
         const timer = setTimeout(() => { dbg("⏱ Abort " + modelo); ctrl.abort(); }, 18000);
@@ -1120,6 +1123,33 @@ async function lancar(pfx) {
     delete dadosSemFoto.fotoMime;
     const temFoto = !!dados.fotoBase64;
 
+    // GET com query params — não sofre redirect block no iOS PWA
+    function enviarGET(payload) {
+      return new Promise((resolve, reject) => {
+        // Codificar apenas campos de texto (sem foto)
+        const p = new URLSearchParams();
+        ["tipo","projeto","valor","qtd","descricao","fornecedor",
+         "categoria","subCategoria","data","grupoRecibo"].forEach(k => {
+          if (payload[k] !== undefined) p.set(k, payload[k]);
+        });
+        p.set("action", "lancar");
+        const url = c.url + "?" + p.toString();
+        dbg("📤 GET: " + url.substring(0,80), "info");
+        const xhr2 = new XMLHttpRequest();
+        xhr2.open("GET", url, true);
+        xhr2.timeout = 25000;
+        xhr2.onload = function() {
+          const txt = xhr2.responseText || "";
+          dbg("📥 GET " + xhr2.status + " (" + txt.length + "c)", xhr2.status < 400 ? "ok" : "err");
+          const s = txt.indexOf("{");
+          if (s !== -1) { try { resolve(JSON.parse(txt.substring(s))); return; } catch(e) {} }
+          resolve(null);
+        };
+        xhr2.onerror  = () => reject(new Error("GET error"));
+        xhr2.ontimeout = () => reject(new Error("GET timeout"));
+        xhr2.send();
+      });
+    }
     // XHR em vez de fetch — iOS Safari PWA bloqueia fetch para script.google.com
     function enviarXHR(payload) {
       return new Promise((resolve, reject) => {
@@ -1153,34 +1183,43 @@ async function lancar(pfx) {
         try {
           respJson = await enviarPayload(dadosSemFoto, "T2 sem foto");
         } catch(e2) {
-          dbg("⚠️ T2 falhou: " + e2.message + " — no-cors", "warn");
-          // Último recurso: XHR sem ler resposta
+          dbg("⚠️ T2 falhou: " + e2.message + " — T3 GET", "warn");
+          // T3: GET com params (funciona no iOS PWA — sem foto)
           try {
-            const x = new XMLHttpRequest();
-            x.open("POST", c.url, true);
-            x.setRequestHeader("Content-Type", "application/json");
-            x.send(JSON.stringify(dadosSemFoto));
-            dbg("📤 XHR fallback enviado", "warn");
-          } catch(e3) { dbg("❌ XHR fallback falhou: " + e3.message, "err"); }
+            respJson = await enviarGET(dadosSemFoto);
+            if (respJson) dbg("✅ T3 GET ok", "ok");
+          } catch(e3) {
+            dbg("⚠️ T3 GET falhou: " + e3.message + " — sendBeacon", "warn");
+            try {
+              const blob = new Blob([JSON.stringify(dadosSemFoto)], {type:"application/json"});
+              const ok = navigator.sendBeacon(c.url, blob);
+              dbg("📤 sendBeacon: " + (ok?"aceito":"rejeitado"), ok?"ok":"warn");
+            } catch(e4) { dbg("❌ sendBeacon falhou: " + e4.message, "err"); }
+          }
         }
       }
     } else {
       try {
         respJson = await enviarPayload(dados, "T1 sem foto");
       } catch(e) {
-        dbg("⚠️ XHR falhou: " + e.message + " — retry", "warn");
+        dbg("⚠️ XHR falhou: " + e.message + " — GET", "warn");
         try {
-          const x = new XMLHttpRequest();
-          x.open("POST", c.url, true);
-          x.setRequestHeader("Content-Type", "application/json");
-          x.send(JSON.stringify(dados));
-          dbg("📤 XHR retry enviado", "warn");
-        } catch(e2) { dbg("❌ Retry falhou: " + e2.message, "err"); }
+          respJson = await enviarGET(dados);
+          if (respJson) dbg("✅ GET ok", "ok");
+        } catch(e2) {
+          dbg("⚠️ GET falhou: " + e2.message + " — sendBeacon", "warn");
+          try {
+            const blob = new Blob([JSON.stringify(dados)], {type:"application/json"});
+            const ok = navigator.sendBeacon(c.url, blob);
+            dbg("📤 sendBeacon: " + (ok?"aceito":"rejeitado"), ok?"ok":"warn");
+          } catch(e3) { dbg("❌ sendBeacon falhou: " + e3.message, "err"); }
+        }
       }
     }
 
     adicionarHist(dados);
 
+    dbg("📢 Chegou no toast | respJson=" + (respJson?"sim":"nenhum"), "ok");
     let msg = "✅ Lançado no Sheets!";
     if (respJson) {
       dbg("✅ Resposta: " + JSON.stringify(respJson).substring(0,120), "ok");
