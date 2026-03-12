@@ -152,18 +152,19 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
 .hval.e{color:var(--green)}
 
 /* ── FORNECEDOR DROPDOWN ── */
-.forn-frow{position:relative}
+.forn-frow{position:static}
 .forn-wrap{position:relative;flex:1;min-width:0}
 .forn-wrap input{width:100%;padding-right:28px;background:transparent;border:none;outline:none;font-family:var(--font);font-size:14px;font-weight:500;color:var(--text)}
 .forn-clear{position:absolute;right:2px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:4px;line-height:1;display:none;z-index:2}
 .forn-wrap.has-value .forn-clear{display:block}
-.forn-dropdown{position:absolute;top:100%;left:-110px;right:-24px;background:var(--surface2);border:1px solid var(--green);border-radius:14px;z-index:9999;max-height:220px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.7);display:none;margin-top:4px}
+.forn-dropdown{position:fixed;background:var(--surface);border:1.5px solid var(--green);border-radius:14px;z-index:9999;max-height:210px;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,.75);display:none}
 .forn-dropdown.open{display:block}
-.forn-opt{padding:13px 16px;cursor:pointer;font-size:14px;border-bottom:1px solid var(--border);color:var(--text);transition:background .1s}
+.forn-opt{padding:14px 16px;cursor:pointer;font-size:14px;font-weight:500;border-bottom:1px solid var(--border);color:var(--text)}
 .forn-opt:last-child{border-bottom:none}
-.forn-opt:active,.forn-opt.focused{background:rgba(74,222,128,.15);color:var(--green)}
-.forn-opt.add-new{color:var(--green);font-weight:600;font-size:13px}
-.forn-loading{padding:12px 16px;color:var(--muted);font-size:13px;text-align:center}
+.forn-opt:active,.forn-opt.focused{background:rgba(74,222,128,.12);color:var(--green)}
+.forn-opt.add-new{color:var(--green);font-weight:700;font-size:13px;letter-spacing:.2px}
+.forn-opt.add-new::before{content:"＋ "}
+.forn-loading{padding:14px 16px;color:var(--muted);font-size:13px;text-align:center}
 .forn-badge{display:inline-block;background:var(--green-dim);color:var(--green);border-radius:6px;font-size:10px;padding:1px 6px;margin-left:4px;font-weight:700;vertical-align:middle}
 
 
@@ -265,8 +266,15 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
 
     <!-- Caixa de erro detalhado -->
     <div class="erro-box" id="erroBox">
-      <strong>⚠️ Erro da IA</strong>
-      <span id="erroMsg"></span>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div><strong>⚠️ Erro da IA</strong> <span id="erroMsg"></span></div>
+        <button id="retryBtn" onclick="analisarIA()" style="
+          background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+          color:#fff;font-family:var(--font);font-size:12px;font-weight:600;
+          padding:6px 12px;border-radius:20px;cursor:pointer;white-space:nowrap;flex-shrink:0">
+          🔄 Tentar novamente
+        </button>
+      </div>
     </div>
 
     <!-- Resultado -->
@@ -407,12 +415,20 @@ async function carregarFornecedores(forcar) {
 }
 
 async function abrirFornecedores(pfx) {
-  const dd = document.getElementById("forn-dd-" + pfx);
+  const dd   = document.getElementById("forn-dd-" + pfx);
+  const frow = document.querySelector(`[id="forn-wrap-${pfx}"]`)?.closest(".frow");
   if (!dd) return;
-  // Mostrar loading imediatamente
+
+  // Posicionar dropdown abaixo da frow (largura total do card)
+  if (frow) {
+    const r = frow.getBoundingClientRect();
+    dd.style.top   = (r.bottom + 2) + "px";
+    dd.style.left  = r.left + "px";
+    dd.style.width = r.width + "px";
+  }
+
   dd.innerHTML = '<div class="forn-loading">⏳ Carregando...</div>';
   dd.classList.add("open");
-  // Aguardar lista se ainda não carregou
   await carregarFornecedores(false);
   filtrarFornecedores(pfx);
 }
