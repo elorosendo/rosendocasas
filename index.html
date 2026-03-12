@@ -245,14 +245,14 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
   <div class="tab-panel active" id="tab-foto">
 
     <!-- Área câmera -->
-    <div class="camera-zone" id="cameraZone" onclick="abrirCamera()">
+    <div class="camera-zone" id="cameraZone">
       <img id="preview-img" alt="preview">
       <div class="cam-ph">
         <div class="cam-icon">🧾</div>
         <div class="cam-title">Adicionar recibo</div>
         <div class="cam-sub">Toque para câmera ou galeria</div>
       </div>
-      <button class="change-photo" onclick="event.stopPropagation();abrirCamera()">Trocar foto</button>
+      <button class="change-photo" id="changePh">Trocar foto</button>
       <!-- Overlay removido daqui -->
     </div>
     <input type="file" id="file-input" accept="image/*" onchange="fotoSelecionada(event)" style="display:none">
@@ -490,7 +490,7 @@ async function adicionarNovoFornecedor(pfx, nome) {
       _fornecedores.push(nomeReal); // atualiza cache local
       _fornecedores.sort((a,b) => a.localeCompare(b,"pt-BR"));
       selecionarFornecedor(pfx, nomeReal);
-      toast("✅ "" + nomeReal + "" adicionado à lista!", "ok");
+      toast("✅ \"" + nomeReal + "\" adicionado à lista!", "ok");
     } else {
       toast("❌ Erro: " + (data.erro || "não foi possível adicionar"), "err");
       fecharFornecedorDD(pfx);
@@ -694,7 +694,25 @@ function updateSub(pfx, sel) {
 // ═══════════════════════════════════════════════════════
 //  CÂMERA
 // ═══════════════════════════════════════════════════════
-function abrirCamera()  { document.getElementById("file-input").click(); }
+function abrirCamera() {
+  var fi = document.getElementById("file-input");
+  if (fi) { fi.value = ""; fi.click(); }
+}
+
+// Listeners da câmera — adicionados aqui para garantir que existem
+(function() {
+  function initCamListeners() {
+    var zone = document.getElementById("cameraZone");
+    var chg  = document.getElementById("changePh");
+    if (zone) zone.addEventListener("click", function() { abrirCamera(); });
+    if (chg)  chg.addEventListener("click", function(e) { e.stopPropagation(); abrirCamera(); });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initCamListeners);
+  } else {
+    initCamListeners();
+  }
+})();
 
 function fotoSelecionada(e) {
   const f = e.target.files[0]; if (!f) return;
