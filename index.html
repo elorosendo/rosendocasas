@@ -255,7 +255,7 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
     <div class="logo-icon">🧾</div>
     <div>
       <div class="logo-text">Recibos</div>
-      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.13</span></div>
+      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.15</span></div>
     </div>
   </div>
   <div class="hdr-right">
@@ -393,28 +393,23 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
 <script>
 // ── DEBUG PANEL — função global ─────────────────────────
 function dbg(msg, tipo) {
-  const log = document.getElementById("debugLog");
-  if (!log) return;
-  const cls = tipo === "err" ? "d-err" : tipo === "warn" ? "d-warn" : tipo === "ok" ? "d-ok" : "d-info";
-  const t = new Date().toLocaleTimeString("pt-BR");
-  const div = document.createElement("div");
-  div.className = cls;
-  div.textContent = "[" + t + "] " + String(msg);
-  log.appendChild(div);
-  log.scrollTop = log.scrollHeight;
-  // Abrir painel em erros/warns
-  if (tipo === "err" || tipo === "warn") {
-    const p = document.getElementById("debugPanel");
-    if (p) p.classList.add("open");
-  }
+  try {
+    const log = document.getElementById("debugLog");
+    if (!log) return;
+    const cls = tipo === "err" ? "d-err" : tipo === "warn" ? "d-warn" : tipo === "ok" ? "d-ok" : "d-info";
+    const t = new Date().toLocaleTimeString("pt-BR");
+    const div = document.createElement("div");
+    div.className = cls;
+    div.textContent = "[" + t + "] " + String(msg);
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+    if (tipo === "err" || tipo === "warn") {
+      const p = document.getElementById("debugPanel");
+      if (p) p.classList.add("open");
+    }
+  } catch(e) {}
 }
-// Interceptar console
-const _clog  = console.log.bind(console);
-const _cwarn = console.warn.bind(console);
-const _cerr  = console.error.bind(console);
-console.log   = (...a) => { _clog(...a);  dbg(a.join(" "), "info"); };
-console.warn  = (...a) => { _cwarn(...a); dbg(a.join(" "), "warn"); };
-console.error = (...a) => { _cerr(...a);  dbg(a.join(" "), "err"); };
+// SEM interceptação de console — evita loop infinito
 
 // ═══════════════════════════════════════════════════════
 //  DADOS
@@ -441,7 +436,10 @@ let imgB64 = null, imgMime = null;
 let _fornecedores = [];        // cache da lista do Sheets
 let _fornCarregando = false;   // evita chamadas duplas
 let tipoFoto = "Saida", tipoManual = "Saida";
-let hist = JSON.parse(localStorage.getItem("rc_hist") || "[]");
+let hist = (function() {
+  try { return JSON.parse(localStorage.getItem("rc_hist") || "[]"); }
+  catch(e) { return []; }
+})();
 
 const MODELOS = [
   "gemini-2.5-flash",
@@ -627,15 +625,17 @@ function cfg() {
   return {
     // Valores padrão pré-configurados — qualquer pessoa já entra funcionando
     // Para trocar: ícone ⚙️ → alterar → Salvar
-    key:      localStorage.getItem("rc_key")  || _k,
-    url:      localStorage.getItem("rc_url")  || "https://script.google.com/macros/s/AKfycbxvFEOjmUj4_0a4vdYWwt5LiPjkFMsi0iuNE5xs5vu_jQjFkvDLROR1Jc7jbMwLvgo/exec",
-    projeto:  localStorage.getItem("rc_proj") || "P3",
+    key:      (function(){try{return localStorage.getItem("rc_key");}catch(e){return null;}}()) || _k,
+    url:      (function(){try{return localStorage.getItem("rc_url");}catch(e){return null;}})() || "https://script.google.com/macros/s/AKfycbxvFEOjmUj4_0a4vdYWwt5LiPjkFMsi0iuNE5xs5vu_jQjFkvDLROR1Jc7jbMwLvgo/exec",
+    projeto:  (function(){try{return localStorage.getItem("rc_proj");}catch(e){return null;}})() || "P3",
   };
 }
 function salvarSettings() {
+  try {
   localStorage.setItem("rc_key",  document.getElementById("sGeminiKey").value.trim());
   localStorage.setItem("rc_url",  document.getElementById("sScriptUrl").value.trim());
   localStorage.setItem("rc_proj", document.getElementById("sProjeto").value.trim() || "P3");
+  } catch(e) {}
   fecharSettings();
   toast("✅ Configurações salvas!", "ok");
 }
@@ -645,7 +645,7 @@ function abrirSettings() {
   document.getElementById("sScriptUrl").value = c.url;
   document.getElementById("sProjeto").value   = c.projeto;
   // Mostrar aviso se ainda não salvou
-  const jaSalvou = localStorage.getItem("rc_key");
+  const jaSalvou = (function(){try{return localStorage.getItem("rc_key");}catch(e){return null;}})();
   const notice = document.getElementById("sNotice");
   if (!jaSalvou) {
     notice.textContent = "⚠️ Primeira vez? Clique em Salvar para guardar no seu celular.";
@@ -834,7 +834,7 @@ async function analisarIA() {
   function dbgAI(msg) {
     const p = document.querySelector("#aiLoading .dbg-log");
     if (p) p.textContent += msg + "\n";
-    dbgAI("[IA] " + msg, "info");
+    dbg("[IA] " + msg, "info");
   }
 
   const cfg_ = cfg();
@@ -1418,7 +1418,7 @@ function escHtml(s) {
 function adicionarHist(d) {
   hist.unshift({...d, ts:Date.now()});
   if (hist.length>15) hist=hist.slice(0,15);
-  localStorage.setItem("rc_hist",JSON.stringify(hist));
+  try { localStorage.setItem("rc_hist",JSON.stringify(hist)); } catch(e) {}
   renderHist();
 }
 function renderHist() {
