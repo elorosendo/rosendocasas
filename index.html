@@ -255,7 +255,7 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
     <div class="logo-icon">🧾</div>
     <div>
       <div class="logo-text">Recibos</div>
-      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.15</span></div>
+      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.16</span></div>
     </div>
   </div>
   <div class="hdr-right">
@@ -442,8 +442,9 @@ let hist = (function() {
 })();
 
 const MODELOS = [
-  "gemini-2.5-flash",
-  "gemini-1.5-flash",
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
+  "gemini-1.5-flash-latest",
 ];
 
 // ═══════════════════════════════════════════════════════
@@ -1110,50 +1111,66 @@ async function lancar(pfx) {
   btn.innerHTML = pfx==="foto" ? "📤 Enviando foto…" : "Enviando…";
 
   try {
-    // mode:"cors" para ler a resposta (saldo e link do Drive)
-    // Apps Script com "Execute as: Me / Anyone" suporta CORS em POST
     let respJson = null;
-    try {
-      dbg("📤 Enviando para: " + c.url.substring(0,60) + "...", "info");
-      dbg("📦 Payload: tipo=" + dados.tipo + " valor=" + dados.valor + " foto=" + (dados.fotoBase64 ? "SIM" : "NÃO"), "info");
+
+    // ── 3 tentativas: com foto → sem foto → no-cors ──
+    const dadosSemFoto = Object.assign({}, dados);
+    delete dadosSemFoto.fotoBase64;
+    delete dadosSemFoto.fotoMime;
+    const temFoto = !!dados.fotoBase64;
+
+    async function enviarPayload(payload, label) {
+      dbg("📤 " + label + " | " + c.url.substring(0,50), "info");
+      dbg("📦 tipo=" + payload.tipo + " val=" + payload.valor + " foto=" + (payload.fotoBase64?"SIM":"NÃO"), "info");
       const resp = await fetch(c.url, {
         method: "POST",
-        redirect: "follow",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify(dados),
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload),
       });
       const txt = await resp.text();
-      dbg("📥 Resposta (" + txt.length + " chars): " + txt.substring(0,150), "info");
-      const jsonStart = txt.indexOf("{");
-      if (jsonStart !== -1) {
-        respJson = JSON.parse(txt.substring(jsonStart));
-        dbg("✅ JSON ok | link=" + (respJson.linkRecibo||"NULO") + " | driveErro=" + (respJson.driveErro||"nenhum"), respJson.linkRecibo ? "ok" : "warn");
-      } else {
-        dbg("❌ Sem JSON na resposta", "err");
+      dbg("📥 HTTP " + resp.status + " (" + txt.length + " chars)", resp.ok ? "ok" : "err");
+      const s = txt.indexOf("{");
+      if (s !== -1) return JSON.parse(txt.substring(s));
+      return null;
+    }
+
+    if (temFoto) {
+      try {
+        respJson = await enviarPayload(dados, "T1 com foto");
+      } catch(e1) {
+        dbg("⚠️ T1 falhou: " + e1.message, "warn");
+        try {
+          respJson = await enviarPayload(dadosSemFoto, "T2 sem foto");
+        } catch(e2) {
+          dbg("⚠️ T2 falhou: " + e2.message + " — no-cors", "warn");
+          await fetch(c.url, { method:"POST", mode:"no-cors",
+            headers:{"Content-Type":"application/json"},
+            body: JSON.stringify(dadosSemFoto) }).catch(()=>{});
+          dbg("📤 no-cors enviado (sem confirmação)", "warn");
+        }
       }
-    } catch(corsErr) {
-      dbg("❌ Fetch erro: " + corsErr.message, "err");
-      dbg("⚠️ Usando no-cors — foto NÃO será salva no Drive", "warn");
-      await fetch(c.url, {
-        method:"POST", mode:"no-cors",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify(dados),
-      }).catch(()=>{});
+    } else {
+      try {
+        respJson = await enviarPayload(dados, "T1 sem foto");
+      } catch(e) {
+        dbg("⚠️ CORS falhou: " + e.message + " — no-cors", "warn");
+        await fetch(c.url, { method:"POST", mode:"no-cors",
+          headers:{"Content-Type":"application/json"},
+          body: JSON.stringify(dados) }).catch(()=>{});
+      }
     }
 
     adicionarHist(dados);
 
-    // Montar mensagem de confirmação com saldo e link
     let msg = "✅ Lançado no Sheets!";
     if (respJson) {
-      console.log("Resposta completa:", JSON.stringify(respJson));
+      dbg("✅ Resposta: " + JSON.stringify(respJson).substring(0,120), "ok");
       if (respJson.saldo !== undefined) {
-        msg += `\n💰 Saldo: R$${Number(respJson.saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}`;
+        msg += "\n💰 Saldo: R$" + Number(respJson.saldo).toLocaleString("pt-BR",{minimumFractionDigits:2});
       }
       if (respJson.linkRecibo) {
-        dbg("✅ Drive link: " + respJson.linkRecibo, "ok");
+        dbg("✅ Drive: " + respJson.linkRecibo, "ok");
         msg += "\n📎 Recibo salvo no Drive";
-        // Mostrar botão de abrir link (não usar window.open automático — iOS bloqueia)
         setTimeout(() => {
           if (confirm("📎 Recibo salvo no Drive. Abrir?")) {
             window.open(respJson.linkRecibo, "_blank");
@@ -1161,7 +1178,6 @@ async function lancar(pfx) {
         }, 800);
       } else if (respJson.driveErro) {
         dbg("❌ Drive erro: " + respJson.driveErro, "err");
-        msg += "\n⚠️ Drive: " + respJson.driveErro;
       }
     }
     toast(msg, "ok", 5000);
@@ -1170,6 +1186,7 @@ async function lancar(pfx) {
     else resetarManual();
 
   } catch(err) {
+    dbg("❌ Erro fatal: " + err.message, "err");
     toast("❌ Erro ao enviar: "+err.message,"err");
   } finally {
     btn.classList.remove("sending");
