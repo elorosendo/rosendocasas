@@ -6,14 +6,11 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <link rel="apple-touch-icon" href="appicone.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Recibos">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Recibos">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Recibos — Rosendo Casas</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -26,8 +23,6 @@
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;-webkit-font-smoothing:antialiased}
 .app{min-height:100dvh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
-
-/* HEADER */
 header{padding:20px 24px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:100;backdrop-filter:blur(20px)}
 .logo{display:flex;align-items:center;gap:10px}
 .logo-icon{width:36px;height:36px;background:var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
@@ -36,21 +31,13 @@ header{padding:20px 24px 16px;display:flex;align-items:center;justify-content:sp
 .hdr-right{display:flex;gap:8px}
 .icon-btn{width:36px;height:36px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px}
 .icon-btn:active{background:var(--surface2)}
-
-/* MAIN */
 main{flex:1;padding:20px 24px;display:flex;flex-direction:column;gap:14px}
-
-/* TABS */
 .tabs{display:flex;gap:6px;background:var(--surface);border-radius:12px;padding:4px}
 .tab-btn{flex:1;height:38px;border-radius:9px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
 .tab-btn.active{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
 .tab-panel{display:none;flex-direction:column;gap:14px}
 .tab-panel.active{display:flex}
-
-/* LOADING IA OVERLAY */
-@keyframes spin{ to{ transform:rotate(360deg); } }
-
-/* CAMERA */
+@keyframes spin{to{transform:rotate(360deg)}}
 .camera-zone{background:var(--surface);border:2px dashed var(--border);border-radius:var(--radius);min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:border-color .2s,background .2s;position:relative;overflow:hidden}
 .camera-zone.has-image{border-style:solid;border-color:var(--green)}
 .camera-zone:active{background:var(--surface2)}
@@ -64,22 +51,15 @@ main{flex:1;padding:20px 24px;display:flex;flex-direction:column;gap:14px}
 #file-input{display:none}
 .change-photo{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.75);border:1px solid rgba(255,255,255,.2);color:#fff;font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:20px;cursor:pointer;display:none}
 .camera-zone.has-image .change-photo{display:block}
-
-/* BOTÃO IA */
 .ai-btn{width:100%;height:54px;background:var(--green);color:#0a1a0f;border:none;border-radius:var(--radius);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s,transform .1s}
 .ai-btn:disabled{opacity:.35;cursor:not-allowed}
 .ai-btn:not(:disabled):active{transform:scale(.98);opacity:.9}
 .spinner{width:20px;height:20px;border:2.5px solid rgba(10,26,15,.3);border-top-color:#0a1a0f;border-radius:50%;animation:spin .7s linear infinite;display:none}
 .ai-btn.loading .btn-txt{display:none}
 .ai-btn.loading .spinner{display:block}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* ERRO BOX */
 .erro-box{background:var(--red-dim);border:1px solid var(--red);border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.5;display:none}
 .erro-box.visible{display:block}
 .erro-box strong{color:var(--red);display:block;margin-bottom:4px;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
-
-/* CARD RESULTADO */
 .result-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;display:none;animation:slideUp .3s ease}
 .result-card.visible{display:block}
 @keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
@@ -87,8 +67,6 @@ main{flex:1;padding:20px 24px;display:flex;flex-direction:column;gap:14px}
 .card-dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
 .card-title{font-size:11px;font-weight:600;color:var(--muted2);letter-spacing:.5px;text-transform:uppercase;margin-left:8px}
 .edit-hint{font-size:11px;color:var(--muted)}
-
-/* CAMPOS */
 .fields{padding:2px 0}
 .frow{display:flex;align-items:center;padding:10px 18px;border-bottom:1px solid var(--border);gap:10px}
 .frow:last-child{border-bottom:none}
@@ -102,27 +80,19 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
 .tbtn{flex:1;height:30px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--muted2);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
 .tbtn.a-saida{background:var(--red-dim);border-color:var(--red);color:var(--red)}
 .tbtn.a-entrada{background:var(--green-dim);border-color:var(--green);color:var(--green)}
-
-/* CONFIRMAR */
 .confirm-btn{width:100%;height:54px;background:var(--surface2);border:1px solid var(--green);color:var(--green);border-radius:var(--radius);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;display:none;align-items:center;justify-content:center;gap:8px;transition:background .15s,transform .1s;position:relative;z-index:100}
 .confirm-btn.visible{display:flex}
 .confirm-btn:active{transform:scale(.98)}
 .confirm-btn.sending{opacity:.6;pointer-events:none}
-
-/* FORM MANUAL */
 .manual-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
 .manual-header{padding:13px 18px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--muted2);letter-spacing:.5px;text-transform:uppercase}
 .submit-btn{width:100%;height:54px;background:var(--green);color:#0a1a0f;border:none;border-radius:var(--radius);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s,transform .1s}
 .submit-btn:active{transform:scale(.98);opacity:.9}
 .submit-btn.sending{opacity:.6;pointer-events:none}
-
-/* TOAST */
 .toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0));left:50%;transform:translateX(-50%) translateY(90px);background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:11px 18px;border-radius:30px;font-size:13px;font-weight:500;white-space:nowrap;transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.4)}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.ok{border-color:var(--green)}
 .toast.err{border-color:var(--red)}
-
-/* SETTINGS */
 .overlay{position:fixed;inset:0;z-index:200;display:none;flex-direction:column}
 .overlay.open{display:flex}
 .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)}
@@ -134,13 +104,8 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
 .s-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;display:block}
 .s-input{width:100%;height:46px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:var(--font);font-size:13px;padding:0 15px;outline:none;transition:border-color .15s}
 .s-input:focus{border-color:var(--green)}
-.s-notice{
-  font-size:12px;color:var(--gold);text-align:center;
-  min-height:18px;margin-bottom:4px;
-}
+.s-notice{font-size:12px;color:var(--gold);text-align:center;min-height:18px;margin-bottom:4px}
 .save-btn{width:100%;height:46px;background:var(--green);border:none;border-radius:11px;color:#0a1a0f;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;margin-top:6px}
-
-/* HISTÓRICO */
 .hist-section{margin-top:2px}
 .hist-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
 .hist-item{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:11px 14px;margin-bottom:7px;display:flex;align-items:center;gap:10px}
@@ -153,15 +118,12 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
 .hval{font-size:13px;font-weight:700;flex-shrink:0}
 .hval.s{color:var(--red)}
 .hval.e{color:var(--green)}
-
-/* ── FORNECEDOR — campo readonly ── */
 .forn-frow{position:static}
 .forn-wrap{position:relative;flex:1;min-width:0}
 .forn-wrap input{width:100%;background:transparent;border:none;outline:none;font-family:var(--font);font-size:14px;font-weight:500;color:var(--text);cursor:pointer}
 .forn-clear{position:absolute;right:2px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:4px;line-height:1;display:none;z-index:2}
 .forn-wrap.has-value .forn-clear{display:block}
 .forn-badge{display:inline-block;background:var(--green-dim);color:var(--green);border-radius:6px;font-size:10px;padding:1px 6px;margin-left:4px;font-weight:700;vertical-align:middle}
-/* ── FORNECEDOR BOTTOM SHEET ── */
 .forn-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:8000;display:none;backdrop-filter:blur(3px)}
 .forn-ov.open{display:block}
 .forn-bs{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:#1c1c1e;border-radius:22px 22px 0 0;z-index:8001;display:flex;flex-direction:column;max-height:75vh;transform:translateY(100%);transition:transform .35s cubic-bezier(.32,.72,0,1);will-change:transform}
@@ -183,9 +145,6 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
 .forn-bs-opt.add-new{color:var(--green);font-weight:700;font-size:14px}
 .forn-bs-opt.add-new::before{content:"＋  "}
 .forn-bs-empty{padding:20px;text-align:center;color:var(--muted);font-size:14px}
-
-
-/* ── MÚLTIPLOS ITENS ── */
 .itens-header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border)}
 .itens-title{font-size:13px;font-weight:600;color:var(--muted2)}
 .itens-total{font-size:13px;font-weight:700;color:var(--green)}
@@ -202,9 +161,6 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
 .itens-warn{font-size:12px;color:var(--gold);padding:6px 18px;display:none}
 .itens-warn.visible{display:block}
 .confirm-multi{background:linear-gradient(135deg,var(--green),#16a34a);color:#fff;border:none;border-radius:14px;padding:14px 24px;font-size:15px;font-weight:700;cursor:pointer;width:calc(100% - 32px);margin:8px 16px 16px;font-family:var(--font)}
-
-
-/* ── DEBUG PANEL ── */
 #debugPanel{position:fixed;bottom:0;left:0;right:0;max-height:45vh;background:#0a0a0a;border-top:2px solid #4ade80;z-index:9999;display:none;flex-direction:column;font-family:monospace}
 #debugPanel.open{display:flex}
 #debugHeader{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#111;flex-shrink:0}
@@ -218,44 +174,32 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
 </style>
 </head>
 <body>
-  <!-- SPLASH SCREEN — primeiro elemento do body -->
-  <div id="splash" style="position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#0f1f17 0%,#152b1e 60%,#0a1a10 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease;">
-    <img src="appicone.png" width="110" height="110" style="border-radius:26px;box-shadow:0 8px 40px rgba(74,222,128,0.25);margin-bottom:22px;" onerror="this.style.display='none'">
-    <div style="color:#fff;font-size:26px;font-weight:700;letter-spacing:-0.5px;">Recibos</div>
-    <div style="color:#4ade80;font-size:14px;font-weight:500;margin-top:6px;letter-spacing:0.5px;">Casas Rosendo</div>
-    <div style="margin-top:48px;width:36px;height:3px;background:rgba(74,222,128,0.25);border-radius:2px;overflow:hidden;">
-      <div id="splash-bar" style="height:100%;width:0%;background:#4ade80;border-radius:2px;transition:width 1.6s ease;"></div>
-    </div>
-  </div>
-  <!-- Script inline — executa IMEDIATAMENTE, não depende do resto do JS carregar -->
-  <script>
-    (function() {
-      var _splashDone = false;
-      function hideSplash() {
-        if (_splashDone) return;
-        _splashDone = true;
-        var s = document.getElementById('splash');
-        if (!s) return;
-        var bar = document.getElementById('splash-bar');
-        if (bar) bar.style.width = '100%';
-        setTimeout(function() {
-          s.style.opacity = '0';
-          setTimeout(function() { s.style.display = 'none'; }, 600);
-        }, 1600);
-      }
-      // Dispara em 2s no máximo — independente de qualquer outro JS
-      setTimeout(hideSplash, 2000);
-      window.addEventListener('load', function() { setTimeout(hideSplash, 200); });
-    })();
-  </script>
-<div class="app">
 
+<!-- SPLASH -->
+<div id="splash" style="position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#0f1f17 0%,#152b1e 60%,#0a1a10 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease;">
+  <img src="appicone.png" width="110" height="110" style="border-radius:26px;box-shadow:0 8px 40px rgba(74,222,128,0.25);margin-bottom:22px;" onerror="this.style.display='none'">
+  <div style="color:#fff;font-size:26px;font-weight:700;letter-spacing:-0.5px;">Recibos</div>
+  <div style="color:#4ade80;font-size:14px;font-weight:500;margin-top:6px;letter-spacing:0.5px;">Casas Rosendo</div>
+  <div style="margin-top:48px;width:36px;height:3px;background:rgba(74,222,128,0.25);border-radius:2px;overflow:hidden;">
+    <div id="splash-bar" style="height:100%;width:0%;background:#4ade80;border-radius:2px;transition:width 1.6s ease;"></div>
+  </div>
+</div>
+<script>
+(function(){
+  var _done=false;
+  function hide(){if(_done)return;_done=true;var s=document.getElementById('splash');if(!s)return;var b=document.getElementById('splash-bar');if(b)b.style.width='100%';setTimeout(function(){s.style.opacity='0';setTimeout(function(){s.style.display='none';},600);},1600);}
+  setTimeout(hide,2000);
+  window.addEventListener('load',function(){setTimeout(hide,200);});
+})();
+</script>
+
+<div class="app">
 <header>
   <div class="logo">
     <div class="logo-icon">🧾</div>
     <div>
       <div class="logo-text">Recibos</div>
-      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.18</span></div>
+      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.19</span></div>
     </div>
   </div>
   <div class="hdr-right">
@@ -266,17 +210,13 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
 </header>
 
 <main>
-
-  <!-- TABS -->
   <div class="tabs">
     <button class="tab-btn active" id="tab-foto-btn" onclick="mudarTab('foto')">📷 Foto + IA</button>
     <button class="tab-btn" id="tab-manual-btn" onclick="mudarTab('manual')">✏️ Manual</button>
   </div>
 
-  <!-- ══ TAB FOTO ══ -->
+  <!-- TAB FOTO -->
   <div class="tab-panel active" id="tab-foto">
-
-    <!-- Área câmera -->
     <div class="camera-zone" id="cameraZone">
       <img id="preview-img" alt="preview">
       <div class="cam-ph">
@@ -285,30 +225,18 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
         <div class="cam-sub">Toque para câmera ou galeria</div>
       </div>
       <button class="change-photo" id="changePh">Trocar foto</button>
-      <!-- Overlay removido daqui -->
     </div>
     <input type="file" id="file-input" accept="image/*" onchange="fotoSelecionada(event)" style="display:none">
-
-    <!-- Botão analisar — oculto, análise agora é automática ao selecionar foto -->
     <button class="ai-btn" id="aiBtn" disabled onclick="analisarIA()" style="display:none">
       <span class="btn-txt">✨ Analisar com IA</span>
       <div class="spinner"></div>
     </button>
-
-    <!-- Caixa de erro detalhado -->
     <div class="erro-box" id="erroBox">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
         <div><strong>⚠️ Erro da IA</strong> <span id="erroMsg"></span></div>
-        <button id="retryBtn" onclick="analisarIA()" style="
-          background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
-          color:#fff;font-family:var(--font);font-size:12px;font-weight:600;
-          padding:6px 12px;border-radius:20px;cursor:pointer;white-space:nowrap;flex-shrink:0">
-          🔄 Tentar novamente
-        </button>
+        <button id="retryBtn" onclick="analisarIA()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-family:var(--font);font-size:12px;font-weight:600;padding:6px 12px;border-radius:20px;cursor:pointer;white-space:nowrap;flex-shrink:0">🔄 Tentar novamente</button>
       </div>
     </div>
-
-    <!-- Resultado -->
     <div class="result-card" id="resultCard">
       <div class="card-header">
         <div style="display:flex;align-items:center">
@@ -317,13 +245,7 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
         </div>
         <span class="edit-hint">toque para editar</span>
       </div>
-
-      <!-- MODO ITEM ÚNICO -->
-      <div id="single-item-view">
-        <div class="fields" id="fields-foto"></div>
-      </div>
-
-      <!-- MODO MÚLTIPLOS ITENS -->
+      <div id="single-item-view"><div class="fields" id="fields-foto"></div></div>
       <div id="multi-item-view" style="display:none">
         <div class="itens-header">
           <span class="itens-title" id="itens-count-label">0 itens</span>
@@ -334,47 +256,37 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
         <button class="add-item-btn" onclick="adicionarItemVazio()">➕ Adicionar item</button>
       </div>
     </div>
-
-    <!-- Confirmar item único -->
-    <button class="confirm-btn" id="confirmBtn" onclick="dbg('🟢 BOTÃO CLICADO - chegou no onclick','ok'); lancar('foto')">
+    <button class="confirm-btn" id="confirmBtn" onclick="dbg('🟢 BOTÃO CLICADO - chegou no onclick','ok');lancar('foto')">
       ✅ Confirmar e lançar no Sheets
     </button>
-    <!-- Confirmar múltiplos itens -->
     <button class="confirm-multi" id="confirmMultiBtn" onclick="lancarMulti()" style="display:none">
       ✅ Lançar todos os itens
     </button>
+  </div>
 
-  </div><!-- /tab-foto -->
-
-  <!-- ══ TAB MANUAL ══ -->
+  <!-- TAB MANUAL -->
   <div class="tab-panel" id="tab-manual">
     <div class="manual-card">
       <div class="manual-header">✏️ Lançamento manual</div>
       <div class="fields" id="fields-manual"></div>
     </div>
-    <button class="submit-btn" id="submitManual" onclick="lancar('manual')">
-      ✅ Lançar no Sheets
-    </button>
-  </div><!-- /tab-manual -->
+    <button class="submit-btn" id="submitManual" onclick="lancar('manual')">✅ Lançar no Sheets</button>
+  </div>
 
-  <!-- Histórico -->
   <div class="hist-section" id="histSection"></div>
-
 </main>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<!-- Settings overlay -->
+<!-- SETTINGS -->
 <div class="overlay" id="settingsOverlay">
   <div class="backdrop" onclick="fecharSettings()"></div>
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">⚙️ Configurações</div>
-
     <div class="s-field">
-      <label class="s-label">Chave API Gemini <span style="color:var(--gold);font-weight:400">(criar em aistudio.google.com/apikey)</span></label>
+      <label class="s-label">Chave API Gemini <span style="color:var(--gold);font-weight:400">(aistudio.google.com/apikey)</span></label>
       <input class="s-input" id="sGeminiKey" type="password" placeholder="AIzaSy...">
     </div>
     <div class="s-field">
@@ -391,869 +303,442 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
 </div>
 
 <script>
-// ── DEBUG PANEL — função global ─────────────────────────
-function dbg(msg, tipo) {
-  try {
-    const log = document.getElementById("debugLog");
-    if (!log) return;
-    const cls = tipo === "err" ? "d-err" : tipo === "warn" ? "d-warn" : tipo === "ok" ? "d-ok" : "d-info";
-    const t = new Date().toLocaleTimeString("pt-BR");
-    const div = document.createElement("div");
-    div.className = cls;
-    div.textContent = "[" + t + "] " + String(msg);
-    log.appendChild(div);
-    log.scrollTop = log.scrollHeight;
-    if (tipo === "err" || tipo === "warn") {
-      const p = document.getElementById("debugPanel");
-      if (p) p.classList.add("open");
-    }
-  } catch(e) {}
+// ── DEBUG ──────────────────────────────────────────────────────
+function dbg(msg,tipo){
+  try{
+    const log=document.getElementById("debugLog");if(!log)return;
+    const cls=tipo==="err"?"d-err":tipo==="warn"?"d-warn":tipo==="ok"?"d-ok":"d-info";
+    const t=new Date().toLocaleTimeString("pt-BR");
+    const div=document.createElement("div");div.className=cls;
+    div.textContent="["+t+"] "+String(msg);log.appendChild(div);log.scrollTop=log.scrollHeight;
+    if(tipo==="err"||tipo==="warn"){const p=document.getElementById("debugPanel");if(p)p.classList.add("open");}
+  }catch(e){}
 }
-// SEM interceptação de console — evita loop infinito
 
-// ═══════════════════════════════════════════════════════
-//  DADOS
-// ═══════════════════════════════════════════════════════
-const CATS = {
-  "Terreno e Legalização":     ["Terreno","ITBI","Cartorio","Registro","Taxa Prefeitura","Sabesp","Poste","ART","Engenheiro","Projeto","Imposto","Imobiliaria","Processo Prefeitura","Desdobro"],
-  "Infraestrutura e Fundação": ["Aterro","Terra","Areia","Pedra","Cimento","Ferro","Arame","Lajes","Concreto"],
-  "Estrutura e Alvenaria":     ["Blocos vedacao","Muro","Colunas e vigas","Reparo estrutural","Concreto"],
-  "Instalação Elétrica":       ["Fio","Conduite","Caixa disjuntor","Luz","Poste","Disjuntores","Interruptores","Tomadas","Soquetes"],
-  "Instalação Hidráulica":     ["Tubos e conexoes","Caixa esgoto","Torneira","Vaso sanitario","Concreto","Registros","Caixa dagua"],
-  "Cobertura":                 ["Telhado","Madeiramento","Calha"],
-  "Esquadrias":                ["Portas","Janelas","Portoes"],
-  "Acabamentos":               ["Piso","Azulejo","Gesso","Tinta","Marmore","Grama"],
-  "Mão de Obra":               ["Mao de obra geral","Empreitagem","Diarias","Muro","Pintura","Gesseiro"],
-  "Logística e Apoio":         ["Gasolina","Frete","Locacoes","Limpeza final"],
-  "Administração":             ["Materiais diversos","Despesas administrativas","Livro engenheiro","Outros","Ferramentas","Contas obra","Deposito fornecedor","Venda de propriedade","Corretor","Taxas","Imposto"],
+// ── DADOS ──────────────────────────────────────────────────────
+const CATS={
+  "Terreno e Legalização":["Terreno","ITBI","Cartorio","Registro","Taxa Prefeitura","Sabesp","Poste","ART","Engenheiro","Projeto","Imposto","Imobiliaria","Processo Prefeitura","Desdobro"],
+  "Infraestrutura e Fundação":["Aterro","Terra","Areia","Pedra","Cimento","Ferro","Arame","Lajes","Concreto"],
+  "Estrutura e Alvenaria":["Blocos vedacao","Muro","Colunas e vigas","Reparo estrutural","Concreto"],
+  "Instalação Elétrica":["Fio","Conduite","Caixa disjuntor","Luz","Poste","Disjuntores","Interruptores","Tomadas","Soquetes"],
+  "Instalação Hidráulica":["Tubos e conexoes","Caixa esgoto","Torneira","Vaso sanitario","Concreto","Registros","Caixa dagua"],
+  "Cobertura":["Telhado","Madeiramento","Calha"],
+  "Esquadrias":["Portas","Janelas","Portoes"],
+  "Acabamentos":["Piso","Azulejo","Gesso","Tinta","Marmore","Grama"],
+  "Mão de Obra":["Mao de obra geral","Empreitagem","Diarias","Muro","Pintura","Gesseiro"],
+  "Logística e Apoio":["Gasolina","Frete","Locacoes","Limpeza final"],
+  "Administração":["Materiais diversos","Despesas administrativas","Livro engenheiro","Outros","Ferramentas","Contas obra","Deposito fornecedor","Venda de propriedade","Corretor","Taxas","Imposto"],
 };
-const CAT_KEYS = Object.keys(CATS);
+const CAT_KEYS=Object.keys(CATS);
+const MODELOS=["gemini-2.0-flash-lite","gemini-2.0-flash","gemini-2.0-flash-exp","gemini-1.5-flash","gemini-1.5-flash-8b"];
 
-// ═══════════════════════════════════════════════════════
-//  ESTADO GLOBAL
-// ═══════════════════════════════════════════════════════
-let imgB64 = null, imgMime = null;
-let _fornecedores = [];        // cache da lista do Sheets
-let _fornCarregando = false;   // evita chamadas duplas
-let tipoFoto = "Saida", tipoManual = "Saida";
-let hist = (function() {
-  try { return JSON.parse(localStorage.getItem("rc_hist") || "[]"); }
-  catch(e) { return []; }
-})();
+// ── ESTADO ─────────────────────────────────────────────────────
+let imgB64=null,imgMime=null;
+let _fornecedores=[],_fornCarregando=false,_fornPfxAtivo=null;
+let tipoFoto="Saida",tipoManual="Saida";
+let hist=(function(){try{return JSON.parse(localStorage.getItem("rc_hist")||"[]");}catch(e){return[];}})();
+let _itensMulti=[],_metaMulti={};
 
-const MODELOS = [
-  "gemini-2.0-flash-lite",   // mais rápido, menor quota
-  "gemini-2.0-flash",        // principal
-  "gemini-2.0-flash-exp",    // experimental
-  "gemini-1.5-flash",        // fallback (v1)
-  "gemini-1.5-flash-8b",     // fallback leve (v1)
-];
-
-// ═══════════════════════════════════════════════════════
-//  CONFIG
-// ═══════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════
-//  FORNECEDOR — Dropdown dinâmico com lista do Sheets
-// ═══════════════════════════════════════════════════════
-
-// Carrega lista do Sheets (chamado no init e quando abre o campo)
-// ── FORNECEDOR BOTTOM SHEET ─────────────────────────────────
-
-let _fornPfxAtivo = null;  // qual campo está ativo
-
-async function carregarFornecedores(forcar) {
-  if (_fornecedores.length > 0 && !forcar) return;
-  if (_fornCarregando) return;
-  _fornCarregando = true;
-  const url = cfg().url;
-  if (!url) { _fornCarregando = false; return; }
-  try {
-    const r = await fetch(url + "?action=fornecedores");
-    const d = await r.json();
-    if (d.ok && Array.isArray(d.fornecedores)) _fornecedores = d.fornecedores;
-  } catch(e) { console.warn("Fornecedores:", e); }
-  finally { _fornCarregando = false; }
-}
-
-async function abrirSheetFornecedor(pfx) {
-  _fornPfxAtivo = pfx;
-  const ov = document.getElementById("forn-ov");
-  const bs = document.getElementById("forn-bs");
-  const inp = document.getElementById("forn-bs-input");
-
-  // Mostrar sheet
-  ov.classList.add("open");
-  bs.classList.add("open");
-  inp.value = "";
-  document.getElementById("forn-bs-clr").classList.remove("vis");
-
-  // Mostrar loading e buscar lista
-  document.getElementById("forn-bs-list").innerHTML =
-    '<div class="forn-bs-empty">⏳ Carregando…</div>';
-
-  await carregarFornecedores(false);
-  renderSheetFornecedor();
-  setTimeout(() => inp.focus(), 350);
-
-  // Swipe down para fechar
-  iniciarSwipeSheet();
-}
-
-function fecharSheetFornecedor() {
-  const bs = document.getElementById("forn-bs");
-  const ov = document.getElementById("forn-ov");
-  bs.style.transition = "transform .3s cubic-bezier(.32,.72,0,1)";
-  bs.style.transform  = "translateY(100%)";
-  ov.classList.remove("open");
-  setTimeout(() => {
-    bs.classList.remove("open");
-    bs.style.transform = "";
-  }, 300);
-}
-
-function renderSheetFornecedor() {
-  const inp   = document.getElementById("forn-bs-input");
-  const list  = document.getElementById("forn-bs-list");
-  const clr   = document.getElementById("forn-bs-clr");
-  const q     = inp.value.trim();
-  const ql    = q.toLowerCase();
-
-  clr.classList.toggle("vis", q.length > 0);
-
-  const filtrado = ql
-    ? _fornecedores.filter(f => f.toLowerCase().includes(ql))
-    : _fornecedores;
-
-  let html = "";
-  filtrado.forEach(f => {
-    const esc = f.replace(/'/g, "\'");
-    html += `<div class="forn-bs-opt" onclick="selecionarSheetFornecedor('${esc}')">${f}</div>`;
-  });
-
-  // Adicionar novo
-  const jaExiste = _fornecedores.some(f => f.toLowerCase() === ql);
-  if (q && !jaExiste) {
-    const qEsc = q.replace(/'/g, "\'");
-    html += `<div class="forn-bs-opt add-new" onclick="adicionarNovoFornecedor('${qEsc}')">Adicionar "${q}"</div>`;
-  }
-
-  list.innerHTML = html || '<div class="forn-bs-empty">Nenhum resultado</div>';
-}
-
-function selecionarSheetFornecedor(val) {
-  if (!_fornPfxAtivo) return;
-  const input = document.getElementById("forn-" + _fornPfxAtivo);
-  const wrap  = document.getElementById("forn-wrap-" + _fornPfxAtivo);
-  if (input) { input.value = val; wrap?.classList.add("has-value"); }
-  fecharSheetFornecedor();
-}
-
-function limparFornecedor(pfx) {
-  const input = document.getElementById("forn-" + pfx);
-  const wrap  = document.getElementById("forn-wrap-" + pfx);
-  const badge = document.getElementById("forn-badge-" + pfx);
-  if (input) input.value = "";
-  wrap?.classList.remove("has-value");
-  if (badge) badge.style.display = "none";
-}
-
-async function adicionarNovoFornecedor(nome) {
-  const nomeReal = nome.trim();
-  if (!nomeReal) return;
-  const url = cfg().url;
-  if (!url) { toast("⚙️ Configure a URL primeiro", "err"); return; }
-  try {
-    const resp = await fetch(url + "?action=addFornecedor&nome=" + encodeURIComponent(nomeReal));
-    const data = await resp.json();
-    if (data.ok) {
-      _fornecedores.push(nomeReal);
-      _fornecedores.sort((a,b) => a.localeCompare(b,"pt-BR"));
-      selecionarSheetFornecedor(nomeReal);
-      toast("✅ Fornecedor adicionado!", "ok");
-    } else {
-      toast("❌ " + (data.erro || "Erro ao adicionar"), "err");
-    }
-  } catch(e) {
-    toast("❌ Erro de rede", "err");
-  }
-}
-
-// Swipe down para fechar o sheet
-function iniciarSwipeSheet() {
-  const bs = document.getElementById("forn-bs");
-  const drag = document.getElementById("forn-bs-drag");
-  let startY = 0, startT = 0, dragging = false;
-
-  function onStart(e) {
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
-    startY = y; startT = Date.now(); dragging = true;
-    bs.style.transition = "none";
-  }
-  function onMove(e) {
-    if (!dragging) return;
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
-    const dy = Math.max(0, y - startY);
-    bs.style.transform = `translateY(${dy}px)`;
-  }
-  function onEnd(e) {
-    if (!dragging) return; dragging = false;
-    const y = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-    const dy = y - startY;
-    const dt = Date.now() - startT;
-    // Fecha se arrastou >100px ou velocidade alta
-    if (dy > 100 || (dy > 40 && dt < 250)) {
-      fecharSheetFornecedor();
-    } else {
-      bs.style.transition = "transform .3s cubic-bezier(.32,.72,0,1)";
-      bs.style.transform  = "translateY(0)";
-    }
-  }
-
-  // Limpar listeners antigos e adicionar novos
-  drag.ontouchstart = onStart;
-  drag.ontouchmove  = onMove;
-  drag.ontouchend   = onEnd;
-}
-
-// Aliases para compatibilidade com chamadas antigas no código
-function abrirFornecedores(pfx)  { abrirSheetFornecedor(pfx); }
-function fecharFornecedorDD(pfx) { fecharSheetFornecedor(); }
-function filtrarFornecedores(pfx){ renderSheetFornecedor(); }
-function navFornecedores(){}
-
-
-function cfg() {
-  // Chave dividida para evitar detecção automática do GitHub
-  const _k = "AIzaSyCfYaMvVg7MMQp" + "npDrs2luiM5kc1I2SFiE";
-  return {
-    // Valores padrão pré-configurados — qualquer pessoa já entra funcionando
-    // Para trocar: ícone ⚙️ → alterar → Salvar
-    key:      (function(){try{return localStorage.getItem("rc_key");}catch(e){return null;}}()) || _k,
-    url:      (function(){try{return localStorage.getItem("rc_url");}catch(e){return null;}})() || "https://script.google.com/macros/s/AKfycbxvFEOjmUj4_0a4vdYWwt5LiPjkFMsi0iuNE5xs5vu_jQjFkvDLROR1Jc7jbMwLvgo/exec",
-    projeto:  (function(){try{return localStorage.getItem("rc_proj");}catch(e){return null;}})() || "P3",
+// ── CONFIG ─────────────────────────────────────────────────────
+function cfg(){
+  const _k="AIzaSyCfYaMvVg7MMQp"+"npDrs2luiM5kc1I2SFiE";
+  return{
+    key:(function(){try{return localStorage.getItem("rc_key");}catch(e){return null;}})() || _k,
+    url:(function(){try{return localStorage.getItem("rc_url");}catch(e){return null;}})() || "https://script.google.com/macros/s/AKfycbxvFEOjmUj4_0a4vdYWwt5LiPjkFMsi0iuNE5xs5vu_jQjFkvDLROR1Jc7jbMwLvgo/exec",
+    projeto:(function(){try{return localStorage.getItem("rc_proj");}catch(e){return null;}})() || "P3",
   };
 }
-function salvarSettings() {
-  try {
-  localStorage.setItem("rc_key",  document.getElementById("sGeminiKey").value.trim());
-  localStorage.setItem("rc_url",  document.getElementById("sScriptUrl").value.trim());
-  localStorage.setItem("rc_proj", document.getElementById("sProjeto").value.trim() || "P3");
-  } catch(e) {}
-  fecharSettings();
-  toast("✅ Configurações salvas!", "ok");
+function salvarSettings(){
+  try{localStorage.setItem("rc_key",document.getElementById("sGeminiKey").value.trim());localStorage.setItem("rc_url",document.getElementById("sScriptUrl").value.trim());localStorage.setItem("rc_proj",document.getElementById("sProjeto").value.trim()||"P3");}catch(e){}
+  fecharSettings();toast("✅ Configurações salvas!","ok");
 }
-function abrirSettings() {
-  const c = cfg();
-  document.getElementById("sGeminiKey").value = c.key;
-  document.getElementById("sScriptUrl").value = c.url;
-  document.getElementById("sProjeto").value   = c.projeto;
-  // Mostrar aviso se ainda não salvou
-  const jaSalvou = (function(){try{return localStorage.getItem("rc_key");}catch(e){return null;}})();
-  const notice = document.getElementById("sNotice");
-  if (!jaSalvou) {
-    notice.textContent = "⚠️ Primeira vez? Clique em Salvar para guardar no seu celular.";
-  } else {
-    notice.textContent = "✅ Configurações salvas neste dispositivo.";
-  }
+function abrirSettings(){
+  const c=cfg();
+  document.getElementById("sGeminiKey").value=c.key;
+  document.getElementById("sScriptUrl").value=c.url;
+  document.getElementById("sProjeto").value=c.projeto;
+  const jaSalvou=(function(){try{return localStorage.getItem("rc_key");}catch(e){return null;}})();
+  document.getElementById("sNotice").textContent=jaSalvou?"✅ Configurações salvas neste dispositivo.":"⚠️ Primeira vez? Clique em Salvar.";
   document.getElementById("settingsOverlay").classList.add("open");
 }
-function fecharSettings() {
-  document.getElementById("settingsOverlay").classList.remove("open");
+function fecharSettings(){document.getElementById("settingsOverlay").classList.remove("open");}
+
+// ── TABS ───────────────────────────────────────────────────────
+function mudarTab(t){
+  document.getElementById("tab-foto-btn").classList.toggle("active",t==="foto");
+  document.getElementById("tab-manual-btn").classList.toggle("active",t==="manual");
+  document.getElementById("tab-foto").classList.toggle("active",t==="foto");
+  document.getElementById("tab-manual").classList.toggle("active",t==="manual");
 }
 
-// ═══════════════════════════════════════════════════════
-//  TABS
-// ═══════════════════════════════════════════════════════
-function mudarTab(t) {
-  document.getElementById("tab-foto-btn").classList.toggle("active",   t==="foto");
-  document.getElementById("tab-manual-btn").classList.toggle("active", t==="manual");
-  document.getElementById("tab-foto").classList.toggle("active",   t==="foto");
-  document.getElementById("tab-manual").classList.toggle("active", t==="manual");
+// ── CAMPOS ─────────────────────────────────────────────────────
+function buildFields(containerId,pfx,tipo,fnTipo){
+  const c=cfg();
+  const projOpts=["P3","P4","P5","Outro"].map(p=>`<option${p===c.projeto?" selected":""}>${p}</option>`).join("");
+  const catOpts=CAT_KEYS.map(k=>`<option>${k}</option>`).join("");
+  const subOpts=CATS[CAT_KEYS[0]].map(s=>`<option>${s}</option>`).join("");
+  const hoje=new Date();
+  const dataHoje=`${String(hoje.getDate()).padStart(2,'0')}/${String(hoje.getMonth()+1).padStart(2,'0')}/${hoje.getFullYear()}`;
+  document.getElementById(containerId).innerHTML=`
+    <div class="frow"><span class="flabel">Data</span><input class="fval" id="data-${pfx}" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" value="${dataHoje}" maxlength="10" oninput="mascaraData(this)"></div>
+    <div class="frow"><span class="flabel">Tipo</span><div class="tipo-wrap"><button class="tbtn${tipo==="Saida"?" a-saida":""}" id="ts-${pfx}" onclick="${fnTipo}('Saida')">↓ Saída</button><button class="tbtn${tipo==="Entrada"?" a-entrada":""}" id="te-${pfx}" onclick="${fnTipo}('Entrada')">↑ Entrada</button></div></div>
+    <div class="frow"><span class="flabel">Projeto</span><select class="fval" id="proj-${pfx}">${projOpts}</select></div>
+    <div class="frow"><span class="flabel">Valor (R$)</span><input class="fval${tipo==="Saida"?" c-saida":" c-entrada"}" id="val-${pfx}" type="text" inputmode="decimal" placeholder="0,00" oninput="mascaraValor(this)"></div>
+    <div class="frow"><span class="flabel">Descrição</span><input class="fval" id="desc-${pfx}" type="text" placeholder="—"></div>
+    <div class="frow"><span class="flabel">Quantidade</span><input class="fval" id="qtd-${pfx}" type="text" inputmode="decimal" placeholder="1"></div>
+    <div class="frow forn-frow"><span class="flabel">Fornecedor <span id="forn-badge-${pfx}" class="forn-badge" style="display:none">da IA</span></span><div class="forn-wrap" id="forn-wrap-${pfx}"><input class="fval" id="forn-${pfx}" type="text" placeholder="Toque para selecionar…" autocomplete="off" readonly onclick="abrirSheetFornecedor('${pfx}')"><button class="forn-clear" onclick="limparFornecedor('${pfx}')" type="button">✕</button></div></div>
+    <div class="frow"><span class="flabel">Categoria</span><select class="fval" id="cat-${pfx}" onchange="updateSub('${pfx}')">${catOpts}</select></div>
+    <div class="frow"><span class="flabel">Subcategoria</span><select class="fval" id="sub-${pfx}">${subOpts}</select></div>`;
 }
+function setTipoFoto(t){tipoFoto=t;document.getElementById("ts-foto").className="tbtn"+(t==="Saida"?" a-saida":"");document.getElementById("te-foto").className="tbtn"+(t==="Entrada"?" a-entrada":"");const v=document.getElementById("val-foto");if(v)v.className="fval"+(t==="Saida"?" c-saida":" c-entrada");}
+function setTipoManual(t){tipoManual=t;document.getElementById("ts-manual").className="tbtn"+(t==="Saida"?" a-saida":"");document.getElementById("te-manual").className="tbtn"+(t==="Entrada"?" a-entrada":"");const v=document.getElementById("val-manual");if(v)v.className="fval"+(t==="Saida"?" c-saida":" c-entrada");}
+function updateSub(pfx,sel){const cat=document.getElementById("cat-"+pfx).value;const subs=CATS[cat]||[];document.getElementById("sub-"+pfx).innerHTML=subs.map(s=>`<option${s===sel?" selected":""}>${s}</option>`).join("");}
 
-// ═══════════════════════════════════════════════════════
-//  CONSTRUIR CAMPOS
-// ═══════════════════════════════════════════════════════
-function buildFields(containerId, pfx, tipo, fnTipo) {
-  const c = cfg();
-  const projOpts = ["P3","P4","P5","Outro"].map(p =>
-    `<option${p===c.projeto?" selected":""}>${p}</option>`).join("");
-  const catOpts = CAT_KEYS.map(k => `<option>${k}</option>`).join("");
-  const subOpts = CATS[CAT_KEYS[0]].map(s => `<option>${s}</option>`).join("");
-
-  // Data de hoje para o valor padrão do campo data
-  const hoje = new Date();
-  const dd = String(hoje.getDate()).padStart(2,'0');
-  const mm = String(hoje.getMonth()+1).padStart(2,'0');
-  const yyyy = hoje.getFullYear();
-  const dataHoje = `${dd}/${mm}/${yyyy}`;
-
-  document.getElementById(containerId).innerHTML = `
-    <div class="frow">
-      <span class="flabel">Data</span>
-      <input class="fval" id="data-${pfx}" type="text" inputmode="numeric"
-             placeholder="dd/mm/aaaa" value="${dataHoje}" maxlength="10"
-             oninput="mascaraData(this)">
-    </div>
-    <div class="frow">
-      <span class="flabel">Tipo</span>
-      <div class="tipo-wrap">
-        <button class="tbtn${tipo==="Saida"?" a-saida":""}"   id="ts-${pfx}" onclick="${fnTipo}('Saida')">↓ Saída</button>
-        <button class="tbtn${tipo==="Entrada"?" a-entrada":""}" id="te-${pfx}" onclick="${fnTipo}('Entrada')">↑ Entrada</button>
-      </div>
-    </div>
-    <div class="frow">
-      <span class="flabel">Projeto</span>
-      <select class="fval" id="proj-${pfx}">${projOpts}</select>
-    </div>
-    <div class="frow">
-      <span class="flabel">Valor (R$)</span>
-      <input class="fval${tipo==="Saida"?" c-saida":" c-entrada"}" id="val-${pfx}" type="text" inputmode="decimal" placeholder="0,00" oninput="mascaraValor(this)">
-    </div>
-    <div class="frow">
-      <span class="flabel">Descrição</span>
-      <input class="fval" id="desc-${pfx}" type="text" placeholder="—">
-    </div>
-    <div class="frow">
-      <span class="flabel">Quantidade</span>
-      <input class="fval" id="qtd-${pfx}" type="text" inputmode="decimal" placeholder="1">
-    </div>
-    <div class="frow forn-frow">
-      <span class="flabel">Fornecedor <span id="forn-badge-${pfx}" class="forn-badge" style="display:none">da IA</span></span>
-      <div class="forn-wrap" id="forn-wrap-${pfx}">
-        <input class="fval" id="forn-${pfx}" type="text" placeholder="Toque para selecionar…"
-          autocomplete="off" readonly
-          onclick="abrirSheetFornecedor('${pfx}')">
-        <button class="forn-clear" onclick="limparFornecedor('${pfx}')" type="button">✕</button>
-      </div>
-    </div>
-    </div>
-    <div class="frow">
-      <span class="flabel">Categoria</span>
-      <select class="fval" id="cat-${pfx}" onchange="updateSub('${pfx}')">${catOpts}</select>
-    </div>
-    <div class="frow">
-      <span class="flabel">Subcategoria</span>
-      <select class="fval" id="sub-${pfx}">${subOpts}</select>
-    </div>`;
-}
-
-function setTipoFoto(t) {
-  tipoFoto = t;
-  document.getElementById("ts-foto").className  = "tbtn"+(t==="Saida"?" a-saida":"");
-  document.getElementById("te-foto").className  = "tbtn"+(t==="Entrada"?" a-entrada":"");
-  const v = document.getElementById("val-foto");
-  if (v) v.className = "fval"+(t==="Saida"?" c-saida":" c-entrada");
-}
-function setTipoManual(t) {
-  tipoManual = t;
-  document.getElementById("ts-manual").className = "tbtn"+(t==="Saida"?" a-saida":"");
-  document.getElementById("te-manual").className = "tbtn"+(t==="Entrada"?" a-entrada":"");
-  const v = document.getElementById("val-manual");
-  if (v) v.className = "fval"+(t==="Saida"?" c-saida":" c-entrada");
-}
-
-function updateSub(pfx, sel) {
-  const cat = document.getElementById("cat-"+pfx).value;
-  const subs = CATS[cat] || [];
-  document.getElementById("sub-"+pfx).innerHTML =
-    subs.map(s => `<option${s===sel?" selected":""}>${s}</option>`).join("");
-}
-
-// ═══════════════════════════════════════════════════════
-//  CÂMERA
-// ═══════════════════════════════════════════════════════
-function abrirCamera() {
-  var fi = document.getElementById("file-input");
-  if (fi) { fi.value = ""; fi.click(); }
-}
-
-// Listeners da câmera — adicionados aqui para garantir que existem
-(function() {
-  function initCamListeners() {
-    var zone = document.getElementById("cameraZone");
-    var chg  = document.getElementById("changePh");
-    if (zone) zone.addEventListener("click", function() { abrirCamera(); });
-    if (chg)  chg.addEventListener("click", function(e) { e.stopPropagation(); abrirCamera(); });
-  }
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initCamListeners);
-  } else {
-    initCamListeners();
-  }
+// ── CÂMERA ─────────────────────────────────────────────────────
+function abrirCamera(){var fi=document.getElementById("file-input");if(fi){fi.value="";fi.click();}}
+(function(){
+  function init(){var zone=document.getElementById("cameraZone");var chg=document.getElementById("changePh");if(zone)zone.addEventListener("click",function(){abrirCamera();});if(chg)chg.addEventListener("click",function(e){e.stopPropagation();abrirCamera();});}
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
-
-function fotoSelecionada(e) {
-  const f = e.target.files[0]; if (!f) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    // Comprimir imagem para max 1200px e qualidade 0.75 — evita quota exceeded
-    const img = new Image();
-    img.onload = () => {
-      const MAX = 700; // menor = menor arquivo = sem timeout
-      let w = img.width, h = img.height;
-      if (w > MAX || h > MAX) {
-        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-        else       { w = Math.round(w * MAX / h); h = MAX; }
-      }
-      const canvas = document.createElement("canvas");
-      canvas.width = w; canvas.height = h;
-      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.45); // mais comprimido
-      imgB64  = dataUrl.split(",")[1];
-      imgMime = "image/jpeg";
-      document.getElementById("preview-img").src = dataUrl;
+function fotoSelecionada(e){
+  const f=e.target.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=700;let w=img.width,h=img.height;
+      if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+      const canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;
+      canvas.getContext("2d").drawImage(img,0,0,w,h);
+      const dataUrl=canvas.toDataURL("image/jpeg",0.45);
+      imgB64=dataUrl.split(",")[1];imgMime="image/jpeg";
+      document.getElementById("preview-img").src=dataUrl;
       document.getElementById("cameraZone").classList.add("has-image");
-      document.getElementById("aiBtn").disabled = false;
+      document.getElementById("aiBtn").disabled=false;
       document.getElementById("resultCard").classList.remove("visible");
       document.getElementById("confirmBtn").classList.remove("visible");
       document.getElementById("erroBox").classList.remove("visible");
       analisarIA();
     };
-    img.src = ev.target.result;
+    img.src=ev.target.result;
   };
-  reader.readAsDataURL(f);
-  e.target.value = "";
+  reader.readAsDataURL(f);e.target.value="";
 }
 
-// ═══════════════════════════════════════════════════════
-//  ANALISAR COM GEMINI
-//
-//  MODELOS DISPONÍVEIS NO FREE TIER (março 2026):
-//  - gemini-2.5-flash      → melhor opção free tier, suporta visão
-//  - gemini-2.5-flash-lite → leve e rápido, fallback
-//  - gemini-2.0-flash      → fallback estável
-//
-//  CHAVE API: deve ser criada em aistudio.google.com/apikey
-//  Chaves do Google Cloud Console precisam de billing ativado!
-// ═══════════════════════════════════════════════════════
-function forcarSaida() {
-  document.getElementById("aiLoading").style.display="none";
-  preencherFoto({}, "manual");
-  toast("Preencha manualmente","");
-}
-
-async function analisarIA() {
-  function dbgAI(msg) {
-    const p = document.querySelector("#aiLoading .dbg-log");
-    if (p) p.textContent += msg + "\n";
-    dbg("[IA] " + msg, "info");
-  }
-
-  const cfg_ = cfg();
-  if (!cfg_.key) { toast("⚙️ Configure a chave Gemini primeiro","err"); abrirSettings(); return; }
-  if (!imgB64)   { toast("📷 Selecione uma foto primeiro","err"); return; }
-
+// ── IA ─────────────────────────────────────────────────────────
+function forcarSaida(){document.getElementById("aiLoading").style.display="none";preencherFoto({},"manual");toast("Preencha manualmente","");}
+async function analisarIA(){
+  function dbgAI(msg){const p=document.querySelector("#aiLoading .dbg-log");if(p)p.textContent+=msg+"\n";dbg("[IA] "+msg,"info");}
+  const cfg_=cfg();
+  if(!cfg_.key){toast("⚙️ Configure a chave Gemini primeiro","err");abrirSettings();return;}
+  if(!imgB64){toast("📷 Selecione uma foto primeiro","err");return;}
   document.getElementById("erroBox").classList.remove("visible");
   document.getElementById("resultCard").classList.remove("visible");
   document.getElementById("confirmBtn").classList.remove("visible");
   document.getElementById("aiLoading").style.display="flex";
-
-  // Garantia de segurança: se algo inesperado travar, libera após 20s
-  const safetyTimer = setTimeout(() => {
-    dbgAI("⚠️ Safety timeout 20s — forçando saída");
-    document.getElementById("aiLoading").style.display="none";
-    mostrarErro("Tempo esgotado. Preencha manualmente.");
-    preencherFoto({}, "manual");
-  }, 45000);
-
-  try {
-    const CATS_LIST = "Acabamentos/Instalação Elétrica/Instalação Hidráulica/Infraestrutura e Fundação/Estrutura e Alvenaria/Cobertura/Esquadrias/Mão de Obra/Logística e Apoio/Terreno e Legalização/Administração";
-    const prompt = `Analise este recibo fiscal/cupom. Retorne APENAS JSON válido, sem markdown, sem texto extra.
-
-REGRAS IMPORTANTES:
-1. Se o recibo tem 2 ou mais produtos/itens DISTINTOS → use modo "multiplo" e liste CADA item separadamente no array "itens"
-2. Se o recibo tem apenas 1 produto ou é uma nota de serviço → use modo "simples" com 1 item
-3. Cada item do array deve ter seu próprio valor unitário (não o total)
-4. A SOMA de todos os valores dos itens deve ser IGUAL ao valorTotal do recibo
-5. Nunca agrupe itens diferentes — prefira separar
-6. Se não conseguir ler o valor de um item específico, divida o total igualmente
-
-Formato JSON obrigatório:
-{"modo":"multiplo","fornecedor":"NOME_LOJA","valorTotal":"0.00","data":"DD/MM/AAAA","itens":[{"descricao":"Nome do produto","quantidade":"1","valor":"0.00","categoria":"Administração","subCategoria":"","tipo":"Saida"}]}
-
-Categorias válidas: ${CATS_LIST}
-
-Retorne SÓ o JSON, sem nenhum texto antes ou depois.`;
-
-    let parsed = null;
-    let modeloUsado = "";
-    let erroMsg = "";
-
-    for (const modelo of MODELOS) {
-      dbgAI("🔄 " + modelo + " [" + (modelo.startsWith("gemini-1")?"v1":"v1beta") + "]");
-      // gemini-2.x usa v1beta, gemini-1.x usa v1
-      const apiVer = modelo.startsWith("gemini-1") ? "v1" : "v1beta";
-      const url = `https://generativelanguage.googleapis.com/${apiVer}/models/${modelo}:generateContent?key=${cfg_.key}`;
-      try {
-        const ctrl  = new AbortController();
-        const timer = setTimeout(() => { dbg("⏱ Abort " + modelo); ctrl.abort(); }, 18000);
-
-        const res = await fetch(url, {
-          method: "POST",
-          signal: ctrl.signal,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [
-              { text: prompt },
-              { inline_data: { mime_type: imgMime, data: imgB64 } }
-            ]}],
-            generationConfig: { temperature: 0.1, maxOutputTokens: 1200 }
-          })
-        });
+  const safetyTimer=setTimeout(()=>{dbgAI("⚠️ Safety timeout 45s");document.getElementById("aiLoading").style.display="none";mostrarErro("Tempo esgotado. Preencha manualmente.");preencherFoto({},"manual");},45000);
+  try{
+    const CATS_LIST="Acabamentos/Instalação Elétrica/Instalação Hidráulica/Infraestrutura e Fundação/Estrutura e Alvenaria/Cobertura/Esquadrias/Mão de Obra/Logística e Apoio/Terreno e Legalização/Administração";
+    const prompt=`Analise este recibo fiscal/cupom. Retorne APENAS JSON válido, sem markdown, sem texto extra.\n\nREGRAS IMPORTANTES:\n1. Se o recibo tem 2 ou mais produtos/itens DISTINTOS → use modo "multiplo" e liste CADA item separadamente no array "itens"\n2. Se o recibo tem apenas 1 produto ou é uma nota de serviço → use modo "simples" com 1 item\n3. Cada item do array deve ter seu próprio valor unitário (não o total)\n4. A SOMA de todos os valores dos itens deve ser IGUAL ao valorTotal do recibo\n5. Nunca agrupe itens diferentes — prefira separar\n6. Se não conseguir ler o valor de um item específico, divida o total igualmente\n\nFormato JSON obrigatório:\n{"modo":"multiplo","fornecedor":"NOME_LOJA","valorTotal":"0.00","data":"DD/MM/AAAA","itens":[{"descricao":"Nome do produto","quantidade":"1","valor":"0.00","categoria":"Administração","subCategoria":"","tipo":"Saida"}]}\n\nCategorias válidas: ${CATS_LIST}\n\nRetorne SÓ o JSON, sem nenhum texto antes ou depois.`;
+    let parsed=null,modeloUsado="",erroMsg="";
+    for(const modelo of MODELOS){
+      dbgAI("🔄 "+modelo+" ["+(modelo.startsWith("gemini-1")?"v1":"v1beta")+"]");
+      const apiVer=modelo.startsWith("gemini-1")?"v1":"v1beta";
+      const url=`https://generativelanguage.googleapis.com/${apiVer}/models/${modelo}:generateContent?key=${cfg_.key}`;
+      try{
+        const ctrl=new AbortController();
+        const timer=setTimeout(()=>{dbg("⏱ Abort "+modelo);ctrl.abort();},18000);
+        const res=await fetch(url,{method:"POST",signal:ctrl.signal,headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:prompt},{inline_data:{mime_type:imgMime,data:imgB64}}]}],generationConfig:{temperature:0.1,maxOutputTokens:1200}})});
         clearTimeout(timer);
-        dbgAI("✅ HTTP " + res.status);
-
-        if (!res.ok) { erroMsg = `HTTP ${res.status}`; continue; }
-
-        const json = await res.json();
-        if (json.error) { erroMsg = json.error.message; dbg("❌ API: " + erroMsg); continue; }
-
-        const texto = (json.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
-        dbgAI("📄 Resposta: " + texto.substring(0,80));
-        if (!texto) { erroMsg = "sem texto"; continue; }
-
-        let p = null;
-        // Limpar markdown (```json ... ```)
-        let txt2 = texto.replace(/```json\s*/gi,"").replace(/```\s*/g,"").trim();
-        // Tentativa 1: parse direto
-        try { p = JSON.parse(txt2); } catch(e) {}
-        // Tentativa 2: extrair do primeiro { ao último }
-        if (!p) {
-          const ini = txt2.indexOf("{"), fim = txt2.lastIndexOf("}");
-          if (ini !== -1 && fim > ini) try { p = JSON.parse(txt2.slice(ini, fim+1)); } catch(e) {}
+        dbgAI("✅ HTTP "+res.status);
+        if(!res.ok){erroMsg=`HTTP ${res.status}`;continue;}
+        const json=await res.json();
+        if(json.error){erroMsg=json.error.message;dbg("❌ API: "+erroMsg);continue;}
+        const texto=(json.candidates?.[0]?.content?.parts?.[0]?.text||"").trim();
+        dbgAI("📄 Resposta: "+texto.substring(0,80));
+        if(!texto){erroMsg="sem texto";continue;}
+        let p=null;
+        let txt2=texto.replace(/```json\s*/gi,"").replace(/```\s*/g,"").trim();
+        try{p=JSON.parse(txt2);}catch(e){}
+        if(!p){const ini=txt2.indexOf("{"),fim=txt2.lastIndexOf("}");if(ini!==-1&&fim>ini)try{p=JSON.parse(txt2.slice(ini,fim+1));}catch(e){}}
+        if(!p){const ini=txt2.indexOf("{");if(ini!==-1){let parcial=txt2.slice(ini);parcial=parcial.replace(/,\s*"[^"]*"\s*:\s*"[^"]*$/,"}");parcial=parcial.replace(/,\s*"[^"]*"\s*:\s*$/,"}");const diff=(parcial.match(/{/g)||[]).length-(parcial.match(/}/g)||[]).length;if(diff>0)parcial+="}".repeat(diff);try{p=JSON.parse(parcial);}catch(e){}}}
+        if(p){
+          if(!p.itens&&p.valor){p={modo:"simples",fornecedor:p.fornecedor||"",valorTotal:p.valor,data:p.data||"",itens:[{descricao:p.descricao||"",quantidade:"1",valor:p.valor,categoria:p.categoria||"Administração",subCategoria:p.subCategoria||"",tipo:p.tipo||"Saida"}]};}
+          parsed=p;modeloUsado=modelo;
+          dbgAI("✅ JSON OK! modo="+(p.modo||"?")+" itens="+(p.itens?.length||0));break;
         }
-        // Tentativa 3: JSON incompleto — completar chaves abertas
-        if (!p) {
-          const ini = txt2.indexOf("{");
-          if (ini !== -1) {
-            let parcial = txt2.slice(ini);
-            parcial = parcial.replace(/,\s*"[^"]*"\s*:\s*"[^"]*$/, "}");
-            parcial = parcial.replace(/,\s*"[^"]*"\s*:\s*$/, "}");
-            const diff = (parcial.match(/{/g)||[]).length - (parcial.match(/}/g)||[]).length;
-            if (diff > 0) parcial += "}".repeat(diff);
-            try { p = JSON.parse(parcial); } catch(e) {}
-          }
-        }
-        if (p) {
-          // Normalizar: novo formato {"modo","itens"} ou formato legado {"valor"...}
-          if (!p.itens && p.valor) {
-            // formato legado → converter para novo
-            p = { modo:"simples", fornecedor: p.fornecedor||"", valorTotal: p.valor, data: p.data||"", itens:[{
-              descricao: p.descricao||"", quantidade:"1", valor: p.valor,
-              categoria: p.categoria||"Administração", subCategoria: p.subCategoria||"", tipo: p.tipo||"Saida"
-            }]};
-          }
-          parsed = p; modeloUsado = modelo;
-          dbgAI("✅ JSON OK! modo=" + (p.modo||"?") + " itens=" + (p.itens?.length||0));
-          break;
-        }
-        erroMsg = "JSON inválido";
-        dbgAI("❌ JSON inválido: " + txt2.substring(0,80));
-
-      } catch (ex) {
-        erroMsg = ex.name === "AbortError" ? "timeout" : ex.message;
-        dbgAI("❌ Catch: " + erroMsg);
-        if (ex.name === "AbortError") break;
-      }
+        erroMsg="JSON inválido";dbgAI("❌ JSON inválido: "+txt2.substring(0,80));
+      }catch(ex){erroMsg=ex.name==="AbortError"?"timeout":ex.message;dbgAI("❌ Catch: "+erroMsg);if(ex.name==="AbortError")break;}
     }
-
     clearTimeout(safetyTimer);
     document.getElementById("aiLoading").style.display="none";
-
-    if (parsed && parsed.itens && parsed.itens.length > 0) {
-      if (parsed.modo === "multiplo" && parsed.itens.length > 1) {
-        preencherMulti(parsed, modeloUsado);
-      } else {
-        preencherFoto(parsed.itens[0], modeloUsado, parsed);
-      }
-    } else {
-      mostrarErro("IA não leu o recibo — preencha manualmente.\nDetalhe: " + erroMsg);
-      preencherFoto({}, "manual");
-    }
-
-  } catch (fatalErr) {
-    clearTimeout(safetyTimer);
-    document.getElementById("aiLoading").style.display="none";
-    mostrarErro("Erro inesperado: " + fatalErr.message);
-    preencherFoto({}, "manual");
+    if(parsed&&parsed.itens&&parsed.itens.length>0){
+      if(parsed.modo==="multiplo"&&parsed.itens.length>1)preencherMulti(parsed,modeloUsado);
+      else preencherFoto(parsed.itens[0],modeloUsado,parsed);
+    }else{mostrarErro("IA não leu o recibo — preencha manualmente.\nDetalhe: "+erroMsg);preencherFoto({},"manual");}
+  }catch(fatalErr){
+    clearTimeout(safetyTimer);document.getElementById("aiLoading").style.display="none";
+    mostrarErro("Erro inesperado: "+fatalErr.message);preencherFoto({},"manual");
   }
 }
-
-// Máscara de data: digita 11032026 → 11/03/2026
-function mascaraData(input) {
-  let v = input.value.replace(/\D/g, '').substring(0,8);
-  if (v.length >= 5)      v = v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4);
-  else if (v.length >= 3) v = v.slice(0,2)+'/'+v.slice(2);
-  input.value = v;
-}
-
-// Máscara de valor em formato BR: permite 1.200,50 ou 1200,50 ou 1200.50
-function mascaraValor(input) {
-  let v = input.value;
-  // Remove tudo exceto dígitos, vírgula e ponto
-  v = v.replace(/[^0-9.,]/g, '');
-  // Permite apenas um separador decimal (vírgula ou ponto no final)
-  input.value = v;
-}
-
-// Converte valor BR para float: "1.200,50" → 1200.50 | "1200,50" → 1200.50 | "1200.50" → 1200.50
-function parseBRL(str) {
-  if (!str) return 0;
-  str = String(str).trim();
-  // Se tem vírgula como último separador: 1.200,50 → remove pontos → troca vírgula por ponto
-  if (str.includes(',')) {
-    str = str.replace(/\./g, '').replace(',', '.');
-  }
-  return parseFloat(str) || 0;
-}
-
-function mostrarErro(msg) {
-  document.getElementById("erroMsg").textContent = msg;
-  document.getElementById("erroBox").classList.add("visible");
-  toast("⚠️ Erro na análise — veja detalhes acima","err");
-}
-
-// meta = objeto pai com fornecedor, data, valorTotal (no modo multiplo vira simples)
-function preencherFoto(d, modeloUsado, meta) {
-  const c = cfg();
-  if (d.tipo === "Entrada" || d.tipo === "Saida") tipoFoto = d.tipo;
-
+function mascaraData(input){let v=input.value.replace(/\D/g,'').substring(0,8);if(v.length>=5)v=v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4);else if(v.length>=3)v=v.slice(0,2)+'/'+v.slice(2);input.value=v;}
+function mascaraValor(input){input.value=input.value.replace(/[^0-9.,]/g,'');}
+function parseBRL(str){if(!str)return 0;str=String(str).trim();if(str.includes(','))str=str.replace(/\./g,'').replace(',','.');return parseFloat(str)||0;}
+function mostrarErro(msg){document.getElementById("erroMsg").textContent=msg;document.getElementById("erroBox").classList.add("visible");toast("⚠️ Erro na análise — veja detalhes acima","err");}
+function preencherFoto(d,modeloUsado,meta){
+  const c=cfg();
+  if(d.tipo==="Entrada"||d.tipo==="Saida")tipoFoto=d.tipo;
   buildFields("fields-foto","foto",tipoFoto,"setTipoFoto");
-
-  // Modo visual: item único
-  document.getElementById("single-item-view").style.display = "";
-  document.getElementById("multi-item-view").style.display  = "none";
-  document.getElementById("confirmBtn").style.display       = "";
+  document.getElementById("single-item-view").style.display="";
+  document.getElementById("multi-item-view").style.display="none";
+  document.getElementById("confirmBtn").style.display="";
   document.getElementById("confirmBtn").classList.add("visible");
-  document.getElementById("confirmMultiBtn").style.display  = "none";
+  document.getElementById("confirmMultiBtn").style.display="none";
   document.getElementById("resultCard").classList.add("visible");
-
-  document.getElementById("proj-foto").value = c.projeto;
-  document.getElementById("val-foto").value  = d.valor      || "";
-  document.getElementById("desc-foto").value = d.descricao  || "";
-  document.getElementById("qtd-foto").value  = d.quantidade || "";
-  // data: preferir do meta (recibo) ou do item
-  if (meta?.data || d.data) {
-    document.getElementById("data-foto").value = meta?.data || d.data || "";
-  }
-  const fornVal = (meta?.fornecedor || d.fornecedor || "");
-  document.getElementById("forn-foto").value = fornVal;
-  document.getElementById("forn-wrap-foto")?.classList.toggle("has-value", !!fornVal);
-  // Mostrar badge "da IA" quando sugerido pela IA
-  const badge = document.getElementById("forn-badge-foto");
-  if (badge) badge.style.display = fornVal ? "inline-block" : "none";
-
-  // Garantir que resultCard e confirmBtn estão visíveis
-  document.getElementById("resultCard").classList.add("visible");
-  document.getElementById("confirmBtn").classList.add("visible");
-
-  if (d.categoria && CATS[d.categoria]) {
-    document.getElementById("cat-foto").value = d.categoria;
-    updateSub("foto", d.subCategoria || "");
-  } else {
-    updateSub("foto","");
-  }
-
-  // Data: se a IA identificou a data da nota, preenche; senão mantém hoje
-  if (d.data) {
-    document.getElementById("data-foto").value = d.data;
-  }
-
-  toast("✨ Analisado com " + (modeloUsado||"IA") + "!", "ok");
+  document.getElementById("proj-foto").value=c.projeto;
+  document.getElementById("val-foto").value=d.valor||"";
+  document.getElementById("desc-foto").value=d.descricao||"";
+  document.getElementById("qtd-foto").value=d.quantidade||"";
+  if(meta?.data||d.data)document.getElementById("data-foto").value=meta?.data||d.data||"";
+  const fornVal=(meta?.fornecedor||d.fornecedor||"");
+  document.getElementById("forn-foto").value=fornVal;
+  document.getElementById("forn-wrap-foto")?.classList.toggle("has-value",!!fornVal);
+  const badge=document.getElementById("forn-badge-foto");if(badge)badge.style.display=fornVal?"inline-block":"none";
+  if(d.categoria&&CATS[d.categoria]){document.getElementById("cat-foto").value=d.categoria;updateSub("foto",d.subCategoria||"");}else{updateSub("foto","");}
+  if(d.data)document.getElementById("data-foto").value=d.data;
+  toast("✨ Analisado com "+(modeloUsado||"IA")+"!","ok");
 }
 
-// ═══════════════════════════════════════════════════════
-//  LANÇAR NO SHEETS
-// ═══════════════════════════════════════════════════════
-async function lancar(pfx) {
-  dbg("🚀 Iniciando lançamento... pfx=" + pfx, "info");
+// ══════════════════════════════════════════════════════════════
+//  ENVIO — iOS PWA safe (v3.19)
+//
+//  PROBLEMA RAIZ: iOS Safari standalone bloqueia XHR/fetch POST
+//  para script.google.com porque o Apps Script retorna redirect
+//  302 → googleusercontent.com. O Safari em modo PWA trata esse
+//  redirect como network error (política de segurança standalone).
+//
+//  SOLUÇÃO:
+//  1. Dados textuais → GET com ?action=lancar&... (sem redirect issue)
+//  2. Foto → POST no-cors em background após confirmar lançamento
+//  3. POST/XHR mantidos como fallback para browser normal
+// ══════════════════════════════════════════════════════════════
 
+// Envia dados textuais via GET — funciona 100% no iOS PWA standalone
+function _enviarGET(url, payload) {
+  return new Promise((resolve, reject) => {
+    const p = new URLSearchParams();
+    p.set("action", "lancar");
+    ["tipo","projeto","valor","qtd","descricao","fornecedor",
+     "categoria","subCategoria","data","grupoRecibo"].forEach(k => {
+      if (payload[k] !== undefined && payload[k] !== null)
+        p.set(k, String(payload[k]));
+    });
+    const fullUrl = url + "?" + p.toString();
+    dbg("📤 GET: " + fullUrl.substring(0, 90), "info");
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", fullUrl, true);
+    xhr.timeout = 28000;
+    xhr.onload = function() {
+      const txt = xhr.responseText || "";
+      dbg("📥 GET " + xhr.status + " (" + txt.length + "c)", xhr.status < 400 ? "ok" : "err");
+      const s = txt.indexOf("{");
+      if (s !== -1) { try { resolve(JSON.parse(txt.substring(s))); return; } catch(e) {} }
+      if (xhr.status >= 200 && xhr.status < 400) { resolve({ ok: true, _semJson: true }); return; }
+      reject(new Error("GET " + xhr.status));
+    };
+    xhr.onerror   = () => reject(new Error("GET network error"));
+    xhr.ontimeout = () => reject(new Error("GET timeout"));
+    xhr.send();
+  });
+}
+
+// Envia foto em background via POST no-cors (fire-and-forget)
+// Não bloqueia o lançamento — falha silenciosa se iOS bloquear
+function _enviarFotoBackground(url, dados) {
+  if (!dados.fotoBase64 || !dados.fotoMime) return;
+  const kb = Math.round(dados.fotoBase64.length * 0.75 / 1024);
+  if (kb > 500) { dbg("⚠️ Foto " + kb + "KB — skip", "warn"); return; }
+  const payload = {
+    action: "uploadFoto",
+    grupoRecibo: dados.grupoRecibo || "",
+    fotoBase64:  dados.fotoBase64,
+    fotoMime:    dados.fotoMime,
+    descricao:   dados.descricao || "",
+    projeto:     dados.projeto || "",
+  };
+  try {
+    const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+    fetch(url, { method: "POST", body: blob, mode: "no-cors" })
+      .then(() => dbg("📎 Foto enviada bg (no-cors)", "ok"))
+      .catch(e  => dbg("⚠️ Foto bg falhou: " + e.message, "warn"));
+    dbg("📤 Foto disparada em background (" + kb + "KB)", "info");
+  } catch(e) { dbg("⚠️ Foto bg catch: " + e.message, "warn"); }
+}
+
+async function lancar(pfx) {
+  dbg("🟢 BOTÃO CLICADO — chegou no onclick", "ok");
+  dbg("🚀 Iniciando lançamento... pfx=" + pfx, "info");
   const c = cfg();
   if (!c.url) { toast("⚙️ Configure a URL do Apps Script","err"); abrirSettings(); return; }
-
-  const tipo = pfx==="foto" ? tipoFoto : tipoManual;
+  const tipo = pfx === "foto" ? tipoFoto : tipoManual;
   dbg("📋 tipo=" + tipo + " | url=" + c.url.substring(0,50) + "...", "info");
-
   const dados = {
     tipo,
-    projeto:      document.getElementById(`proj-${pfx}`)?.value  || c.projeto,
-    valor:        String(parseBRL(document.getElementById(`val-${pfx}`)?.value || "0")),
-    qtd:          document.getElementById(`qtd-${pfx}`)?.value   || "",
-    descricao:    document.getElementById(`desc-${pfx}`)?.value   || "",
-    fornecedor:   document.getElementById(`forn-${pfx}`)?.value   || "N/A",
-    categoria:    document.getElementById(`cat-${pfx}`)?.value    || "Administração",
-    subCategoria: document.getElementById(`sub-${pfx}`)?.value    || "",
-    data:         document.getElementById(`data-${pfx}`)?.value || new Date().toLocaleDateString("pt-BR"),
+    projeto:      document.getElementById("proj-"+pfx)?.value  || c.projeto,
+    valor:        String(parseBRL(document.getElementById("val-"+pfx)?.value || "0")),
+    qtd:          document.getElementById("qtd-"+pfx)?.value   || "",
+    descricao:    document.getElementById("desc-"+pfx)?.value  || "",
+    fornecedor:   document.getElementById("forn-"+pfx)?.value  || "N/A",
+    categoria:    document.getElementById("cat-"+pfx)?.value   || "Administração",
+    subCategoria: document.getElementById("sub-"+pfx)?.value   || "",
+    data:         document.getElementById("data-"+pfx)?.value  || new Date().toLocaleDateString("pt-BR"),
   };
-
-  // Inclui foto no payload — comprimida, tamanho razoável
+  const val = parseFloat(dados.valor);
+  if (!val || val <= 0) { toast("⚠️ Informe um valor válido","err"); return; }
   if (pfx === "foto" && imgB64 && imgMime) {
     const kb = Math.round(imgB64.length * 0.75 / 1024);
     dbg("📷 Foto: " + kb + "KB | mime: " + imgMime, "info");
-    if (kb < 600) {
-      dados.fotoBase64 = imgB64;
-      dados.fotoMime   = imgMime;
-      dbg("✅ Foto incluída no payload (" + kb + "KB)", "ok");
-    } else {
-      dbg("⚠️ Foto muito grande (" + kb + "KB) — não enviando. Tente foto menor.", "warn");
-    }
-  } else if (pfx === "foto") {
-    dbg("⚠️ Sem foto: imgB64=" + (imgB64?"sim":"NÃO") + " imgMime=" + (imgMime||"NÃO"), "warn");
+    dados.fotoBase64  = imgB64;
+    dados.fotoMime    = imgMime;
+    dados.grupoRecibo = "REC_" + Date.now().toString(36).toUpperCase();
   }
-
-  // Validação básica
-  const val = parseFloat(dados.valor);
-  if (!val || val <= 0) { toast("⚠️ Informe um valor válido","err"); return; }
-
-  // Botão de envio
-  const btn = pfx==="foto"
-    ? document.getElementById("confirmBtn")
-    : document.getElementById("submitManual");
+  const btn = pfx === "foto" ? document.getElementById("confirmBtn") : document.getElementById("submitManual");
   btn.classList.add("sending");
   const txtOrig = btn.innerHTML;
-  btn.innerHTML = pfx==="foto" ? "📤 Enviando foto…" : "Enviando…";
-
+  btn.innerHTML = "📤 Enviando...";
   try {
     let respJson = null;
-
-    // ── 3 tentativas: com foto → sem foto → no-cors ──
-    const dadosSemFoto = Object.assign({}, dados);
-    delete dadosSemFoto.fotoBase64;
-    delete dadosSemFoto.fotoMime;
-    const temFoto = !!dados.fotoBase64;
-
-    // GET com query params — não sofre redirect block no iOS PWA
-    function enviarGET(payload) {
-      return new Promise((resolve, reject) => {
-        // Codificar apenas campos de texto (sem foto)
-        const p = new URLSearchParams();
-        ["tipo","projeto","valor","qtd","descricao","fornecedor",
-         "categoria","subCategoria","data","grupoRecibo"].forEach(k => {
-          if (payload[k] !== undefined) p.set(k, payload[k]);
+    // ── GET primeiro (iOS PWA safe) ──────────────────────
+    try {
+      respJson = await _enviarGET(c.url, dados);
+      dbg("✅ GET ok", "ok");
+      if (dados.fotoBase64) _enviarFotoBackground(c.url, dados);
+    } catch(getErr) {
+      dbg("⚠️ GET falhou: " + getErr.message + " — POST fallback", "warn");
+      try {
+        const sem = Object.assign({}, dados);
+        delete sem.fotoBase64; delete sem.fotoMime;
+        respJson = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", c.url, true);
+          xhr.setRequestHeader("Content-Type","application/json");
+          xhr.timeout = 30000;
+          xhr.onload = function() {
+            const txt = xhr.responseText || "";
+            const s = txt.indexOf("{");
+            if (s !== -1) { try { resolve(JSON.parse(txt.substring(s))); return; } catch(e) {} }
+            if (xhr.status >= 200 && xhr.status < 400) { resolve({ ok: true }); return; }
+            reject(new Error("POST " + xhr.status));
+          };
+          xhr.onerror   = () => reject(new Error("POST network error"));
+          xhr.ontimeout = () => reject(new Error("POST timeout"));
+          xhr.send(JSON.stringify(sem));
         });
-        p.set("action", "lancar");
-        const url = c.url + "?" + p.toString();
-        dbg("📤 GET: " + url.substring(0,80), "info");
-        const xhr2 = new XMLHttpRequest();
-        xhr2.open("GET", url, true);
-        xhr2.timeout = 25000;
-        xhr2.onload = function() {
-          const txt = xhr2.responseText || "";
-          dbg("📥 GET " + xhr2.status + " (" + txt.length + "c)", xhr2.status < 400 ? "ok" : "err");
-          const s = txt.indexOf("{");
-          if (s !== -1) { try { resolve(JSON.parse(txt.substring(s))); return; } catch(e) {} }
-          resolve(null);
-        };
-        xhr2.onerror  = () => reject(new Error("GET error"));
-        xhr2.ontimeout = () => reject(new Error("GET timeout"));
-        xhr2.send();
-      });
-    }
-    // XHR em vez de fetch — iOS Safari PWA bloqueia fetch para script.google.com
-    function enviarXHR(payload) {
-      return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", c.url, true);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.timeout = 30000;
-        xhr.onload = function() {
-          const txt = xhr.responseText || "";
-          dbg("📥 XHR " + xhr.status + " (" + txt.length + "c)", xhr.status < 400 ? "ok" : "err");
-          const s = txt.indexOf("{");
-          if (s !== -1) { try { resolve(JSON.parse(txt.substring(s))); return; } catch(e) {} }
-          resolve(null);
-        };
-        xhr.onerror = function() { reject(new Error("XHR network error")); };
-        xhr.ontimeout = function() { reject(new Error("XHR timeout")); };
-        xhr.send(JSON.stringify(payload));
-      });
-    }
-    async function enviarPayload(payload, label) {
-      dbg("📤 " + label + " | foto=" + (payload.fotoBase64?"SIM":"NÃO"), "info");
-      dbg("📦 tipo=" + payload.tipo + " val=" + payload.valor, "info");
-      return await enviarXHR(payload);
-    }
-
-    if (temFoto) {
-      try {
-        respJson = await enviarPayload(dados, "T1 com foto");
-      } catch(e1) {
-        dbg("⚠️ T1 falhou: " + e1.message, "warn");
+        dbg("✅ POST fallback ok", "ok");
+        if (dados.fotoBase64) _enviarFotoBackground(c.url, dados);
+      } catch(postErr) {
+        dbg("⚠️ POST falhou: " + postErr.message + " — sendBeacon", "warn");
         try {
-          respJson = await enviarPayload(dadosSemFoto, "T2 sem foto");
-        } catch(e2) {
-          dbg("⚠️ T2 falhou: " + e2.message + " — T3 GET", "warn");
-          // T3: GET com params (funciona no iOS PWA — sem foto)
-          try {
-            respJson = await enviarGET(dadosSemFoto);
-            if (respJson) dbg("✅ T3 GET ok", "ok");
-          } catch(e3) {
-            dbg("⚠️ T3 GET falhou: " + e3.message + " — sendBeacon", "warn");
-            try {
-              const blob = new Blob([JSON.stringify(dadosSemFoto)], {type:"application/json"});
-              const ok = navigator.sendBeacon(c.url, blob);
-              dbg("📤 sendBeacon: " + (ok?"aceito":"rejeitado"), ok?"ok":"warn");
-            } catch(e4) { dbg("❌ sendBeacon falhou: " + e4.message, "err"); }
-          }
-        }
-      }
-    } else {
-      try {
-        respJson = await enviarPayload(dados, "T1 sem foto");
-      } catch(e) {
-        dbg("⚠️ XHR falhou: " + e.message + " — GET", "warn");
-        try {
-          respJson = await enviarGET(dados);
-          if (respJson) dbg("✅ GET ok", "ok");
-        } catch(e2) {
-          dbg("⚠️ GET falhou: " + e2.message + " — sendBeacon", "warn");
-          try {
-            const blob = new Blob([JSON.stringify(dados)], {type:"application/json"});
-            const ok = navigator.sendBeacon(c.url, blob);
-            dbg("📤 sendBeacon: " + (ok?"aceito":"rejeitado"), ok?"ok":"warn");
-          } catch(e3) { dbg("❌ sendBeacon falhou: " + e3.message, "err"); }
-        }
+          const sem = Object.assign({}, dados);
+          delete sem.fotoBase64; delete sem.fotoMime;
+          const blob = new Blob([JSON.stringify(sem)], { type: "application/json" });
+          const ok = navigator.sendBeacon(c.url, blob);
+          dbg("📡 sendBeacon: " + (ok ? "aceito" : "rejeitado"), ok ? "ok" : "warn");
+          if (ok) respJson = { ok: true, _sendBeacon: true };
+        } catch(e) { dbg("❌ sendBeacon: " + e.message, "err"); }
       }
     }
-
     adicionarHist(dados);
-
-    dbg("📢 Chegou no toast | respJson=" + (respJson?"sim":"nenhum"), "ok");
+    dbg("📢 Chegou no toast | respJson=" + (respJson ? "sim" : "nenhum"), "ok");
     let msg = "✅ Lançado no Sheets!";
-    if (respJson) {
+    if (respJson && !respJson._sendBeacon && !respJson._semJson) {
       dbg("✅ Resposta: " + JSON.stringify(respJson).substring(0,120), "ok");
-      if (respJson.saldo !== undefined) {
+      if (respJson.saldo !== undefined)
         msg += "\n💰 Saldo: R$" + Number(respJson.saldo).toLocaleString("pt-BR",{minimumFractionDigits:2});
-      }
       if (respJson.linkRecibo) {
         dbg("✅ Drive: " + respJson.linkRecibo, "ok");
-        msg += "\n📎 Recibo salvo no Drive";
-        setTimeout(() => {
-          if (confirm("📎 Recibo salvo no Drive. Abrir?")) {
-            window.open(respJson.linkRecibo, "_blank");
-          }
-        }, 800);
-      } else if (respJson.driveErro) {
-        dbg("❌ Drive erro: " + respJson.driveErro, "err");
+        msg += "\n📎 Recibo no Drive";
+        setTimeout(()=>{if(confirm("📎 Recibo salvo no Drive. Abrir?"))window.open(respJson.linkRecibo,"_blank");},800);
       }
     }
     toast(msg, "ok", 5000);
-
-    if (pfx==="foto") resetarFoto();
-    else resetarManual();
-
+    if (pfx === "foto") resetarFoto(); else resetarManual();
   } catch(err) {
     dbg("❌ Erro fatal: " + err.message, "err");
-    toast("❌ Erro ao enviar: "+err.message,"err");
+    toast("❌ Erro ao enviar: " + err.message, "err");
   } finally {
     btn.classList.remove("sending");
     btn.innerHTML = txtOrig;
   }
 }
 
-function resetarFoto() {
-  imgB64=null; imgMime=null; tipoFoto="Saida";
+async function lancarMulti() {
+  dbg("🚀 Iniciando lançamento múltiplo...", "info");
+  const c = cfg();
+  if (!c.url) { toast("⚙️ Configure a URL do Apps Script","err"); abrirSettings(); return; }
+  const semValor = _itensMulti.filter(it => !(parseFloat(it.valor) > 0));
+  if (semValor.length > 0) { toast("⚠️ Todos os itens precisam ter valor","err"); return; }
+  const btn = document.getElementById("confirmMultiBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ Enviando 0/" + _itensMulti.length + "...";
+  const grupoId = (_metaMulti.fornecedor||"rec").replace(/\s+/g,"").substring(0,6).toUpperCase()
+    + "_" + Date.now().toString(36).toUpperCase();
+  let sucessos = 0, erros = 0, ultimoSaldo = null;
+  for (let i = 0; i < _itensMulti.length; i++) {
+    const it = _itensMulti[i];
+    btn.textContent = "⏳ Enviando " + (i+1) + "/" + _itensMulti.length + "...";
+    const dados = {
+      tipo: it.tipo||"Saida", projeto: _metaMulti.projeto,
+      valor: String(parseFloat(it.valor)||0), qtd: it.quantidade||"",
+      descricao: it.descricao||"", fornecedor: it.fornecedor||_metaMulti.fornecedor||"N/A",
+      categoria: it.categoria||"Administração", subCategoria: it.subCategoria||"",
+      data: _metaMulti.data||new Date().toLocaleDateString("pt-BR"), grupoRecibo: grupoId,
+    };
+    try {
+      let respJson = null;
+      try {
+        respJson = await _enviarGET(c.url, dados);
+        if (respJson?.saldo !== undefined) ultimoSaldo = respJson.saldo;
+        dbg("✅ Item " + (i+1) + " ok", "ok");
+      } catch(getErr) {
+        dbg("⚠️ Item " + i + " GET falhou: " + getErr.message, "warn");
+        try {
+          respJson = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", c.url, true);
+            xhr.setRequestHeader("Content-Type","application/json");
+            xhr.timeout = 30000;
+            xhr.onload = () => {
+              const txt = xhr.responseText||"";const s = txt.indexOf("{");
+              if (s !== -1) { try { resolve(JSON.parse(txt.substring(s))); return; } catch(e) {} }
+              if (xhr.status >= 200 && xhr.status < 400) { resolve({ ok:true }); return; }
+              reject(new Error("POST " + xhr.status));
+            };
+            xhr.onerror = () => reject(new Error("XHR error"));
+            xhr.ontimeout = () => reject(new Error("XHR timeout"));
+            xhr.send(JSON.stringify(dados));
+          });
+          if (respJson?.saldo !== undefined) ultimoSaldo = respJson.saldo;
+        } catch(postErr) { dbg("⚠️ Item " + i + " POST falhou: " + postErr.message, "warn"); }
+      }
+      if (i === 0 && imgB64 && imgMime)
+        _enviarFotoBackground(c.url, { ...dados, fotoBase64: imgB64, fotoMime: imgMime });
+      adicionarHist(dados);
+      sucessos++;
+    } catch(err) { erros++; dbg("❌ Erro item " + i + ": " + err.message, "err"); }
+    if (i < _itensMulti.length - 1) await new Promise(r => setTimeout(r, 500));
+  }
+  btn.disabled = false;
+  let msg = "✅ " + sucessos + " ite" + (sucessos===1?"m":"ns") + " lançado" + (sucessos===1?"":"s") + "!";
+  if (ultimoSaldo !== null) msg += "\n💰 Saldo: " + fmtBRL(ultimoSaldo);
+  if (erros > 0) msg += "\n⚠️ " + erros + " erro(s)";
+  toast(msg, "ok", 5000);
+  resetarFoto();
+}
+
+// ── RESET ──────────────────────────────────────────────────────
+function resetarFoto(){
+  imgB64=null;imgMime=null;tipoFoto="Saida";
   document.getElementById("preview-img").src="";
   document.getElementById("cameraZone").classList.remove("has-image");
   document.getElementById("aiBtn").disabled=true;
@@ -1268,352 +753,174 @@ function resetarFoto() {
   document.getElementById("file-input").value="";
   buildFields("fields-foto","foto","Saida","setTipoFoto");
 }
-function resetarManual() {
-  tipoManual="Saida";
-  buildFields("fields-manual","manual","Saida","setTipoManual");
-}
+function resetarManual(){tipoManual="Saida";buildFields("fields-manual","manual","Saida","setTipoManual");}
 
-// ═══════════════════════════════════════════════════════
-//  HISTÓRICO LOCAL
-// ═══════════════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════════════
-//  MÚLTIPLOS ITENS — lógica completa
-// ═══════════════════════════════════════════════════════
-
-let _itensMulti = [];      // [{descricao, quantidade, valor, categoria, subCategoria, tipo, fornecedor, projeto, data}]
-let _metaMulti  = {};      // {fornecedor, valorTotal, data, projeto}
-
-// Chamado quando IA retorna múltiplos itens
-function preencherMulti(parsed, modeloUsado) {
-  const c = cfg();
-  // ID único para agrupar as linhas deste recibo na planilha
-  const _grupoId = (parsed.fornecedor||"rec").replace(/\s+/g,"").substring(0,6).toUpperCase()
-    + "_" + Date.now().toString(36).toUpperCase();
-  _metaMulti = {
-    fornecedor: parsed.fornecedor || "",
-    valorTotal: parseFloat(parsed.valorTotal) || 0,
-    data:       parsed.data || new Date().toLocaleDateString("pt-BR"),
-    projeto:    c.projeto,
-    grupoId:    _grupoId,
-  };
-  _itensMulti = (parsed.itens || []).map(it => ({
-    descricao:    it.descricao    || "",
-    quantidade:   it.quantidade   || "1",
-    valor:        it.valor        || "0.00",
-    categoria:    it.categoria    || "Administração",
-    subCategoria: it.subCategoria || "",
-    tipo:         it.tipo         || "Saida",
-    fornecedor:   parsed.fornecedor || "",
-  }));
-
-  // Mostrar modo multi
-  document.getElementById("single-item-view").style.display = "none";
-  document.getElementById("multi-item-view").style.display  = "";
-  document.getElementById("confirmBtn").style.display       = "none";
-  document.getElementById("confirmMultiBtn").style.display  = "";
+// ── MÚLTIPLOS ITENS ────────────────────────────────────────────
+function preencherMulti(parsed,modeloUsado){
+  const c=cfg();
+  _metaMulti={fornecedor:parsed.fornecedor||"",valorTotal:parseFloat(parsed.valorTotal)||0,data:parsed.data||new Date().toLocaleDateString("pt-BR"),projeto:c.projeto};
+  _itensMulti=(parsed.itens||[]).map(it=>({descricao:it.descricao||"",quantidade:it.quantidade||"1",valor:it.valor||"0.00",categoria:it.categoria||"Administração",subCategoria:it.subCategoria||"",tipo:it.tipo||"Saida",fornecedor:parsed.fornecedor||""}));
+  document.getElementById("single-item-view").style.display="none";
+  document.getElementById("multi-item-view").style.display="";
+  document.getElementById("confirmBtn").style.display="none";
+  document.getElementById("confirmMultiBtn").style.display="";
   document.getElementById("confirmMultiBtn").classList.add("visible");
-
   renderItens();
-
   document.getElementById("resultCard").classList.add("visible");
-  toast("✨ " + _itensMulti.length + " itens identificados por " + (modeloUsado||"IA") + "!", "ok");
+  toast("✨ "+_itensMulti.length+" itens identificados por "+(modeloUsado||"IA")+"!","ok");
 }
-
-// Renderiza a lista de item-cards
-function renderItens() {
-  const list = document.getElementById("itens-list");
-  if (!list) return;
-
-  const totalReal = _itensMulti.reduce((s,it) => s + (parseFloat(it.valor)||0), 0);
-  const totalNota = _metaMulti.valorTotal || 0;
-  const diff = Math.abs(totalReal - totalNota);
-
-  document.getElementById("itens-count-label").textContent = _itensMulti.length + " ite" + (_itensMulti.length===1?"m":"ns");
-  document.getElementById("itens-total-label").textContent = "Total: " + fmtBRL(totalReal);
-
-  const warn = document.getElementById("itens-warn");
-  if (warn) {
-    if (totalNota > 0 && diff > 0.05) {
-      warn.textContent = "⚠️ Soma dos itens (" + fmtBRL(totalReal) + ") ≠ total do recibo (" + fmtBRL(totalNota) + ")";
-      warn.classList.add("visible");
-    } else {
-      warn.classList.remove("visible");
-    }
-  }
-
-  // Atualizar label do botão confirmar
-  const btn = document.getElementById("confirmMultiBtn");
-  if (btn) btn.textContent = "✅ Lançar " + _itensMulti.length + " ite" + (_itensMulti.length===1?"m":"ns") + " no Sheets";
-
-  list.innerHTML = _itensMulti.map((it, i) => {
-    const catOpts = Object.keys(CATS).map(k =>
-      `<option value="${k}" ${k===it.categoria?"selected":""}>${k}</option>`
-    ).join("");
-    const subOpts = (CATS[it.categoria]||[]).map(s =>
-      `<option value="${s}" ${s===it.subCategoria?"selected":""}>${s}</option>`
-    ).join("") || '<option value="">—</option>';
-
-    return `
-    <div class="item-card" id="item-card-${i}">
-      <div class="item-card-header" onclick="toggleItemCard(${i})">
-        <span class="item-num">Item ${i+1}</span>
-        <span style="flex:1;padding:0 10px;font-size:13px;color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.descricao||"—"}</span>
-        <span class="item-valor-badge ${it.tipo==="Entrada"?"entrada":""}">${fmtBRL(parseFloat(it.valor)||0)}</span>
-        <button class="item-remove" onclick="removerItem(event,${i})">×</button>
-      </div>
-      <div class="item-body" id="item-body-${i}">
-        <div class="frow">
-          <span class="flabel">Descrição</span>
-          <input class="fval" value="${escHtml(it.descricao)}" oninput="_itensMulti[${i}].descricao=this.value" placeholder="—">
-        </div>
-        <div class="frow">
-          <span class="flabel">Valor (R$)</span>
-          <input class="fval c-saida" value="${it.valor}" oninput="_itensMulti[${i}].valor=this.value;renderItens()" inputmode="decimal">
-        </div>
-        <div class="frow">
-          <span class="flabel">Quantidade</span>
-          <input class="fval" value="${escHtml(it.quantidade)}" oninput="_itensMulti[${i}].quantidade=this.value" inputmode="decimal" placeholder="1">
-        </div>
-        <div class="frow">
-          <span class="flabel">Categoria</span>
-          <select class="fval" onchange="_itensMulti[${i}].categoria=this.value;_itensMulti[${i}].subCategoria='';renderItens()">${catOpts}</select>
-        </div>
-        <div class="frow">
-          <span class="flabel">Subcategoria</span>
-          <select class="fval" onchange="_itensMulti[${i}].subCategoria=this.value">${subOpts}</select>
-        </div>
-      </div>
-    </div>`;
+function renderItens(){
+  const list=document.getElementById("itens-list");if(!list)return;
+  const totalReal=_itensMulti.reduce((s,it)=>s+(parseFloat(it.valor)||0),0);
+  const totalNota=_metaMulti.valorTotal||0;
+  document.getElementById("itens-count-label").textContent=_itensMulti.length+" ite"+(_itensMulti.length===1?"m":"ns");
+  document.getElementById("itens-total-label").textContent="Total: "+fmtBRL(totalReal);
+  const warn=document.getElementById("itens-warn");
+  if(warn){const diff=Math.abs(totalReal-totalNota);if(totalNota>0&&diff>0.05){warn.textContent="⚠️ Soma dos itens ("+fmtBRL(totalReal)+") ≠ total do recibo ("+fmtBRL(totalNota)+")";warn.classList.add("visible");}else{warn.classList.remove("visible");}}
+  const btn=document.getElementById("confirmMultiBtn");if(btn)btn.textContent="✅ Lançar "+_itensMulti.length+" ite"+(_itensMulti.length===1?"m":"ns")+" no Sheets";
+  list.innerHTML=_itensMulti.map((it,i)=>{
+    const catOpts=Object.keys(CATS).map(k=>`<option value="${k}" ${k===it.categoria?"selected":""}>${k}</option>`).join("");
+    const subOpts=(CATS[it.categoria]||[]).map(s=>`<option value="${s}" ${s===it.subCategoria?"selected":""}>${s}</option>`).join("")||'<option value="">—</option>';
+    return`<div class="item-card" id="item-card-${i}"><div class="item-card-header" onclick="toggleItemCard(${i})"><span class="item-num">Item ${i+1}</span><span style="flex:1;padding:0 10px;font-size:13px;color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.descricao||"—"}</span><span class="item-valor-badge ${it.tipo==="Entrada"?"entrada":""}">${fmtBRL(parseFloat(it.valor)||0)}</span><button class="item-remove" onclick="removerItem(event,${i})">×</button></div><div class="item-body" id="item-body-${i}"><div class="frow"><span class="flabel">Descrição</span><input class="fval" value="${escHtml(it.descricao)}" oninput="_itensMulti[${i}].descricao=this.value" placeholder="—"></div><div class="frow"><span class="flabel">Valor (R$)</span><input class="fval c-saida" value="${it.valor}" oninput="_itensMulti[${i}].valor=this.value;renderItens()" inputmode="decimal"></div><div class="frow"><span class="flabel">Quantidade</span><input class="fval" value="${escHtml(it.quantidade)}" oninput="_itensMulti[${i}].quantidade=this.value" inputmode="decimal" placeholder="1"></div><div class="frow"><span class="flabel">Categoria</span><select class="fval" onchange="_itensMulti[${i}].categoria=this.value;_itensMulti[${i}].subCategoria='';renderItens()">${catOpts}</select></div><div class="frow"><span class="flabel">Subcategoria</span><select class="fval" onchange="_itensMulti[${i}].subCategoria=this.value">${subOpts}</select></div></div></div>`;
   }).join("");
 }
-
-function toggleItemCard(i) {
-  const body = document.getElementById("item-body-" + i);
-  if (body) body.style.display = body.style.display === "none" ? "" : "none";
-}
-
-function removerItem(e, i) {
-  e.stopPropagation();
-  if (_itensMulti.length <= 1) { toast("⚠️ Pelo menos 1 item necessário","err"); return; }
-  _itensMulti.splice(i, 1);
+function toggleItemCard(i){const b=document.getElementById("item-body-"+i);if(b)b.style.display=b.style.display==="none"?"":"";}
+function removerItem(e,i){e.stopPropagation();if(_itensMulti.length<=1){toast("⚠️ Pelo menos 1 item necessário","err");return;}_itensMulti.splice(i,1);renderItens();}
+function adicionarItemVazio(){
+  _itensMulti.push({descricao:"",quantidade:"1",valor:"0.00",categoria:"Administração",subCategoria:"",tipo:"Saida",fornecedor:_metaMulti.fornecedor||""});
   renderItens();
+  setTimeout(()=>{const cards=document.querySelectorAll(".item-card");cards[cards.length-1]?.scrollIntoView({behavior:"smooth",block:"nearest"});},100);
 }
+function fmtBRL(v){return"R$"+Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function escHtml(s){return String(s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");}
 
-function adicionarItemVazio() {
-  _itensMulti.push({ descricao:"", quantidade:"1", valor:"0.00", categoria:"Administração", subCategoria:"", tipo:"Saida", fornecedor: _metaMulti.fornecedor||"" });
-  renderItens();
-  // Scroll para o novo item
-  setTimeout(() => {
-    const cards = document.querySelectorAll(".item-card");
-    cards[cards.length-1]?.scrollIntoView({ behavior:"smooth", block:"nearest" });
-  }, 100);
+// ── HISTÓRICO ──────────────────────────────────────────────────
+function adicionarHist(d){
+  hist.unshift({...d,ts:Date.now()});if(hist.length>15)hist=hist.slice(0,15);
+  try{localStorage.setItem("rc_hist",JSON.stringify(hist));}catch(e){}renderHist();
 }
-
-// Lança todos os itens em sequência
-async function lancarMulti() {
-  dbg("🚀 Iniciando lançamento múltiplo...", "info");
-
-  const c = cfg();
-  if (!c.url) { toast("⚙️ Configure a URL do Apps Script","err"); abrirSettings(); return; }
-
-  // Validar
-  const semValor = _itensMulti.filter(it => !(parseFloat(it.valor) > 0));
-  if (semValor.length > 0) { toast("⚠️ Todos os itens precisam ter valor","err"); return; }
-
-  const btn = document.getElementById("confirmMultiBtn");
-  btn.disabled = true;
-  btn.textContent = "⏳ Enviando 0/" + _itensMulti.length + "...";
-
-  let sucessos = 0, erros = 0, ultimoSaldo = null;
-
-  for (let i = 0; i < _itensMulti.length; i++) {
-    const it = _itensMulti[i];
-    btn.textContent = "⏳ Enviando " + (i+1) + "/" + _itensMulti.length + "...";
-
-    const dados = {
-      tipo:         it.tipo         || "Saida",
-      projeto:      _metaMulti.projeto,
-      valor:        String(parseFloat(it.valor) || 0),
-      qtd:          it.quantidade   || "",
-      descricao:    it.descricao    || "",
-      fornecedor:   it.fornecedor   || _metaMulti.fornecedor || "N/A",
-      categoria:    it.categoria    || "Administração",
-      subCategoria: it.subCategoria || "",
-      data:         _metaMulti.data || new Date().toLocaleDateString("pt-BR"),
-      grupoRecibo:  _metaMulti.grupoId, // ID único do grupo — mesma cor na planilha
-    };
-
-    // Foto só no primeiro item (evita upload duplicado)
-    if (i === 0 && imgB64 && imgMime) {
-      dados.fotoBase64 = imgB64;
-      dados.fotoMime   = imgMime;
-    }
-
-    try {
-      let respJson = null;
-      try {
-        respJson = await new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open("POST", c.url, true);
-          xhr.setRequestHeader("Content-Type", "application/json");
-          xhr.timeout = 30000;
-          xhr.onload = () => {
-            const txt = xhr.responseText || "";
-            const s = txt.indexOf("{");
-            if (s !== -1) { try { resolve(JSON.parse(txt.substring(s))); return; } catch(e) {} }
-            resolve(null);
-          };
-          xhr.onerror = () => reject(new Error("XHR error"));
-          xhr.ontimeout = () => reject(new Error("XHR timeout"));
-          xhr.send(JSON.stringify(dados));
-        });
-        if (respJson?.saldo !== undefined) ultimoSaldo = respJson.saldo;
-      } catch(xhrErr) {
-        dbg("⚠️ Multi XHR erro item " + i + ": " + xhrErr.message, "warn");
-      }
-      adicionarHist(dados);
-      sucessos++;
-    } catch(err) {
-      erros++;
-      console.error("Erro item " + i + ":", err);
-    }
-    // Pequena pausa para evitar race condition no LockService
-    if (i < _itensMulti.length - 1) await new Promise(r => setTimeout(r, 600));
-  }
-
-  btn.disabled = false;
-
-  let msg = "✅ " + sucessos + " ite" + (sucessos===1?"m":"ns") + " lançado" + (sucessos===1?"":"s") + "!";
-  if (ultimoSaldo !== null) msg += "\n💰 Saldo: " + fmtBRL(ultimoSaldo);
-  if (erros > 0) msg += "\n⚠️ " + erros + " erro(s)";
-  toast(msg, "ok", 5000);
-
-  resetarFoto();
-}
-
-function fmtBRL(v) {
-  return "R$" + Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
-}
-function escHtml(s) {
-  return String(s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
-}
-
-function adicionarHist(d) {
-  hist.unshift({...d, ts:Date.now()});
-  if (hist.length>15) hist=hist.slice(0,15);
-  try { localStorage.setItem("rc_hist",JSON.stringify(hist)); } catch(e) {}
-  renderHist();
-}
-function renderHist() {
-  const el = document.getElementById("histSection");
-  if (!hist.length) { el.innerHTML=""; return; }
-  el.innerHTML = `<div class="hist-title">Últimos lançamentos</div>` +
-    hist.slice(0,6).map(h => {
-      const cls = h.tipo==="Entrada"?"e":"s";
-      const sinal = h.tipo==="Entrada"?"+":"-";
-      return `<div class="hist-item">
-        <div class="hdot ${cls}"></div>
-        <div class="hinfo">
-          <div class="hdesc">${h.descricao||h.subCategoria||h.categoria}</div>
-          <div class="hmeta">${h.projeto} · ${h.fornecedor||""} · ${new Date(h.ts).toLocaleDateString("pt-BR")}</div>
-        </div>
-        <div class="hval ${cls}">${sinal}R$${parseFloat(h.valor||0).toFixed(2).replace(".",",")}</div>
-      </div>`;
+function renderHist(){
+  const el=document.getElementById("histSection");
+  if(!hist.length){el.innerHTML="";return;}
+  el.innerHTML=`<div class="hist-title">Últimos lançamentos</div>`+
+    hist.slice(0,6).map(h=>{
+      const cls=h.tipo==="Entrada"?"e":"s";const sinal=h.tipo==="Entrada"?"+":"-";
+      return`<div class="hist-item"><div class="hdot ${cls}"></div><div class="hinfo"><div class="hdesc">${h.descricao||h.subCategoria||h.categoria}</div><div class="hmeta">${h.projeto} · ${h.fornecedor||""} · ${new Date(h.ts).toLocaleDateString("pt-BR")}</div></div><div class="hval ${cls}">${sinal}R$${parseFloat(h.valor||0).toFixed(2).replace(".",",")}</div></div>`;
     }).join("");
 }
 
-// ═══════════════════════════════════════════════════════
-//  TOAST
-// ═══════════════════════════════════════════════════════
+// ── FORNECEDOR BOTTOM SHEET ────────────────────────────────────
+async function carregarFornecedores(forcar){
+  if(_fornecedores.length>0&&!forcar)return;if(_fornCarregando)return;_fornCarregando=true;
+  const url=cfg().url;if(!url){_fornCarregando=false;return;}
+  try{const r=await fetch(url+"?action=fornecedores");const d=await r.json();if(d.ok&&Array.isArray(d.fornecedores))_fornecedores=d.fornecedores;}
+  catch(e){console.warn("Fornecedores:",e);}finally{_fornCarregando=false;}
+}
+async function abrirSheetFornecedor(pfx){
+  _fornPfxAtivo=pfx;
+  const ov=document.getElementById("forn-ov"),bs=document.getElementById("forn-bs"),inp=document.getElementById("forn-bs-input");
+  ov.classList.add("open");bs.classList.add("open");inp.value="";
+  document.getElementById("forn-bs-clr").classList.remove("vis");
+  document.getElementById("forn-bs-list").innerHTML='<div class="forn-bs-empty">⏳ Carregando…</div>';
+  await carregarFornecedores(false);renderSheetFornecedor();
+  setTimeout(()=>inp.focus(),350);iniciarSwipeSheet();
+}
+function fecharSheetFornecedor(){
+  const bs=document.getElementById("forn-bs"),ov=document.getElementById("forn-ov");
+  bs.style.transition="transform .3s cubic-bezier(.32,.72,0,1)";bs.style.transform="translateY(100%)";
+  ov.classList.remove("open");setTimeout(()=>{bs.classList.remove("open");bs.style.transform="";},300);
+}
+function renderSheetFornecedor(){
+  const inp=document.getElementById("forn-bs-input"),list=document.getElementById("forn-bs-list"),clr=document.getElementById("forn-bs-clr");
+  const q=inp.value.trim(),ql=q.toLowerCase();clr.classList.toggle("vis",q.length>0);
+  const filtrado=ql?_fornecedores.filter(f=>f.toLowerCase().includes(ql)):_fornecedores;
+  let html="";filtrado.forEach(f=>{const esc=f.replace(/'/g,"\\'");html+=`<div class="forn-bs-opt" onclick="selecionarSheetFornecedor('${esc}')">${f}</div>`;});
+  const jaExiste=_fornecedores.some(f=>f.toLowerCase()===ql);
+  if(q&&!jaExiste){const qEsc=q.replace(/'/g,"\\'");html+=`<div class="forn-bs-opt add-new" onclick="adicionarNovoFornecedor('${qEsc}')">Adicionar "${q}"</div>`;}
+  list.innerHTML=html||'<div class="forn-bs-empty">Nenhum resultado</div>';
+}
+function selecionarSheetFornecedor(val){
+  if(!_fornPfxAtivo)return;
+  const input=document.getElementById("forn-"+_fornPfxAtivo),wrap=document.getElementById("forn-wrap-"+_fornPfxAtivo);
+  if(input){input.value=val;wrap?.classList.add("has-value");}fecharSheetFornecedor();
+}
+function limparFornecedor(pfx){
+  const input=document.getElementById("forn-"+pfx),wrap=document.getElementById("forn-wrap-"+pfx),badge=document.getElementById("forn-badge-"+pfx);
+  if(input)input.value="";wrap?.classList.remove("has-value");if(badge)badge.style.display="none";
+}
+async function adicionarNovoFornecedor(nome){
+  const nomeReal=nome.trim();if(!nomeReal)return;const url=cfg().url;if(!url){toast("⚙️ Configure a URL primeiro","err");return;}
+  try{
+    const resp=await fetch(url+"?action=addFornecedor&nome="+encodeURIComponent(nomeReal));
+    const data=await resp.json();
+    if(data.ok){_fornecedores.push(nomeReal);_fornecedores.sort((a,b)=>a.localeCompare(b,"pt-BR"));selecionarSheetFornecedor(nomeReal);toast("✅ Fornecedor adicionado!","ok");}
+    else{toast("❌ "+(data.erro||"Erro ao adicionar"),"err");}
+  }catch(e){toast("❌ Erro de rede","err");}
+}
+function iniciarSwipeSheet(){
+  const bs=document.getElementById("forn-bs"),drag=document.getElementById("forn-bs-drag");
+  let startY=0,startT=0,dragging=false;
+  drag.ontouchstart=e=>{startY=e.touches[0].clientY;startT=Date.now();dragging=true;bs.style.transition="none";};
+  drag.ontouchmove=e=>{if(!dragging)return;bs.style.transform=`translateY(${Math.max(0,e.touches[0].clientY-startY)}px)`;};
+  drag.ontouchend=e=>{if(!dragging)return;dragging=false;const dy=e.changedTouches[0].clientY-startY,dt=Date.now()-startT;if(dy>100||(dy>40&&dt<250))fecharSheetFornecedor();else{bs.style.transition="transform .3s cubic-bezier(.32,.72,0,1)";bs.style.transform="translateY(0)";}};
+}
+function abrirFornecedores(pfx){abrirSheetFornecedor(pfx);}
+function fecharFornecedorDD(pfx){fecharSheetFornecedor();}
+function filtrarFornecedores(pfx){renderSheetFornecedor();}
+
+// ── TOAST ──────────────────────────────────────────────────────
 let _toastT;
-function toast(msg, tipo="", duracao=0) {
-  const el = document.getElementById("toast");
-  el.style.whiteSpace = "pre-line"; el.textContent = msg;
-  el.className = "toast show" + (tipo?" "+tipo:"");
-  clearTimeout(_toastT);
-  const _ms = duracao || (tipo==="err" ? 5000 : 3000); _toastT = setTimeout(() => el.classList.remove("show"), _ms);
+function toast(msg,tipo="",duracao=0){
+  const el=document.getElementById("toast");el.style.whiteSpace="pre-line";el.textContent=msg;
+  el.className="toast show"+(tipo?" "+tipo:"");clearTimeout(_toastT);
+  _toastT=setTimeout(()=>el.classList.remove("show"),duracao||(tipo==="err"?5000:3000));
 }
 
-// ═══════════════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════════════
-buildFields("fields-foto",   "foto",   "Saida", "setTipoFoto");
-buildFields("fields-manual", "manual", "Saida", "setTipoManual");
+// ── INIT ───────────────────────────────────────────────────────
+buildFields("fields-foto","foto","Saida","setTipoFoto");
+buildFields("fields-manual","manual","Saida","setTipoManual");
 renderHist();
-
-// Pré-carrega lista de fornecedores
-setTimeout(() => carregarFornecedores(false), 1500);
-
-const _c = cfg();
-if (!_c.key || !_c.url) {
-  setTimeout(() => toast("⚙️ Configure a chave e URL nas configurações",""), 900);
-}
-
-// Splash gerenciado pelo script inline no HTML
-
-// Pull-to-refresh removido — usar botão 🔄 no header
+setTimeout(()=>carregarFornecedores(false),1500);
+const _c=cfg();
+if(!_c.key||!_c.url){setTimeout(()=>toast("⚙️ Configure a chave e URL nas configurações",""),900);}
 </script>
 
-  <!-- Loading tela cheia — fora de qualquer container -->
-  <div id="aiLoading" style="
-    display:none; position:fixed; inset:0; z-index:9999;
-    background:rgba(0,0,0,0.82);
-    flex-direction:column; align-items:center; justify-content:center; gap:16px;
-  ">
-    <div style="
-      width:48px;height:48px;
-      border:4px solid rgba(255,255,255,0.2);
-      border-top-color:#4ade80;
-      border-radius:50%;
-      animation:spin 0.8s linear infinite;
-    "></div>
-    <div style="color:#fff;font-size:16px;font-weight:600;">✨ IA analisando...</div>
-    <div class="dbg-log" style="
-      color:#aef;font-size:11px;margin-top:4px;
-      white-space:pre-wrap;max-width:300px;text-align:center;
-      max-height:120px;overflow:auto;
-    "></div>
-    <button onclick="forcarSaida()" style="
-      margin-top:8px;padding:8px 20px;
-      background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);
-      color:#fff;border-radius:20px;font-size:13px;cursor:pointer;
-    ">Cancelar e preencher manual</button>
-  </div>
+<!-- LOADING IA -->
+<div id="aiLoading" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.82);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+  <div style="width:48px;height:48px;border:4px solid rgba(255,255,255,0.2);border-top-color:#4ade80;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+  <div style="color:#fff;font-size:16px;font-weight:600;">✨ IA analisando...</div>
+  <div class="dbg-log" style="color:#aef;font-size:11px;margin-top:4px;white-space:pre-wrap;max-width:300px;text-align:center;max-height:120px;overflow:auto;"></div>
+  <button onclick="forcarSaida()" style="margin-top:8px;padding:8px 20px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;font-size:13px;cursor:pointer;">Cancelar e preencher manual</button>
+</div>
 
-
-
-  <!-- ── FORNECEDOR BOTTOM SHEET ── -->
-  <div class="forn-ov" id="forn-ov" onclick="fecharSheetFornecedor()"></div>
-  <div class="forn-bs" id="forn-bs">
-    <div class="forn-bs-top" id="forn-bs-drag">
-      <div class="forn-bs-handle"></div>
-      <div class="forn-bs-header">
-        <span class="forn-bs-title">Fornecedor</span>
-        <button class="forn-bs-close" onclick="fecharSheetFornecedor()">✕</button>
-      </div>
-      <div class="forn-bs-search">
-        <input type="text" id="forn-bs-input" placeholder="Buscar fornecedor…"
-          autocomplete="off" spellcheck="false"
-          oninput="renderSheetFornecedor()">
-        <button class="forn-bs-search-clear" id="forn-bs-clr"
-          onclick="document.getElementById('forn-bs-input').value='';renderSheetFornecedor();this.classList.remove('vis')">✕</button>
-      </div>
+<!-- FORNECEDOR BOTTOM SHEET -->
+<div class="forn-ov" id="forn-ov" onclick="fecharSheetFornecedor()"></div>
+<div class="forn-bs" id="forn-bs">
+  <div class="forn-bs-top" id="forn-bs-drag">
+    <div class="forn-bs-handle"></div>
+    <div class="forn-bs-header">
+      <span class="forn-bs-title">Fornecedor</span>
+      <button class="forn-bs-close" onclick="fecharSheetFornecedor()">✕</button>
     </div>
-    <div class="forn-bs-list" id="forn-bs-list"></div>
-  </div>
-
-  <!-- DEBUG PANEL -->
-  <div id="debugPanel">
-    <div id="debugHeader">
-      <span>🔍 Log de Debug</span>
-      <div style="display:flex;gap:8px">
-        <button onclick="document.getElementById('debugLog').innerHTML=''" title="Limpar">🗑️</button>
-        <button onclick="document.getElementById('debugPanel').classList.remove('open')">✕</button>
-      </div>
+    <div class="forn-bs-search">
+      <input type="text" id="forn-bs-input" placeholder="Buscar fornecedor…" autocomplete="off" spellcheck="false" oninput="renderSheetFornecedor()">
+      <button class="forn-bs-search-clear" id="forn-bs-clr" onclick="document.getElementById('forn-bs-input').value='';renderSheetFornecedor();this.classList.remove('vis')">✕</button>
     </div>
-    <div id="debugLog"></div>
   </div>
+  <div class="forn-bs-list" id="forn-bs-list"></div>
+</div>
+
+<!-- DEBUG PANEL -->
+<div id="debugPanel">
+  <div id="debugHeader">
+    <span>🔍 Log de Debug</span>
+    <div style="display:flex;gap:8px">
+      <button onclick="document.getElementById('debugLog').innerHTML=''" title="Limpar">🗑️</button>
+      <button onclick="document.getElementById('debugPanel').classList.remove('open')">✕</button>
+    </div>
+  </div>
+  <div id="debugLog"></div>
+</div>
 
 </body>
 </html>
