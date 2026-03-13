@@ -199,7 +199,7 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
     <div class="logo-icon">🧾</div>
     <div>
       <div class="logo-text">Recibos</div>
-      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.21</span></div>
+      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.22</span></div>
     </div>
   </div>
   <div class="hdr-right">
@@ -350,7 +350,7 @@ let _itensMulti=[],_metaMulti={};
 
 // ── CONFIG ─────────────────────────────────────────────────────
 function cfg(){
-  const _k="AIzaSyCfYaMvVg7MMQp"+"npDrs2luiM5kc1I2SFiE";
+  const _k="AIzaSyCtmuKJeMaOe9K"+"sYeTtzH3v8YzFYUdk5Aw";
   return{
     key:(function(){try{return localStorage.getItem("rc_key");}catch(e){return null;}})() || _k,
     url:(function(){try{return localStorage.getItem("rc_url");}catch(e){return null;}})() || "https://script.google.com/macros/s/AKfycbwg5iGPn6fIK9NL7MpKzVZeyLKNSexSwRkMkJ6blhjS342ibdrln5Zki1PGMOo-q8I02Q/exec",
@@ -595,27 +595,44 @@ function _enviarGET(url, payload) {
   });
 }
 
-// Envia foto em background via POST no-cors (fire-and-forget)
-// Não bloqueia o lançamento — falha silenciosa se iOS bloquear
-function _enviarFotoBackground(url, dados) {
-  if (!dados.fotoBase64 || !dados.fotoMime) return;
+// Envia foto via POST (v3.22) — segue redirect do Apps Script
+// Estratégia: fetch sem mode:no-cors para receber resposta real com link Drive
+// Fallback: no-cors fire-and-forget se fetch normal falhar
+async function _enviarFotoPost(url, dados) {
+  if (!dados.fotoBase64 || !dados.fotoMime) return null;
   const kb = Math.round(dados.fotoBase64.length * 0.75 / 1024);
-  if (kb > 500) { dbg("⚠️ Foto " + kb + "KB — skip", "warn"); return; }
+  if (kb > 700) { dbg("⚠️ Foto " + kb + "KB — muito grande, skip", "warn"); return null; }
   const payload = {
-    action: "uploadFoto",
+    action:      "uploadFoto",
     grupoRecibo: dados.grupoRecibo || "",
     fotoBase64:  dados.fotoBase64,
     fotoMime:    dados.fotoMime,
     descricao:   dados.descricao || "",
-    projeto:     dados.projeto || "",
+    projeto:     dados.projeto   || "",
   };
+  dbg("📤 Enviando foto (" + kb + "KB) para Drive...", "info");
   try {
-    const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
-    fetch(url, { method: "POST", body: blob, mode: "no-cors" })
-      .then(() => dbg("📎 Foto enviada bg (no-cors)", "ok"))
-      .catch(e  => dbg("⚠️ Foto bg falhou: " + e.message, "warn"));
-    dbg("📤 Foto disparada em background (" + kb + "KB)", "info");
-  } catch(e) { dbg("⚠️ Foto bg catch: " + e.message, "warn"); }
+    const resp = await fetch(url, { method: "POST", body: JSON.stringify(payload) });
+    const txt  = await resp.text().catch(() => "");
+    const s = txt.indexOf("{");
+    if (s !== -1) {
+      try {
+        const j = JSON.parse(txt.substring(s));
+        if (j.link) { dbg("📎 Foto no Drive: " + j.link, "ok"); return j.link; }
+        dbg("⚠️ Drive sem link: " + txt.substring(s, 80), "warn");
+      } catch(e) {}
+    }
+    dbg("📎 Foto enviada (sem link)", "ok");
+    return null;
+  } catch(e) {
+    dbg("⚠️ Foto fetch falhou: " + e.message + " — no-cors fallback", "warn");
+    try {
+      const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+      await fetch(url, { method: "POST", body: blob, mode: "no-cors" });
+      dbg("📎 Foto enviada (no-cors fallback)", "ok");
+    } catch(e2) { dbg("❌ Foto falhou: " + e2.message, "warn"); }
+    return null;
+  }
 }
 
 async function lancar(pfx) {
@@ -655,7 +672,7 @@ async function lancar(pfx) {
     try {
       respJson = await _enviarGET(c.url, dados);
       dbg("✅ GET ok", "ok");
-      if (dados.fotoBase64) _enviarFotoBackground(c.url, dados);
+      if (dados.fotoBase64) await _enviarFotoPost(c.url, dados);
     } catch(getErr) {
       dbg("⚠️ GET falhou: " + getErr.message + " — POST fallback", "warn");
       try {
@@ -678,7 +695,7 @@ async function lancar(pfx) {
           xhr.send(JSON.stringify(sem));
         });
         dbg("✅ POST fallback ok", "ok");
-        if (dados.fotoBase64) _enviarFotoBackground(c.url, dados);
+        if (dados.fotoBase64) await _enviarFotoPost(c.url, dados);
       } catch(postErr) {
         dbg("⚠️ POST falhou: " + postErr.message + " — sendBeacon", "warn");
         try {
@@ -765,7 +782,7 @@ async function lancarMulti() {
         } catch(postErr) { dbg("⚠️ Item " + i + " POST falhou: " + postErr.message, "warn"); }
       }
       if (i === 0 && imgB64 && imgMime)
-        _enviarFotoBackground(c.url, { ...dados, fotoBase64: imgB64, fotoMime: imgMime });
+        await _enviarFotoPost(c.url, { ...dados, fotoBase64: imgB64, fotoMime: imgMime });
       adicionarHist(dados);
       sucessos++;
     } catch(err) { erros++; dbg("❌ Erro item " + i + ": " + err.message, "err"); }
