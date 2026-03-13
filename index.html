@@ -199,7 +199,7 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
     <div class="logo-icon">🧾</div>
     <div>
       <div class="logo-text">Recibos</div>
-      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.22</span></div>
+      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.23</span></div>
     </div>
   </div>
   <div class="hdr-right">
@@ -350,9 +350,9 @@ let _itensMulti=[],_metaMulti={};
 
 // ── CONFIG ─────────────────────────────────────────────────────
 function cfg(){
-  const _k="AIzaSyCtmuKJeMaOe9K"+"sYeTtzH3v8YzFYUdk5Aw";
+  const _k="AIzaSyAc6awvAenDc8J"+"tHIXjEn23LE4UTnGaGrA";
   return{
-    key:(function(){try{return localStorage.getItem("rc_key");}catch(e){return null;}})() || _k,
+    key:_k, // v3.23: chave sempre do código (ignora localStorage)
     url:(function(){try{return localStorage.getItem("rc_url");}catch(e){return null;}})() || "https://script.google.com/macros/s/AKfycbwg5iGPn6fIK9NL7MpKzVZeyLKNSexSwRkMkJ6blhjS342ibdrln5Zki1PGMOo-q8I02Q/exec",
     projeto:(function(){try{return localStorage.getItem("rc_proj");}catch(e){return null;}})() || "P3",
   };
@@ -595,7 +595,7 @@ function _enviarGET(url, payload) {
   });
 }
 
-// Envia foto via POST (v3.22) — segue redirect do Apps Script
+// Envia foto via POST (v3.23) — segue redirect do Apps Script
 // Estratégia: fetch sem mode:no-cors para receber resposta real com link Drive
 // Fallback: no-cors fire-and-forget se fetch normal falhar
 async function _enviarFotoPost(url, dados) {
