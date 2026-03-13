@@ -199,7 +199,7 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
     <div class="logo-icon">🧾</div>
     <div>
       <div class="logo-text">Recibos</div>
-      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.23</span></div>
+      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.24</span></div>
     </div>
   </div>
   <div class="hdr-right">
@@ -331,14 +331,11 @@ const CATS={
 };
 const CAT_KEYS=Object.keys(CATS);
 const MODELOS=[
-  // Ordem: mais estável primeiro, com versão de API correta para cada um
-  // gemini-2.0-flash = v1beta (mais capaz para OCR de recibos)
-  // gemini-1.5-flash = v1    (fallback estável)
-  // gemini-1.5-flash-8b = v1 (leve, fallback final)
+  // v3.24: todos via v1beta — gemini-1.5 descontinuado em chaves novas do AI Studio
   "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
   "gemini-1.5-flash",
   "gemini-1.5-flash-8b",
-  "gemini-2.0-flash-lite",
 ];
 
 // ── ESTADO ─────────────────────────────────────────────────────
@@ -352,7 +349,7 @@ let _itensMulti=[],_metaMulti={};
 function cfg(){
   const _k="AIzaSyAc6awvAenDc8J"+"tHIXjEn23LE4UTnGaGrA";
   return{
-    key:_k, // v3.23: chave sempre do código (ignora localStorage)
+    key:_k, // v3.24: chave sempre do código (ignora localStorage)
     url:(function(){try{return localStorage.getItem("rc_url");}catch(e){return null;}})() || "https://script.google.com/macros/s/AKfycbwg5iGPn6fIK9NL7MpKzVZeyLKNSexSwRkMkJ6blhjS342ibdrln5Zki1PGMOo-q8I02Q/exec",
     projeto:(function(){try{return localStorage.getItem("rc_proj");}catch(e){return null;}})() || "P3",
   };
@@ -452,7 +449,7 @@ async function analisarIA(){
     let parsed=null,modeloUsado="",erroMsg="";
     for(const modelo of MODELOS){
       // gemini-2.0-* → v1beta | gemini-1.5-* → v1
-      const apiVer = modelo.startsWith("gemini-2") ? "v1beta" : "v1";
+      const apiVer = "v1beta"; // v3.24: todos via v1beta
       dbgAI("🔄 "+modelo+" ["+apiVer+"]");
       const url=`https://generativelanguage.googleapis.com/${apiVer}/models/${modelo}:generateContent?key=${cfg_.key}`;
       try{
@@ -595,7 +592,7 @@ function _enviarGET(url, payload) {
   });
 }
 
-// Envia foto via POST (v3.23) — segue redirect do Apps Script
+// Envia foto via POST (v3.24) — segue redirect do Apps Script
 // Estratégia: fetch sem mode:no-cors para receber resposta real com link Drive
 // Fallback: no-cors fire-and-forget se fetch normal falhar
 async function _enviarFotoPost(url, dados) {
