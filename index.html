@@ -199,7 +199,7 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
     <div class="logo-icon">🧾</div>
     <div>
       <div class="logo-text">Recibos</div>
-      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.19</span></div>
+      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.20</span></div>
     </div>
   </div>
   <div class="hdr-right">
@@ -330,7 +330,16 @@ const CATS={
   "Administração":["Materiais diversos","Despesas administrativas","Livro engenheiro","Outros","Ferramentas","Contas obra","Deposito fornecedor","Venda de propriedade","Corretor","Taxas","Imposto"],
 };
 const CAT_KEYS=Object.keys(CATS);
-const MODELOS=["gemini-2.0-flash-lite","gemini-2.0-flash","gemini-2.0-flash-exp","gemini-1.5-flash","gemini-1.5-flash-8b"];
+const MODELOS=[
+  // Ordem: mais estável primeiro, com versão de API correta para cada um
+  // gemini-2.0-flash = v1beta (mais capaz para OCR de recibos)
+  // gemini-1.5-flash = v1    (fallback estável)
+  // gemini-1.5-flash-8b = v1 (leve, fallback final)
+  "gemini-2.0-flash",
+  "gemini-1.5-flash",
+  "gemini-1.5-flash-8b",
+  "gemini-2.0-flash-lite",
+];
 
 // ── ESTADO ─────────────────────────────────────────────────────
 let imgB64=null,imgMime=null;
@@ -442,8 +451,9 @@ async function analisarIA(){
     const prompt=`Analise este recibo fiscal/cupom. Retorne APENAS JSON válido, sem markdown, sem texto extra.\n\nREGRAS IMPORTANTES:\n1. Se o recibo tem 2 ou mais produtos/itens DISTINTOS → use modo "multiplo" e liste CADA item separadamente no array "itens"\n2. Se o recibo tem apenas 1 produto ou é uma nota de serviço → use modo "simples" com 1 item\n3. Cada item do array deve ter seu próprio valor unitário (não o total)\n4. A SOMA de todos os valores dos itens deve ser IGUAL ao valorTotal do recibo\n5. Nunca agrupe itens diferentes — prefira separar\n6. Se não conseguir ler o valor de um item específico, divida o total igualmente\n\nFormato JSON obrigatório:\n{"modo":"multiplo","fornecedor":"NOME_LOJA","valorTotal":"0.00","data":"DD/MM/AAAA","itens":[{"descricao":"Nome do produto","quantidade":"1","valor":"0.00","categoria":"Administração","subCategoria":"","tipo":"Saida"}]}\n\nCategorias válidas: ${CATS_LIST}\n\nRetorne SÓ o JSON, sem nenhum texto antes ou depois.`;
     let parsed=null,modeloUsado="",erroMsg="";
     for(const modelo of MODELOS){
-      dbgAI("🔄 "+modelo+" ["+(modelo.startsWith("gemini-1")?"v1":"v1beta")+"]");
-      const apiVer=modelo.startsWith("gemini-1")?"v1":"v1beta";
+      // gemini-2.0-* → v1beta | gemini-1.5-* → v1
+      const apiVer = modelo.startsWith("gemini-2") ? "v1beta" : "v1";
+      dbgAI("🔄 "+modelo+" ["+apiVer+"]");
       const url=`https://generativelanguage.googleapis.com/${apiVer}/models/${modelo}:generateContent?key=${cfg_.key}`;
       try{
         const ctrl=new AbortController();
@@ -451,6 +461,12 @@ async function analisarIA(){
         const res=await fetch(url,{method:"POST",signal:ctrl.signal,headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:prompt},{inline_data:{mime_type:imgMime,data:imgB64}}]}],generationConfig:{temperature:0.1,maxOutputTokens:1200}})});
         clearTimeout(timer);
         dbgAI("✅ HTTP "+res.status);
+        // 429 = quota esgotada → tenta próximo modelo
+        if(res.status===429){erroMsg="quota esgotada (429)";dbgAI("⚠️ 429 quota — próximo modelo...");continue;}
+        // 404 = modelo não disponível nesta versão de API → tenta próximo
+        if(res.status===404){erroMsg="modelo indisponível (404)";dbgAI("⚠️ 404 modelo — próximo...");continue;}
+        // 400 = bad request (ex: imagem muito grande) → para o loop
+        if(res.status===400){erroMsg="erro de requisição (400) — imagem pode ser inválida";dbgAI("❌ 400 — abortando");break;}
         if(!res.ok){erroMsg=`HTTP ${res.status}`;continue;}
         const json=await res.json();
         if(json.error){erroMsg=json.error.message;dbg("❌ API: "+erroMsg);continue;}
@@ -475,7 +491,19 @@ async function analisarIA(){
     if(parsed&&parsed.itens&&parsed.itens.length>0){
       if(parsed.modo==="multiplo"&&parsed.itens.length>1)preencherMulti(parsed,modeloUsado);
       else preencherFoto(parsed.itens[0],modeloUsado,parsed);
-    }else{mostrarErro("IA não leu o recibo — preencha manualmente.\nDetalhe: "+erroMsg);preencherFoto({},"manual");}
+    }else{
+      // Diagnóstico de erro específico
+      let msgFinal = "IA não leu o recibo — preencha manualmente.";
+      if(erroMsg.includes("429")||erroMsg.includes("quota")){
+        msgFinal = "Quota da IA esgotada (429). Aguarde 1 min e tente novamente, ou preencha manualmente.\n⚙️ Se persistir, troque a chave Gemini nas Configurações.";
+      } else if(erroMsg.includes("404")){
+        msgFinal = "Modelos Gemini indisponíveis (404). Verifique sua chave API nas ⚙️ Configurações.";
+      } else {
+        msgFinal = "IA não leu o recibo — preencha manualmente.\nDetalhe: "+erroMsg;
+      }
+      mostrarErro(msgFinal);
+      preencherFoto({},"manual");
+    }
   }catch(fatalErr){
     clearTimeout(safetyTimer);document.getElementById("aiLoading").style.display="none";
     mostrarErro("Erro inesperado: "+fatalErr.message);preencherFoto({},"manual");
@@ -540,11 +568,26 @@ function _enviarGET(url, payload) {
     xhr.timeout = 28000;
     xhr.onload = function() {
       const txt = xhr.responseText || "";
-      dbg("📥 GET " + xhr.status + " (" + txt.length + "c)", xhr.status < 400 ? "ok" : "err");
+      dbg("📥 GET " + xhr.status + " (" + txt.length + "c) → " + txt.substring(0,60), "info");
+      if (xhr.status < 200 || xhr.status >= 400) { reject(new Error("GET " + xhr.status)); return; }
+      // Detectar resposta padrão do doGet (script antigo sem action=lancar)
+      // Ex: {"status":"ok","msg":"Recibos API v8"} → lançamento NÃO foi feito
       const s = txt.indexOf("{");
-      if (s !== -1) { try { resolve(JSON.parse(txt.substring(s))); return; } catch(e) {} }
-      if (xhr.status >= 200 && xhr.status < 400) { resolve({ ok: true, _semJson: true }); return; }
-      reject(new Error("GET " + xhr.status));
+      if (s !== -1) {
+        try {
+          const json = JSON.parse(txt.substring(s));
+          // Se veio resposta de "lancar" real → tem "ok":true + não tem "status":"ok"
+          if (json.status === "ok" && json.msg) {
+            // Script antigo ou deploy desatualizado — precisamos usar POST
+            reject(new Error("API não processou action=lancar (deploy desatualizado — use POST)"));
+            return;
+          }
+          resolve(json);
+          return;
+        } catch(e) {}
+      }
+      // Resposta vazia mas HTTP 200 → aceita como sucesso (sendBeacon-like)
+      resolve({ ok: true, _semJson: true });
     };
     xhr.onerror   = () => reject(new Error("GET network error"));
     xhr.ontimeout = () => reject(new Error("GET timeout"));
