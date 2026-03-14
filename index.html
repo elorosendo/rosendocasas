@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -177,7 +176,6 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
 <body>
 
 <!-- SPLASH -->
-
 <div id="splash" style="position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#0f1f17 0%,#152b1e 60%,#0a1a10 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease;">
   <img src="appicone.png" width="110" height="110" style="border-radius:26px;box-shadow:0 8px 40px rgba(74,222,128,0.25);margin-bottom:22px;" onerror="this.style.display='none'">
   <div style="color:#fff;font-size:26px;font-weight:700;letter-spacing:-0.5px;">Recibos</div>
@@ -201,7 +199,7 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
     <div class="logo-icon">🧾</div>
     <div>
       <div class="logo-text">Recibos</div>
-      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.25</span></div>
+      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.26</span></div>
     </div>
   </div>
   <div class="hdr-right">
@@ -218,7 +216,6 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
   </div>
 
   <!-- TAB FOTO -->
-
   <div class="tab-panel active" id="tab-foto">
     <div class="camera-zone" id="cameraZone">
       <img id="preview-img" alt="preview">
@@ -268,7 +265,6 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
   </div>
 
   <!-- TAB MANUAL -->
-
   <div class="tab-panel" id="tab-manual">
     <div class="manual-card">
       <div class="manual-header">✏️ Lançamento manual</div>
@@ -284,7 +280,6 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
 <div class="toast" id="toast"></div>
 
 <!-- SETTINGS -->
-
 <div class="overlay" id="settingsOverlay">
   <div class="backdrop" onclick="fecharSettings()"></div>
   <div class="sheet">
@@ -336,7 +331,7 @@ const CATS={
 };
 const CAT_KEYS=Object.keys(CATS);
 const MODELOS=[
-  // v3.25: gemini-2.0 via v1beta, gemini-1.5 via v1 (evita 404)
+  // v3.26: gemini-2.0 via v1beta, gemini-1.5 via v1 (evita 404)
   // gemini-2.5-pro adicionado como fallback premium
   "gemini-2.0-flash",
   "gemini-2.0-flash-lite",
@@ -354,9 +349,9 @@ let _itensMulti=[],_metaMulti={};
 
 // ── CONFIG ─────────────────────────────────────────────────────
 function cfg(){
-  const _k="AIzaSyAc6awvAenDc8J"+"tHIXjEn23LE4UTnGaGrA";
+  const _k=""; // v3.26: chave NUNCA hardcoded — use ⚙️ Configurações
   return{
-    key:_k, // v3.25: chave sempre do código (ignora localStorage)
+    key:(function(){try{return localStorage.getItem("rc_key");}catch(e){return null;}})() || _k,
     url:(function(){try{return localStorage.getItem("rc_url");}catch(e){return null;}})() || "https://script.google.com/macros/s/AKfycbwg5iGPn6fIK9NL7MpKzVZeyLKNSexSwRkMkJ6blhjS342ibdrln5Zki1PGMOo-q8I02Q/exec",
     projeto:(function(){try{return localStorage.getItem("rc_proj");}catch(e){return null;}})() || "P3",
   };
@@ -371,7 +366,7 @@ function abrirSettings(){
   document.getElementById("sScriptUrl").value=c.url;
   document.getElementById("sProjeto").value=c.projeto;
   const jaSalvou=(function(){try{return localStorage.getItem("rc_key");}catch(e){return null;}})();
-  document.getElementById("sNotice").textContent=jaSalvou?"✅ Configurações salvas neste dispositivo.":"⚠️ Primeira vez? Clique em Salvar.";
+  document.getElementById("sNotice").textContent=jaSalvou?"✅ Configurações salvas neste dispositivo.":"⚠️ Cole sua chave Gemini acima e clique em Salvar.";
   document.getElementById("settingsOverlay").classList.add("open");
 }
 function fecharSettings(){document.getElementById("settingsOverlay").classList.remove("open");}
@@ -443,7 +438,7 @@ function forcarSaida(){document.getElementById("aiLoading").style.display="none"
 async function analisarIA(){
   function dbgAI(msg){const p=document.querySelector("#aiLoading .dbg-log");if(p)p.textContent+=msg+"\n";dbg("[IA] "+msg,"info");}
   const cfg_=cfg();
-  if(!cfg_.key){toast("⚙️ Configure a chave Gemini primeiro","err");abrirSettings();return;}
+  if(!cfg_.key){toast("⚙️ Configure sua chave Gemini nas Configurações","err");abrirSettings();return;}
   if(!imgB64){toast("📷 Selecione uma foto primeiro","err");return;}
   document.getElementById("erroBox").classList.remove("visible");
   document.getElementById("resultCard").classList.remove("visible");
@@ -456,7 +451,7 @@ async function analisarIA(){
     let parsed=null,modeloUsado="",erroMsg="";
     for(const modelo of MODELOS){
       // gemini-2.0-* → v1beta | gemini-1.5-* → v1
-      const apiVer = modelo.startsWith("gemini-1.5") ? "v1" : "v1beta"; // v3.25: 1.5→v1, resto→v1beta
+      const apiVer = modelo.startsWith("gemini-1.5") ? "v1" : "v1beta"; // v3.26: 1.5→v1, resto→v1beta
       dbgAI("🔄 "+modelo+" ["+apiVer+"]");
       const url=`https://generativelanguage.googleapis.com/${apiVer}/models/${modelo}:generateContent?key=${cfg_.key}`;
       try{
@@ -599,7 +594,7 @@ function _enviarGET(url, payload) {
   });
 }
 
-// Envia foto via POST (v3.25) — segue redirect do Apps Script
+// Envia foto via POST (v3.26) — segue redirect do Apps Script
 // Estratégia: fetch sem mode:no-cors para receber resposta real com link Drive
 // Fallback: no-cors fire-and-forget se fetch normal falhar
 async function _enviarFotoPost(url, dados) {
@@ -950,7 +945,6 @@ if(!_c.key||!_c.url){setTimeout(()=>toast("⚙️ Configure a chave e URL nas co
 </script>
 
 <!-- LOADING IA -->
-
 <div id="aiLoading" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.82);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
   <div style="width:48px;height:48px;border:4px solid rgba(255,255,255,0.2);border-top-color:#4ade80;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
   <div style="color:#fff;font-size:16px;font-weight:600;">✨ IA analisando...</div>
@@ -959,7 +953,6 @@ if(!_c.key||!_c.url){setTimeout(()=>toast("⚙️ Configure a chave e URL nas co
 </div>
 
 <!-- FORNECEDOR BOTTOM SHEET -->
-
 <div class="forn-ov" id="forn-ov" onclick="fecharSheetFornecedor()"></div>
 <div class="forn-bs" id="forn-bs">
   <div class="forn-bs-top" id="forn-bs-drag">
@@ -977,7 +970,6 @@ if(!_c.key||!_c.url){setTimeout(()=>toast("⚙️ Configure a chave e URL nas co
 </div>
 
 <!-- DEBUG PANEL -->
-
 <div id="debugPanel">
   <div id="debugHeader">
     <span>🔍 Log de Debug</span>
