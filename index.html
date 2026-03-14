@@ -199,7 +199,7 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
     <div class="logo-icon">🧾</div>
     <div>
       <div class="logo-text">Recibos</div>
-      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.28</span></div>
+      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.29</span></div>
     </div>
   </div>
   <div class="hdr-right">
@@ -299,6 +299,7 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
     </div>
     <div class="s-notice" id="sNotice"></div>
     <button class="save-btn" onclick="salvarSettings()">💾 Salvar no meu celular</button>
+  <button onclick="limparChave()" style="width:100%;height:38px;background:transparent;border:1px solid var(--red);border-radius:11px;color:var(--red);font-family:var(--font);font-size:13px;cursor:pointer;margin-top:8px">🗑️ Limpar chave salva (forçar padrão)</button>
   </div>
 </div>
 
@@ -331,7 +332,7 @@ const CATS={
 };
 const CAT_KEYS=Object.keys(CATS);
 const MODELOS=[
-  // v3.28: gemini-2.0 via v1beta, gemini-1.5 via v1 (evita 404)
+  // v3.29: gemini-2.0 via v1beta, gemini-1.5 via v1 (evita 404)
   // gemini-2.5-pro adicionado como fallback premium
   "gemini-2.0-flash",
   "gemini-2.0-flash-lite",
@@ -355,6 +356,13 @@ function cfg(){
     url:(function(){try{return localStorage.getItem("rc_url");}catch(e){return null;}})() || "https://script.google.com/macros/s/AKfycbwg5iGPn6fIK9NL7MpKzVZeyLKNSexSwRkMkJ6blhjS342ibdrln5Zki1PGMOo-q8I02Q/exec",
     projeto:(function(){try{return localStorage.getItem("rc_proj");}catch(e){return null;}})() || "P3",
   };
+}
+function limparChave(){
+  try{localStorage.removeItem("rc_key");}catch(e){}
+  cfg_=null;
+  document.getElementById("sGeminiKey").value="";
+  toast("🗑️ Chave removida — usando padrão do código","ok");
+  fecharSettings();
 }
 function salvarSettings(){
   try{localStorage.setItem("rc_key",document.getElementById("sGeminiKey").value.trim());localStorage.setItem("rc_url",document.getElementById("sScriptUrl").value.trim());localStorage.setItem("rc_proj",document.getElementById("sProjeto").value.trim()||"P3");}catch(e){}
@@ -451,7 +459,7 @@ async function analisarIA(){
     let parsed=null,modeloUsado="",erroMsg="";
     for(const modelo of MODELOS){
       // gemini-2.0-* → v1beta | gemini-1.5-* → v1
-      const apiVer = modelo.startsWith("gemini-1.5") ? "v1" : "v1beta"; // v3.28: 1.5→v1, resto→v1beta
+      const apiVer = modelo.startsWith("gemini-1.5") ? "v1" : "v1beta"; // v3.29: 1.5→v1, resto→v1beta
       dbgAI("🔄 "+modelo+" ["+apiVer+"]");
       const url=`https://generativelanguage.googleapis.com/${apiVer}/models/${modelo}:generateContent?key=${cfg_.key}`;
       try{
@@ -594,7 +602,7 @@ function _enviarGET(url, payload) {
   });
 }
 
-// Envia foto via POST (v3.28) — segue redirect do Apps Script
+// Envia foto via POST (v3.29) — segue redirect do Apps Script
 // Estratégia: fetch sem mode:no-cors para receber resposta real com link Drive
 // Fallback: no-cors fire-and-forget se fetch normal falhar
 async function _enviarFotoPost(url, dados) {
