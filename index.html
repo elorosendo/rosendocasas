@@ -199,7 +199,7 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
     <div class="logo-icon">🧾</div>
     <div>
       <div class="logo-text">Recibos</div>
-      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.29</span></div>
+      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.30</span></div>
     </div>
   </div>
   <div class="hdr-right">
@@ -332,7 +332,7 @@ const CATS={
 };
 const CAT_KEYS=Object.keys(CATS);
 const MODELOS=[
-  // v3.29: gemini-2.0 via v1beta, gemini-1.5 via v1 (evita 404)
+  // v3.30: gemini-2.0 via v1beta, gemini-1.5 via v1 (evita 404)
   // gemini-2.5-pro adicionado como fallback premium
   "gemini-2.0-flash",
   "gemini-2.0-flash-lite",
@@ -456,10 +456,10 @@ async function analisarIA(){
   try{
     const CATS_LIST="Acabamentos/Instalação Elétrica/Instalação Hidráulica/Infraestrutura e Fundação/Estrutura e Alvenaria/Cobertura/Esquadrias/Mão de Obra/Logística e Apoio/Terreno e Legalização/Administração";
     const prompt=`Analise este recibo fiscal/cupom. Retorne APENAS JSON válido, sem markdown, sem texto extra.\n\nREGRAS IMPORTANTES:\n1. Se o recibo tem 2 ou mais produtos/itens DISTINTOS → use modo "multiplo" e liste CADA item separadamente no array "itens"\n2. Se o recibo tem apenas 1 produto ou é uma nota de serviço → use modo "simples" com 1 item\n3. Cada item do array deve ter seu próprio valor unitário (não o total)\n4. A SOMA de todos os valores dos itens deve ser IGUAL ao valorTotal do recibo\n5. Nunca agrupe itens diferentes — prefira separar\n6. Se não conseguir ler o valor de um item específico, divida o total igualmente\n\nFormato JSON obrigatório:\n{"modo":"multiplo","fornecedor":"NOME_LOJA","valorTotal":"0.00","data":"DD/MM/AAAA","itens":[{"descricao":"Nome do produto","quantidade":"1","valor":"0.00","categoria":"Administração","subCategoria":"","tipo":"Saida"}]}\n\nCategorias válidas: ${CATS_LIST}\n\nRetorne SÓ o JSON, sem nenhum texto antes ou depois.`;
-    let parsed=null,modeloUsado="",erroMsg="";
+    const keyUsada = cfg_.key || "";dbgAI("🔑 Chave: ..."+keyUsada.slice(-6)+" ("+keyUsada.length+" chars)");dbgAI("🔑 Início: "+keyUsada.substring(0,12)+"...");    let parsed=null,modeloUsado="",erroMsg="";
     for(const modelo of MODELOS){
       // gemini-2.0-* → v1beta | gemini-1.5-* → v1
-      const apiVer = modelo.startsWith("gemini-1.5") ? "v1" : "v1beta"; // v3.29: 1.5→v1, resto→v1beta
+      const apiVer = modelo.startsWith("gemini-1.5") ? "v1" : "v1beta"; // v3.30: 1.5→v1, resto→v1beta
       dbgAI("🔄 "+modelo+" ["+apiVer+"]");
       const url=`https://generativelanguage.googleapis.com/${apiVer}/models/${modelo}:generateContent?key=${cfg_.key}`;
       try{
@@ -602,7 +602,7 @@ function _enviarGET(url, payload) {
   });
 }
 
-// Envia foto via POST (v3.29) — segue redirect do Apps Script
+// Envia foto via POST (v3.30) — segue redirect do Apps Script
 // Estratégia: fetch sem mode:no-cors para receber resposta real com link Drive
 // Fallback: no-cors fire-and-forget se fetch normal falhar
 async function _enviarFotoPost(url, dados) {
