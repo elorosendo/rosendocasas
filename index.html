@@ -199,7 +199,7 @@ select.fval{cursor:pointer;appearance:none;-webkit-appearance:none}
     <div class="logo-icon">🧾</div>
     <div>
       <div class="logo-text">Recibos</div>
-      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.31</span></div>
+      <div class="logo-sub">Rosendo Casas <span style="font-size:9px;opacity:.4">v3.33</span></div>
     </div>
   </div>
   <div class="hdr-right">
@@ -332,13 +332,11 @@ const CATS={
 };
 const CAT_KEYS=Object.keys(CATS);
 const MODELOS=[
-  // v3.31: gemini-2.0 via v1beta, gemini-1.5 via v1 (evita 404)
-  // gemini-2.5-pro adicionado como fallback premium
+  // v3.33: gemini-1.5 removido (descontinuado). Todos via v1beta
   "gemini-2.0-flash",
+  "gemini-2.5-flash",
   "gemini-2.0-flash-lite",
   "gemini-2.5-pro",
-  "gemini-1.5-flash",
-  "gemini-1.5-flash-8b",
 ];
 
 // ── ESTADO ─────────────────────────────────────────────────────
@@ -350,7 +348,7 @@ let _itensMulti=[],_metaMulti={};
 
 // ── CONFIG ─────────────────────────────────────────────────────
 function cfg(){
-  const _k="AIzaSyBt74IinioTUfZ"+"3wsDMZRFF9F2O7Eb3otQ";
+  const _k="AIzaSyAv2BP6PWVSEof"+"ooiVeOgJGdd_5wfzJOE4";
   return{
     key:(function(){try{return localStorage.getItem("rc_key");}catch(e){return null;}})() || _k,
     url:(function(){try{return localStorage.getItem("rc_url");}catch(e){return null;}})() || "https://script.google.com/macros/s/AKfycbwg5iGPn6fIK9NL7MpKzVZeyLKNSexSwRkMkJ6blhjS342ibdrln5Zki1PGMOo-q8I02Q/exec",
@@ -459,7 +457,7 @@ async function analisarIA(){
     const keyUsada = cfg_.key || "";dbgAI("🔑 Chave: ..."+keyUsada.slice(-6)+" ("+keyUsada.length+" chars)");dbgAI("🔑 Início: "+keyUsada.substring(0,12)+"...");    let parsed=null,modeloUsado="",erroMsg="";
     for(const modelo of MODELOS){
       // gemini-2.0-* → v1beta | gemini-1.5-* → v1
-      const apiVer = modelo.startsWith("gemini-1.5") ? "v1" : "v1beta"; // v3.31: 1.5→v1, resto→v1beta
+      const apiVer = "v1beta"; // v3.33: todos via v1beta
       dbgAI("🔄 "+modelo+" ["+apiVer+"]");
       const url=`https://generativelanguage.googleapis.com/${apiVer}/models/${modelo}:generateContent?key=${cfg_.key}`;
       try{
@@ -608,7 +606,7 @@ function _enviarGET(url, payload) {
   });
 }
 
-// Envia foto via POST (v3.31) — segue redirect do Apps Script
+// Envia foto via POST (v3.33) — segue redirect do Apps Script
 // Estratégia: fetch sem mode:no-cors para receber resposta real com link Drive
 // Fallback: no-cors fire-and-forget se fetch normal falhar
 async function _enviarFotoPost(url, dados) {
